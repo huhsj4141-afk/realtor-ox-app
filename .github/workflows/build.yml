@@ -40,6 +40,10 @@ jobs:
         if: steps.pre.outputs.mode == 'full'
         env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', GCLOUD_TTS_KEY: '${{ secrets.GCLOUD_TTS_KEY }}', MINUTES: '300' }
         run: '[ -f gen/DONE ] && echo "이미 완료" || python tools/gen.py full'
+      - name: 객관식 해설·녹음 (이어서)
+        if: steps.pre.outputs.mode == 'full'
+        env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', GCLOUD_TTS_KEY: '${{ secrets.GCLOUD_TTS_KEY }}', MINUTES: '300' }
+        run: python tools/gen.py mc
       - name: 진행 저장
         if: always()
         run: |
@@ -50,6 +54,7 @@ jobs:
             git commit -m "음성 생성 진행 [skip ci]"
             for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done
           fi
+          echo "객관식 해설 $(python -c "import json;print(len(json.load(open('gen/mc_exp.json'))))" 2>/dev/null || echo 0)개, 녹음 $(ls gen/m 2>/dev/null | wc -l)개" >> $GITHUB_STEP_SUMMARY
           echo "해설 $(python -c "import json;print(len(json.load(open('gen/exp.json'))))" 2>/dev/null || echo 0)개, 음성 $(ls gen/a 2>/dev/null | wc -l)개" >> $GITHUB_STEP_SUMMARY
       - name: 샘플 올리기
         if: steps.pre.outputs.mode == 'samples'

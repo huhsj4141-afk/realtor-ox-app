@@ -240,6 +240,16 @@ CUES = {'next': '다음 지문', 'exp': '현재 지문 해설', 'restart': '현�
 
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else 'full'
+    if mode == 'mc':
+        os.makedirs(GEN, exist_ok=True)
+        try:
+            if os.path.exists(os.path.join(GEN, 'MC_DONE')):
+                log('객관식 완료'); return
+            if mc_explanations() and GKEY and mc_audio():
+                open(os.path.join(GEN, 'MC_DONE'), 'w').write('ok'); log('객관식 해설·녹음 완료')
+        except DailyLimit as e:
+            log('오늘 무료 한도 — 다음 실행에서 이어서:', str(e)[:150])
+        return
     if mode == 'sounds':
         os.makedirs(GEN, exist_ok=True); print(sounds()); return
     if not KEY and not GKEY:
@@ -305,6 +315,78 @@ def main():
         log('전부 완료')
     except DailyLimit as e:
         log('오늘 무료 한도 도달 — 다음 실행에서 이어서:', str(e)[:200])
+
+
+MC_PROMPT = """너는 공인중개사 시험 강사야. 아래 객관식 기출문제마다 귀로 듣는 해설을 써 줘.
+규칙:
+- 문제마다 3~5문장, 250자 안팎. 부드러운 해요체.
+- 첫 문장에 정답 번호와 그 이유를 말해요. 이어서 헷갈리기 쉬운 다른 보기 한두 개가 왜 아닌지 짧게 말해요.
+- 근거 법령이나 개념은 이름만 짧게. 확실하지 않은 숫자는 쓰지 않아요.
+- 소리 내어 읽기 좋게: 괄호, 한자, 영어 약어, 특수기호를 쓰지 않아요. 보기 번호는 '1번'처럼 말해요.
+- 정답은 이미 정해져 있으니 바꾸지 말아요.
+JSON으로만 답해: {"items":[{"n":번호,"exp":"해설"}]}
+
+"""
+
+
+def pick_flash():
+    names = []
+    r = call('models?pageSize=200')
+    for m in r.get('models', []):
+        if 'generateContent' in m.get('supportedGenerationMethods', []):
+            names.append(m['name'].split('/', 1)[1])
+    fl = [n for n in names if 'flash' in n and 'lite' not in n and not re.search(r'tts|image|live|audio|embed|vision|thinking|robotics|computer', n)]
+    fl.sort(key=lambda n: ('preview' not in n and 'exp' not in n, ver(n)), reverse=True)
+    log('객관식 해설 모델:', fl[0]); return fl[0]
+
+
+def mc_explanations():
+    data = json.load(open(os.path.join(ROOT, 'data', 'mc.json'), encoding='utf8'))
+    path = os.path.join(GEN, 'mc_exp.json')
+    exp = json.load(open(path, encoding='utf8')) if os.path.exists(path) else {}
+    model = pick_flash()
+    todo = [x for x in data if x['id'] not in exp]
+    for k in range(0, len(todo), 6):
+        if time.time() > DEADLINE:
+            return False
+        chunk = [x for x in todo[k:k + 6] if x['id'] not in exp]
+        lines = [f"{n}. [{x['sub']} · {x['t']}] 정답 {x['a']}번\n{x['q'][:1500]}" for n, x in enumerate(chunk, 1)]
+        body = {'contents': [{'parts': [{'text': MC_PROMPT + '\n\n'.join(lines)}]}],
+                'generationConfig': {'responseMimeType': 'application/json', 'temperature': .3}}
+        try:
+            r = call(f'models/{model}:generateContent', body)
+            txt = ''.join(p.get('text', '') for p in r['candidates'][0]['content']['parts'])
+            items = json.loads(re.search(r'\{.*\}', txt, re.S).group(0))['items']
+        except DailyLimit:
+            raise
+        except Exception as e:
+            log('  묶음 건너뜀:', str(e)[:120]); continue
+        for x in items:
+            n = int(x.get('n', 0))
+            if 1 <= n <= len(chunk) and x.get('exp'):
+                exp[chunk[n - 1]['id']] = clean(x['exp'])
+        json.dump(exp, open(path, 'w', encoding='utf8'), ensure_ascii=False, indent=0)
+        log(f'객관식 해설 {len(exp)}/{len(data)}')
+    return len(exp) >= len(data)
+
+
+def mc_audio():
+    data = json.load(open(os.path.join(ROOT, 'data', 'mc.json'), encoding='utf8'))
+    exp = json.load(open(os.path.join(GEN, 'mc_exp.json'), encoding='utf8'))
+    d = os.path.join(GEN, 'm'); os.makedirs(d, exist_ok=True)
+    tmp = os.path.join(GEN, 'tmp'); os.makedirs(tmp, exist_ok=True)
+    done = 0
+    for x in data:
+        out = os.path.join(d, x['id'] + '.ogg')
+        if os.path.exists(out) or x['id'] not in exp:
+            continue
+        if time.time() > DEADLINE:
+            return False
+        w = os.path.join(tmp, 'm.wav'); say_wav('', '', exp[x['id']], w); encode([w], out)
+        done += 1
+        if done % 20 == 0:
+            log(f'객관식 해설 녹음 +{done}')
+    return all(os.path.exists(os.path.join(d, x['id'] + '.ogg')) for x in data)
 
 
 if __name__ == '__main__':
