@@ -46,7 +46,7 @@ object Remote {
     val ACTIONS = listOf(
         "none" to "없음", "toggle" to "재생 / 정지", "restart" to "처음부터 (지문·해설)",
         "next" to "다음 (해설 → 다음 지문)", "prev" to "이전 지문", "nextItem" to "다음 지문",
-        "exp" to "해설 바로 듣기", "bookmark" to "★ 북마크"
+        "exp" to "해설 바로 듣기", "bookmark" to "★ 북마크", "detail" to "🤖 더 자세히 (인터넷)"
     )
     /** 칸 이름, 화면에 보일 이름, 기본 동작 */
     val SLOTS = listOf(

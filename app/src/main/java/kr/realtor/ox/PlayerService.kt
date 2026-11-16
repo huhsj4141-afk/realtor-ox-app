@@ -68,6 +68,7 @@ class PlayerService : Service() {
     fun setMap(slot: String, action: String) { prefs.edit().putString("map_$slot", action).apply() }
     fun resetMap() { prefs.edit().apply { Remote.SLOTS.forEach { remove("map_${it.first}") } }.apply() }
 
+    var detailText = ""; var detailKey = ""
     private var flash = ""
     private var flashUntil = 0L
     fun flashText(): String = if (SystemClock.elapsedRealtime() < flashUntil) flash else ""
@@ -234,6 +235,18 @@ class PlayerService : Service() {
                 q > 0 -> say("prev", "이전 지문") { go(q - 1, 0) }
                 !bmOnly && trackIdx > 0 -> say("prev", "이전 지문") { load(trackIdx - 1, false, Store.tracks[trackIdx - 1].items.size - 1, true) }
                 else -> say("first", "첫 지문이에요") { go(0, 0) }
+            }
+            "detail" -> {
+                val it = currentItem() ?: return
+                if (player.isPlaying) player.pause()
+                note("🤖 더 자세히 준비 중…"); detailText = ""
+                Thread {
+                    try {
+                        val t = Net.detail(this, it); val files = Net.speech(this, t)
+                        h.post { detailText = t; detailKey = it.key
+                            cue.setMediaItems(files.map { f -> MediaItem.fromUri(Uri.fromFile(f)) }); cue.setPlaybackSpeed(speed); cue.prepare(); cue.play() }
+                    } catch (e: Exception) { h.post { note("더 자세히 실패: ${e.message?.take(60)}") } }
+                }.start()
             }
             "bookmark" -> {
                 val it = currentItem() ?: return

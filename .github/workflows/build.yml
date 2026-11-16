@@ -86,6 +86,12 @@ jobs:
           [ -f gen/exp.json ] && cp gen/exp.json app/src/main/assets/ || echo '{}' > app/src/main/assets/exp.json
           cp gen/snd/*.wav app/src/main/assets/snd/
           [ -d gen/a ] && cp -r gen/a gen/cue app/src/main/assets/ || true
+          mkdir -p app/src/main/assets/web && cp web/* app/src/main/assets/web/
+          [ -f gen/mc_exp.json ] && cp gen/mc_exp.json app/src/main/assets/web/ || true
+          python3 - <<'PY'
+          p='app/src/main/assets/web/index.html'; s=open(p,encoding='utf8').read()
+          i=s.find('<script'); s=s[:i]+'<script src="shim.js"></script>\n'+s[i:]; open(p,'w',encoding='utf8').write(s)
+          PY
       - name: 빌드
         env: { VCODE: '${{ github.run_number }}' }
         run: gradle assembleRelease --no-daemon --stacktrace

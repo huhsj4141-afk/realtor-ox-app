@@ -128,7 +128,7 @@ class MainActivity : Activity() {
         val c2 = card()
         playBtn = btn("▶ 재생", true) { svc?.act("toggle") }
         c2.addView(row(btn("◀ 처음부터") { svc?.act("restart") }, playBtn, btn("다음 ▶") { svc?.act("next") }))
-        c2.addView(row(btn("⏮ 이전 지문") { svc?.act("prev") }, btn("★ 북마크") { svc?.act("bookmark") }))
+        c2.addView(row(btn("⏮ 이전 지문") { svc?.act("prev") }, btn("★ 북마크") { svc?.act("bookmark") }, btn("🤖 더 자세히") { svc?.act("detail") }))
         c2.addView(wide(btn("🌙 검은 화면") { showDark(true) }))
         col.addView(c2)
 
@@ -149,6 +149,20 @@ class MainActivity : Activity() {
         c3.addView(row(*listOf("auto" to "자동 (낮·밤)", "light" to "밝게", "dark" to "어둡게").map { (k, n) ->
             btn(n) { prefs.edit().putString("theme", k).apply(); recreate() }.apply { alpha = if (k == th) 1f else .45f } }.toTypedArray()))
         col.addView(c3)
+
+        // 인터넷 기능 키 (더 자세히·문제 해설 AI): 직접 붙여넣어 폰에만 저장
+        val c5 = card()
+        c5.addView(tv("🔑 키 설정 (더 자세히·AI 해설용)", 16f, true))
+        listOf("gemini" to "Gemini API 키", "tts" to "구글 클라우드 음성 키").forEach { (k, n) ->
+            val f = android.widget.EditText(this).apply {
+                hint = n; textSize = 14f; setTextColor(Color.parseColor(TXT)); setHintTextColor(Color.parseColor(SUB))
+                inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+                setText(prefs.getString("key_$k", ""))
+            }
+            c5.addView(f)
+            c5.addView(wide(btn("$n 저장") { prefs.edit().putString("key_$k", f.text.toString().trim()).apply(); android.widget.Toast.makeText(this, "저장했어요", android.widget.Toast.LENGTH_SHORT).show() }))
+        }
+        col.addView(c5)
 
         // 리모컨 매핑
         val c4 = card()
@@ -266,7 +280,8 @@ class MainActivity : Activity() {
         val bm = it != null && s.bookmarks().contains(it.key)
         pos.text = "$name · ${q + 1}/${s.queue.size}${if (bm) " · ★" else ""} · ${if (ph == 'S') "지문" else "해설"}"
         stmt.text = it?.s ?: ""
-        expV.text = if (it != null && ph == 'E') "정답 ${if (it.o) "O" else "X"}\n${it.exp}" else ""
+        expV.text = (if (it != null && ph == 'E') "정답 ${if (it.o) "O" else "X"}\n${it.exp}" else "") +
+            (if (it != null && s.detailKey == it.key && s.detailText.isNotEmpty()) "\n\n🤖 ${s.detailText}" else "")
         playBtn.text = if (s.player.isPlaying) "⏸ 정지" else "▶ 재생"
         speedBtns.forEach { (v, b) -> b.alpha = if (abs(v - s.speed) < .01f) 1f else .45f }
         gapBtns.forEach { (v, b) -> b.alpha = if (v == s.gapSec) 1f else .45f }
