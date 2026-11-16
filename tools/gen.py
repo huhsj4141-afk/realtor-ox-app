@@ -172,10 +172,15 @@ def explanations(txt_model, data):
     path = os.path.join(GEN, 'exp.json')
     exp = json.load(open(path, encoding='utf8')) if os.path.exists(path) else {}
     todo = [(ti, i, it) for ti, t in enumerate(data) for i, it in enumerate(t['items']) if f'{ti}_{i}' not in exp]
+    todo = todo + todo   # 한 번 더 돌며 빠진 것 채우기
+    seen = set()
     for k in range(0, len(todo), 16):
+        todo_k = [x for x in todo[k:k + 16] if f'{x[0]}_{x[1]}' not in exp]
+        if not todo_k:
+            continue
         if time.time() > DEADLINE:
             return exp, False
-        chunk = todo[k:k + 16]
+        chunk = todo_k
         t0 = time.time()
         lines = []
         for n, (ti, i, it) in enumerate(chunk, 1):
@@ -187,8 +192,11 @@ def explanations(txt_model, data):
         try:
             items = json.loads(txt)['items']
         except Exception:
-            m = re.search(r'\{.*\}', txt, re.S)
-            items = json.loads(m.group(0))['items'] if m else []
+            try:
+                m = re.search(r'\{.*\}', txt, re.S)
+                items = json.loads(m.group(0))['items'] if m else []
+            except Exception:
+                log('  해설 응답 형식 오류 — 이 묶음은 다음에 다시'); items = []
         for x in items:
             n = int(x.get('n', 0))
             if 1 <= n <= len(chunk) and x.get('exp'):
