@@ -1,0 +1,89 @@
+name: build
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: samples(목소리 샘플) 또는 full(전체 생성+APK)
+        default: full
+  push:
+    branches: [main]
+    paths-ignore: ['gen/**', 'samples/**']
+  schedule:
+    - cron: '23 */3 * * *'
+permissions:
+  contents: write
+concurrency:
+  group: build
+  cancel-in-progress: false
+jobs:
+  gen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    outputs:
+      done: ${{ steps.st.outputs.done }}
+      newly: ${{ steps.st.outputs.newly }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: which ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+      - name: before
+        id: pre
+        run: |
+          echo "had=$([ -f gen/DONE ] && echo 1 || echo 0)" >> $GITHUB_OUTPUT
+          if [ "${{ github.event.inputs.mode }}" = samples ] || [ ! -f voice.txt ]; then echo "mode=samples" >> $GITHUB_OUTPUT; else echo "mode=full" >> $GITHUB_OUTPUT; fi
+      - name: 음성 샘플
+        if: steps.pre.outputs.mode == 'samples'
+        env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}' }
+        run: python tools/gen.py samples
+      - name: 해설·음성 생성 (이어서)
+        if: steps.pre.outputs.mode == 'full'
+        env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', MINUTES: '300' }
+        run: '[ -f gen/DONE ] && echo "이미 완료" || python tools/gen.py full'
+      - name: 진행 저장
+        if: always()
+        run: |
+          rm -rf gen/tmp
+          git config user.name "ox-bot"; git config user.email "ox-bot@users.noreply.github.com"
+          git add -A gen samples 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "음성 생성 진행 [skip ci]"
+            for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done
+          fi
+          echo "해설 $(python -c "import json;print(len(json.load(open('gen/exp.json'))))" 2>/dev/null || echo 0)개, 음성 $(ls gen/a 2>/dev/null | wc -l)개" >> $GITHUB_STEP_SUMMARY
+      - name: 샘플 올리기
+        if: steps.pre.outputs.mode == 'samples'
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          gh release delete samples -y --cleanup-tag 2>/dev/null || true
+          gh release create samples samples/*.mp3 -t "목소리 샘플" -n "듣고 마음에 드는 목소리 이름을 알려주세요"
+      - name: state
+        id: st
+        run: |
+          echo "done=$([ -f gen/DONE ] && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "newly=$([ -f gen/DONE ] && [ '${{ steps.pre.outputs.had }}' = 0 ] && echo true || echo false)" >> $GITHUB_OUTPUT
+  apk:
+    needs: gen
+    if: needs.gen.outputs.done == 'true' && (github.event_name != 'schedule' || needs.gen.outputs.newly == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: '8.11.1' }
+      - name: 자료 넣기
+        run: |
+          mkdir -p app/src/main/assets
+          cp data/ox.json gen/exp.json app/src/main/assets/
+          cp -r gen/a gen/cue app/src/main/assets/
+      - name: 빌드
+        env: { VCODE: '${{ github.run_number }}' }
+        run: gradle assembleRelease --no-daemon --stacktrace
+      - name: 올리기
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk realtor-ox.apk
+          gh release delete latest -y --cleanup-tag 2>/dev/null || true
+          gh release create latest realtor-ox.apk -t "중개사 OX 듣기 v${{ github.run_number }}" -n "폰에서 realtor-ox.apk 를 받아 설치하세요"
