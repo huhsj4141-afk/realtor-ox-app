@@ -87,3 +87,16 @@ jobs:
           cp app/build/outputs/apk/release/app-release.apk realtor-ox.apk
           gh release delete latest -y --cleanup-tag 2>/dev/null || true
           gh release create latest realtor-ox.apk -t "중개사 OX 듣기 v${{ github.run_number }}" -n "폰에서 realtor-ox.apk 를 받아 설치하세요"
+  check:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: '8.11.1' }
+      - name: 코드 확인 빌드 (음성 없이)
+        run: |
+          mkdir -p app/src/main/assets && cp data/ox.json app/src/main/assets/
+          gradle assembleRelease --no-daemon
