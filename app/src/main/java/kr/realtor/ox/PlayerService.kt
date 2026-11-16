@@ -236,6 +236,8 @@ class PlayerService : Service() {
 
     private fun ready(q: Int, cb: (Boolean) -> Unit) {
         val it = queue.getOrNull(q) ?: return cb(false)
+        if (rec.contains(recS(it)) && (rec.contains(recE(it)) || it.exp.isBlank())) { cb(true); return }
+        if (rec.contains(recS(it))) { synth(clean(it.exp), fE(it)) { b -> cb(b) }; return }
         synth(clean(it.s), fS(it)) { a ->
             if (it.exp.isBlank()) cb(a) else synth(clean(it.exp), fE(it)) { b -> cb(a && b) }
         }
@@ -254,8 +256,23 @@ class PlayerService : Service() {
         return b.build()
     }
 
+    /** 미리 녹음된 음성(클라우드 Achernar) 목록 */
+    private val rec: Set<String> by lazy {
+        val a = try { assets.list("a")?.toSet() } catch (e: Exception) { null } ?: emptySet()
+        val c = try { assets.list("cue")?.map { "cue/$it" }?.toSet() } catch (e: Exception) { null } ?: emptySet()
+        a.map { "a/$it" }.toSet() + c
+    }
+    private fun recS(it: Item) = "a/t${it.ti}_${it.i}_s.ogg"
+    private fun recE(it: Item) = "a/t${it.ti}_${it.i}_e.ogg"
+
     private fun slots(q: Int): List<MediaSource> {
         val it = queue[q]
+        if (rec.contains(recS(it))) {
+            val ex = if (rec.contains(recE(it))) asset(recE(it)) else {
+                val e = fE(it); val ans = asset(if (it.o) "snd/ding.wav" else "snd/ttaeng.wav")
+                if (e.exists()) concat(ans, asset("snd/gap.wav"), file(e)) else ans }
+            return listOf(asset(recS(it)), SilenceMediaSource(gapSec * 1_000_000L), ex, SilenceMediaSource(150_000L))
+        }
         val ans = asset(if (it.o) "snd/ding.wav" else "snd/ttaeng.wav")
         val s = fS(it); val e = fE(it)
         val stmt = if (s.exists()) concat(asset("snd/chime.wav"), asset("snd/gap.wav"), file(s)) else asset("snd/chime.wav")
@@ -322,10 +339,17 @@ class PlayerService : Service() {
         flash = text; flashUntil = SystemClock.elapsedRealtime() + 2500
         if (name == "flash" || !voiceCue) { then?.invoke(); return }
         if (then != null && player.isPlaying) player.pause()
+        if (rec.contains("cue/$name.ogg")) { playCue(MediaItem.fromUri(Uri.parse("asset:///cue/$name.ogg")), then); return }
         val f = File(dir(), "cue_$name.wav")
         synth(text.replace("★", "").trim(), f) { ok ->
             if (!ok) { then?.invoke(); return@synth }
-            cue.setMediaItem(MediaItem.fromUri(Uri.fromFile(f))); cue.setPlaybackSpeed(maxOf(1.1f, speed)); cue.prepare()
+            playCue(MediaItem.fromUri(Uri.fromFile(f)), then)
+        }
+    }
+
+    private fun playCue(mi: MediaItem, then: (() -> Unit)?) {
+        run {
+            cue.setMediaItem(mi); cue.setPlaybackSpeed(maxOf(1.1f, speed)); cue.prepare()
             var done = false
             cue.addListener(object : Player.Listener {
                 override fun onPlaybackStateChanged(s: Int) {

@@ -146,10 +146,36 @@ def encode(parts, out):
     os.remove(tmp)
 
 
+GKEY = os.environ.get('GCLOUD_TTS_KEY', '').strip()
+GVOICE = os.environ.get('CLOUD_VOICE', 'ko-KR-Chirp3-HD-Achernar')
+
+
+def cloud_tts(text, raw):
+    body = {'input': {'text': text}, 'voice': {'languageCode': 'ko-KR', 'name': GVOICE},
+            'audioConfig': {'audioEncoding': 'LINEAR16', 'sampleRateHertz': 24000}}
+    for k in range(8):
+        req = urllib.request.Request(f'https://texttospeech.googleapis.com/v1/text:synthesize?key={GKEY}',
+                                     data=json.dumps(body).encode(), headers={'Content-Type': 'application/json'})
+        try:
+            with urllib.request.urlopen(req, timeout=120) as r:
+                open(raw, 'wb').write(base64.b64decode(json.loads(r.read())['audioContent'])); return
+        except urllib.error.HTTPError as e:
+            msg = e.read().decode('utf8', 'replace')
+            if e.code in (429, 500, 503):
+                log(f'  클라우드 TTS {e.code} → 대기'); time.sleep(20 * (k + 1)); continue
+            raise RuntimeError(f'클라우드 TTS HTTP {e.code}: {msg[:400]}')
+        except (urllib.error.URLError, TimeoutError, OSError):
+            time.sleep(10 * (k + 1))
+    raise RuntimeError('클라우드 TTS 재시도 초과')
+
+
 def say_wav(model, voice, text, path):
-    pcm, rate = tts(model, voice, text)
     raw = path + '.raw.wav'
-    pcm_to_wav(pcm, rate, raw)
+    if GKEY:
+        cloud_tts(text, raw)
+    else:
+        pcm, rate = tts(model, voice, text)
+        pcm_to_wav(pcm, rate, raw)
     # 앞뒤 무음 정리 + 24kHz
     subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', raw, '-af',
                     'silenceremove=start_periods=1:start_threshold=-50dB,areverse,silenceremove=start_periods=1:start_threshold=-50dB,areverse,apad=pad_dur=0.25',
@@ -216,11 +242,12 @@ def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else 'full'
     if mode == 'sounds':
         os.makedirs(GEN, exist_ok=True); print(sounds()); return
-    if not KEY:
+    if not KEY and not GKEY:
         sys.exit('GEMINI_API_KEY 가 없어요 (저장소 Settings > Secrets > Actions)')
     os.makedirs(GEN, exist_ok=True)
     data = json.load(open(os.path.join(ROOT, 'data', 'ox.json'), encoding='utf8'))
-    tts_model, txt_model = pick_models()
+    tts_model, txt_model = pick_models() if KEY else ('', '')
+    if GKEY: log('목소리(클라우드):', GVOICE)
     snd = sounds()
     if mode == 'samples':
         d = os.path.join(ROOT, 'samples'); os.makedirs(d, exist_ok=True)
@@ -243,7 +270,7 @@ def main():
         exp, ok = explanations(txt_model, data)
         if not ok:
             log('시간 초과 — 다음 실행에서 이어서'); return
-        if os.environ.get('AUDIO', '0') != '1':      # 폰 음성(TTS)으로 읽으므로 녹음은 만들지 않음
+        if not GKEY and os.environ.get('AUDIO', '0') != '1':      # 폰 음성(TTS)으로 읽으므로 녹음은 만들지 않음
             if len(exp) >= sum(len(t['items']) for t in data):
                 open(os.path.join(GEN, 'DONE'), 'w').write('tts'); log('해설 전부 완료')
             return
@@ -262,7 +289,7 @@ def main():
                 if not os.path.exists(s_out):
                     w = os.path.join(tmp, 's.wav'); say_wav(tts_model, voice, clean(it['s']), w)
                     encode([snd['chime'], snd['gap'], w], s_out)
-                if not os.path.exists(e_out):
+                if not os.path.exists(e_out) and os.path.exists(os.path.join(GEN, 'EXP_OK')):
                     ex = exp.get(f'{ti}_{i}', '')
                     parts = [snd['ding' if it['o'] else 'ttaeng'], snd['gap']]
                     if ex:
@@ -271,7 +298,10 @@ def main():
                 done += 1
                 if done % 10 == 0:
                     log(f'음성 {done}/{total}')
-        open(os.path.join(GEN, 'DONE'), 'w').write(voice)
+        if os.path.exists(os.path.join(GEN, 'EXP_OK')):
+            open(os.path.join(GEN, 'DONE'), 'w').write(voice)
+        else:
+            open(os.path.join(GEN, 'STMT_DONE'), 'w').write(voice)
         log('전부 완료')
     except DailyLimit as e:
         log('오늘 무료 한도 도달 — 다음 실행에서 이어서:', str(e)[:200])
