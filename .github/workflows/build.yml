@@ -42,7 +42,7 @@ jobs:
         run: '[ -f gen/DONE ] && echo "이미 완료" || python tools/gen.py full'
       - name: 객관식 해설·녹음 (이어서)
         if: steps.pre.outputs.mode == 'full'
-        env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', GCLOUD_TTS_KEY: '${{ secrets.GCLOUD_TTS_KEY }}', MINUTES: '300' }
+        env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', MINUTES: '40' }
         run: python tools/gen.py mc
       - name: 진행 저장
         if: always()
