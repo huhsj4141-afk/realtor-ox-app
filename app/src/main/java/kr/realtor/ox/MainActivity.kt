@@ -47,9 +47,21 @@ class MainActivity : Activity() {
     private val speedBtns = ArrayList<Pair<Float, Button>>()
     private val gapBtns = ArrayList<Pair<Int, Button>>()
     private var synced = false
+    // 화면 테마: auto(낮 7~19시 밝게, 밤 어둡게) / light / dark
+    private val prefs by lazy { getSharedPreferences("ox", android.content.Context.MODE_PRIVATE) }
+    private fun wantDark(): Boolean = when (prefs.getString("theme", "auto")) {
+        "dark" -> true; "light" -> false
+        else -> java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY).let { it >= 19 || it < 7 }
+    }
+    private var dk = false
+    private fun c(light: String, dark: String) = Color.parseColor(if (dk) dark else light)
+    private val TXT get() = if (dk) "#E6EDF3" else "#111827"
+    private val SUB get() = if (dk) "#9AA4AF" else "#6B7280"
     private var spinBusy = false
 
     override fun onCreate(b: Bundle?) {
+        dk = wantDark()
+        setTheme(if (dk) android.R.style.Theme_Material_NoActionBar else android.R.style.Theme_Material_Light_NoActionBar)
         super.onCreate(b)
         val cf = java.io.File(filesDir, "crash.txt")
         if (cf.exists()) {      // 지난번 비정상 종료 원인 보여주기
@@ -73,16 +85,16 @@ class MainActivity : Activity() {
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
     private fun round(c: Int, r: Int) = GradientDrawable().apply { setColor(c); cornerRadius = dp(r).toFloat() }
     private fun card() = LinearLayout(this).apply {
-        orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(14), dp(16), dp(14)); background = round(Color.WHITE, 16)
+        orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(14), dp(16), dp(14)); background = round(c("#FFFFFF", "#161B22"), 16)
         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(dp(12), dp(6), dp(12), dp(6)) }
     }
-    private fun tv(t: String, sp: Float, bold: Boolean = false, color: String = "#111827") = TextView(this).apply {
+    private fun tv(t: String, sp: Float, bold: Boolean = false, color: String = TXT) = TextView(this).apply {
         text = t; textSize = sp; setTextColor(Color.parseColor(color)); setLineSpacing(0f, 1.25f); if (bold) setTypeface(typeface, Typeface.BOLD)
     }
     private fun btn(t: String, primary: Boolean = false, f: () -> Unit) = Button(this).apply {
         text = t; isAllCaps = false; textSize = 16f
-        setTextColor(if (primary) Color.WHITE else Color.parseColor("#111827"))
-        background = round(Color.parseColor(if (primary) "#2563EB" else "#EEF1F5"), 12)
+        setTextColor(if (primary) Color.WHITE else Color.parseColor(TXT))
+        background = round(if (primary) Color.parseColor("#2563EB") else c("#EEF1F5", "#21262D"), 12)
         layoutParams = LinearLayout.LayoutParams(0, dp(56), 1f).apply { setMargins(dp(4), dp(4), dp(4), dp(4)) }
         setOnClickListener { f() }
     }
@@ -90,7 +102,7 @@ class MainActivity : Activity() {
     private fun wide(b: Button) = b.apply { layoutParams = LinearLayout.LayoutParams(-1, dp(52)).apply { setMargins(dp(4), dp(6), dp(4), dp(4)) } }
 
     private fun buildUi(): View {
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Color.parseColor("#F5F6F8")); setPadding(0, dp(12), 0, dp(24)) }
+        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(c("#F5F6F8", "#0B0F14")); setPadding(0, dp(12), 0, dp(24)) }
         col.addView(tv("🎧 공인중개사 OX 듣기", 22f, true).apply { setPadding(dp(18), dp(8), dp(18), dp(6)) })
 
         // 지금 듣는 문항
@@ -106,9 +118,9 @@ class MainActivity : Activity() {
                 override fun onNothingSelected(p: AdapterView<*>?) {}
             }
         }
-        pos = tv("", 13f, color = "#6B7280").apply { setPadding(0, dp(8), 0, 0) }
+        pos = tv("", 13f, color = SUB).apply { setPadding(0, dp(8), 0, 0) }
         stmt = tv("", 19f).apply { setPadding(0, dp(8), 0, dp(8)) }
-        expV = tv("", 15f, color = "#374151")
+        expV = tv("", 15f, color = if (dk) "#C9D1D9" else "#374151")
         listOf(spinner, pos, stmt, expV).forEach { c1.addView(it) }
         col.addView(c1)
 
@@ -122,22 +134,26 @@ class MainActivity : Activity() {
 
         // 듣는 방식
         val c3 = card()
-        c3.addView(CheckBox(this).apply { text = "계속 듣기 (끄면 한 문항씩 멈춰요)"; textSize = 15f
+        c3.addView(CheckBox(this).apply { text = "계속 듣기 (끄면 한 문항씩 멈춰요)"; textSize = 15f; setTextColor(Color.parseColor(TXT))
             isChecked = getSharedPreferences("ox", android.content.Context.MODE_PRIVATE).getBoolean("cont", false)
             setOnCheckedChangeListener { _, v -> svc?.continuous = v } })
-        c3.addView(CheckBox(this).apply { text = "🗣 동작 안내 음성"; textSize = 15f
+        c3.addView(CheckBox(this).apply { text = "동작 안내 말하기 (\"다음 지문\" 등)"; textSize = 15f; setTextColor(Color.parseColor(TXT))
             isChecked = getSharedPreferences("ox", android.content.Context.MODE_PRIVATE).getBoolean("vcue", true)
             setOnCheckedChangeListener { _, v -> svc?.voiceCue = v } })
         c3.addView(tv("속도", 14f, true).apply { setPadding(0, dp(8), 0, 0) })
         c3.addView(row(*listOf(0.8f, 1f, 1.2f, 1.5f).map { v -> btn("${v}배") { svc?.speed = v }.also { speedBtns.add(v to it) } }.toTypedArray()))
         c3.addView(tv("지문 뒤 생각 시간", 14f, true).apply { setPadding(0, dp(8), 0, 0) })
         c3.addView(row(*listOf(1, 3, 5, 8).map { v -> btn("${v}초") { svc?.gapSec = v }.also { gapBtns.add(v to it) } }.toTypedArray()))
+        c3.addView(tv("화면", 14f, true).apply { setPadding(0, dp(8), 0, 0) })
+        val th = prefs.getString("theme", "auto")
+        c3.addView(row(*listOf("auto" to "자동 (낮·밤)", "light" to "밝게", "dark" to "어둡게").map { (k, n) ->
+            btn(n) { prefs.edit().putString("theme", k).apply(); recreate() }.apply { alpha = if (k == th) 1f else .45f } }.toTypedArray()))
         col.addView(c3)
 
         // 리모컨 매핑
         val c4 = card()
         c4.addView(tv("🎮 링 리모컨", 16f, true))
-        c4.addView(tv("길게 누르기는 화면이 꺼져도 돼요. 짧게 누르기는 검은 화면에서만 돼요. 눌러서 동작을 바꾸세요.", 13f, color = "#6B7280").apply { setPadding(0, dp(4), 0, dp(4)) })
+        c4.addView(tv("길게 누르기는 화면이 꺼져도 돼요. 짧게 누르기는 검은 화면에서만 돼요. 눌러서 동작을 바꾸세요.", 13f, color = SUB).apply { setPadding(0, dp(4), 0, dp(4)) })
         mapBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         c4.addView(mapBox)
         c4.addView(wide(btn("기본값으로") { svc?.resetMap(); drawMap() }))
@@ -162,7 +178,7 @@ class MainActivity : Activity() {
                 addView(tv(name, 14f).apply { layoutParams = LinearLayout.LayoutParams(0, -2, 1f) })
                 addView(Button(this@MainActivity).apply {
                     text = Remote.label(s.mapOf(slot)); isAllCaps = false; textSize = 14f
-                    background = round(Color.parseColor("#EEF1F5"), 10); setPadding(dp(12), 0, dp(12), 0)
+                    background = round(c("#EEF1F5", "#21262D"), 10); setTextColor(Color.parseColor(TXT)); setPadding(dp(12), 0, dp(12), 0)
                     setOnClickListener {
                         val cur = Remote.ACTIONS.indexOfFirst { it.first == s.mapOf(slot) }
                         AlertDialog.Builder(this@MainActivity).setTitle(name)
@@ -241,6 +257,7 @@ class MainActivity : Activity() {
     private fun refresh() {
         val s = svc ?: return
         if (!synced) { synced = true; drawMap() }
+        if (wantDark() != dk && dark.visibility != View.VISIBLE) { recreate(); return }
         val want = if (s.bmOnly) Store.tracks.size else s.trackIdx
         if (spinner.selectedItemPosition != want) { spinBusy = true; spinner.setSelection(want, false); h.post { spinBusy = false } }
         val (q, ph) = s.phase()
