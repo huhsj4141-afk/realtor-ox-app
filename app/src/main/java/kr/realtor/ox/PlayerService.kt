@@ -250,7 +250,7 @@ class PlayerService : Service() {
     private fun file(f: File) = src(Uri.fromFile(f).toString())
     private fun concat(vararg s: MediaSource): MediaSource {
         val b = ConcatenatingMediaSource2.Builder()
-        s.forEach { b.add(it, C.TIME_UNSET) }
+        s.forEach { b.add(it, 1000L) }
         return b.build()
     }
 
@@ -287,9 +287,11 @@ class PlayerService : Service() {
         ready(q) { _ ->
             if (my != goSeq) return@ready
             preparing = false
-            if (loadedQ != q) {
-                player.setMediaSources(slots(q), k, 0); player.prepare(); loadedQ = q
-            } else player.seekTo(k, 0)
+            try {
+                if (loadedQ != q) {
+                    player.setMediaSources(slots(q), k, 0); player.prepare(); loadedQ = q
+                } else player.seekTo(k, 0)
+            } catch (e: Exception) { say("flash", "재생 준비 오류: ${e.message}"); return@ready }
             prefs.edit().putInt("q", q).apply()
             if (play) player.play()
             updateSession()
