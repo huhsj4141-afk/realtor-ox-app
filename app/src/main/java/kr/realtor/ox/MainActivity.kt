@@ -110,6 +110,13 @@ class MainActivity : Activity() {
 
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
+        val cf = java.io.File(filesDir, "crash.txt")
+        if (cf.exists()) {
+            val msg = cf.readText(); cf.delete()
+            setContentView(ScrollView(this).apply { addView(TextView(this@MainActivity).apply {
+                text = "지난번 비정상 종료 원인 (이 화면을 캡처해서 Claude에게 보내주세요)\n\n$msg"; textSize = 12f; setTextIsSelectable(true); setPadding(24, 48, 24, 24) }) })
+            return
+        }
         Store.load(this)
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
