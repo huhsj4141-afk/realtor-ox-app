@@ -26,6 +26,9 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TextView
+import android.app.AlertDialog
+import android.speech.tts.TextToSpeech
+import java.util.Locale as JLocale
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -46,6 +49,59 @@ class MainActivity : Activity() {
     private val speedBtns = ArrayList<Pair<Float, Button>>()
     private val gapBtns = ArrayList<Pair<Int, Button>>()
     private var ignoreSpin = true
+    private lateinit var voiceV: TextView
+
+    // ---------- 목소리 고르기: 폰에 있는 엔진(삼성·구글…)의 한국어 목소리를 들어보고 선택 ----------
+    private fun pickVoice() {
+        val probe = arrayOfNulls<TextToSpeech>(1)
+        probe[0] = TextToSpeech(this) { _ ->
+            val engines = probe[0]?.engines ?: emptyList()
+            probe[0]?.shutdown()
+            val opts = ArrayList<Triple<String, String, String>>()   // 엔진, 목소리, 이름표
+            val ttsMap = HashMap<String, TextToSpeech>()
+            var left = engines.size
+            engines.forEach { e ->
+                var t: TextToSpeech? = null
+                t = TextToSpeech(this, { st ->
+                    h.post {
+                        val tt = t
+                        if (st == TextToSpeech.SUCCESS && tt != null) {
+                            ttsMap[e.name] = tt
+                            val vs = try { (tt.voices ?: emptySet()).filter { it.locale.language == "ko" || it.locale.language == "kor" }
+                                .sortedWith(compareBy({ it.isNetworkConnectionRequired }, { it.name })) } catch (x: Exception) { emptyList() }
+                            vs.forEachIndexed { i, v ->
+                                opts.add(Triple(e.name, v.name, "${e.label} ${i + 1}번" + (if (v.isNetworkConnectionRequired) " (인터넷 필요)" else "")))
+                            }
+                        }
+                        left--
+                        if (left == 0) showVoiceDialog(opts, ttsMap)
+                    }
+                }, e.name)
+            }
+        }
+    }
+
+    private fun showVoiceDialog(opts: List<Triple<String, String, String>>, ttsMap: Map<String, TextToSpeech>) {
+        if (opts.isEmpty()) { ttsMap.values.forEach { it.shutdown() }; return }
+        val s = svc
+        var sel = opts.indexOfFirst { it.second == s?.currentVoiceName() }.coerceAtLeast(0)
+        val sample = "민법상 계약명의신탁에서 매도인이 선의라면, 수탁자는 소유권을 취득해요."
+        AlertDialog.Builder(this).setTitle("목소리 고르기 — 누르면 들려요")
+            .setSingleChoiceItems(opts.map { it.third }.toTypedArray(), sel) { _, i ->
+                sel = i
+                val (e, v, _) = opts[i]
+                ttsMap.values.forEach { it.stop() }
+                ttsMap[e]?.let { t -> t.language = JLocale.KOREAN; t.voices?.firstOrNull { it.name == v }?.let { t.voice = it }
+                    t.speak(sample, TextToSpeech.QUEUE_FLUSH, null, "pv") }
+            }
+            .setPositiveButton("이 목소리로") { _, _ -> val (e, v, _) = opts[sel]; svc?.setVoice(e, v); voiceLabel = opts[sel].third }
+            .setNegativeButton("닫기", null)
+            .setOnDismissListener { ttsMap.values.forEach { it.stop(); it.shutdown() } }
+            .show()
+    }
+    private var voiceLabel: String
+        get() = getSharedPreferences("ox", android.content.Context.MODE_PRIVATE).getString("vlabel", "삼성 TTS 1번 (기본)") ?: ""
+        set(v) { getSharedPreferences("ox", android.content.Context.MODE_PRIVATE).edit().putString("vlabel", v).apply() }
 
     private val svc get() = PlayerService.inst
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
@@ -138,6 +194,14 @@ class MainActivity : Activity() {
         listOf(1, 3, 5, 8).forEach { v -> val bt = btn("${v}초") { svc?.gapSec = v }; gapBtns.add(v to bt); gr.addView(bt) }
         c3.addView(gr)
         col.addView(c3)
+
+        val c5 = card()
+        c5.addView(tv("🗣 목소리", 16f, true))
+        voiceV = tv("", 13f, color = Color.parseColor("#6B7280")).apply { setPadding(0, dp(4), 0, dp(4)) }
+        c5.addView(voiceV)
+        c5.addView(btn("목소리 고르기 (들어보고 선택)") { pickVoice() }.apply {
+            layoutParams = LinearLayout.LayoutParams(-1, dp(52)).apply { setMargins(dp(4), dp(4), dp(4), dp(4)) } })
+        col.addView(c5)
 
         val c4 = card()
         c4.addView(tv("🎮 링 리모컨 (화면 꺼져도 작동)", 16f, true))
@@ -270,6 +334,7 @@ class MainActivity : Activity() {
         stmt.text = it?.s ?: ""
         expV.text = if (it != null && ph == 'E') "정답 ${if (it.o) "O (맞는 말)" else "X (틀린 말)"}\n${it.exp}" else ""
         playBtn.text = if (s.player.isPlaying) "⏸ 정지" else "▶ 재생"
+        voiceV.text = "지금: $voiceLabel" + (if (s.flashText().isNotEmpty()) "  ·  ${s.flashText()}" else "")
         speedBtns.forEach { (v, b) -> b.alpha = if (abs(v - s.speed) < .01f) 1f else .45f }
         gapBtns.forEach { (v, b) -> b.alpha = if (v == s.gapSec) 1f else .45f }
         if (dark.visibility == View.VISIBLE) {

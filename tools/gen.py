@@ -72,7 +72,7 @@ def pick_models():
     tts = [n for n in names if 'tts' in n]
     tts.sort(key=lambda n: (('flash' in n) and ('lite' not in n), 'preview' not in n, ver(n)), reverse=True)
     txt = [n for n in names if 'flash' in n and not re.search(r'tts|image|live|audio|embed|vision|thinking|robotics|computer', n)]
-    txt.sort(key=lambda n: ('lite' not in n, 'preview' not in n and 'exp' not in n, ver(n)), reverse=True)
+    txt.sort(key=lambda n: ('lite' in n, 'preview' not in n and 'exp' not in n, ver(n)), reverse=True)  # 무료 한도가 넉넉한 lite 우선
     if not tts or not txt:
         raise RuntimeError(f'모델을 못 찾음: {names}')
     log('TTS 모델:', tts[0], '/ 글 모델:', txt[0])
@@ -172,10 +172,10 @@ def explanations(txt_model, data):
     path = os.path.join(GEN, 'exp.json')
     exp = json.load(open(path, encoding='utf8')) if os.path.exists(path) else {}
     todo = [(ti, i, it) for ti, t in enumerate(data) for i, it in enumerate(t['items']) if f'{ti}_{i}' not in exp]
-    for k in range(0, len(todo), 8):
+    for k in range(0, len(todo), 16):
         if time.time() > DEADLINE:
             return exp, False
-        chunk = todo[k:k + 8]
+        chunk = todo[k:k + 16]
         t0 = time.time()
         lines = []
         for n, (ti, i, it) in enumerate(chunk, 1):
@@ -206,6 +206,8 @@ CUES = {'next': '다음 지문', 'exp': '현재 지문 해설', 'restart': '현�
 
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else 'full'
+    if mode == 'sounds':
+        os.makedirs(GEN, exist_ok=True); print(sounds()); return
     if not KEY:
         sys.exit('GEMINI_API_KEY 가 없어요 (저장소 Settings > Secrets > Actions)')
     os.makedirs(GEN, exist_ok=True)
@@ -233,6 +235,10 @@ def main():
         exp, ok = explanations(txt_model, data)
         if not ok:
             log('시간 초과 — 다음 실행에서 이어서'); return
+        if os.environ.get('AUDIO', '0') != '1':      # 폰 음성(TTS)으로 읽으므로 녹음은 만들지 않음
+            if len(exp) >= sum(len(t['items']) for t in data):
+                open(os.path.join(GEN, 'DONE'), 'w').write('tts'); log('해설 전부 완료')
+            return
         a = os.path.join(GEN, 'a'); c = os.path.join(GEN, 'cue'); os.makedirs(a, exist_ok=True); os.makedirs(c, exist_ok=True)
         tmp = os.path.join(GEN, 'tmp'); os.makedirs(tmp, exist_ok=True)
         for k, t in CUES.items():
