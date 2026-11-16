@@ -98,7 +98,7 @@ class PlayerService : Service() {
                 updateSession()
             }
             override fun onIsPlayingChanged(isPlaying: Boolean) {
-                if (isPlaying) autoStopQ = -1
+                if (isPlaying) { autoStopQ = -1; fg() }
                 updateSession()
             }
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
@@ -123,13 +123,23 @@ class PlayerService : Service() {
             isActive = true
         }
         createChannel()
-        val n = buildNotif()
-        if (Build.VERSION.SDK_INT >= 29) startForeground(NID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
-        else startForeground(NID, n)
+        fg()
         player.setPlaybackSpeed(speed)
         initTts(prefs.getString("eng", SAMSUNG))
         bmOnly = prefs.getBoolean("bmOnly", false)
         load(prefs.getInt("ti", 0), bmOnly, prefs.getInt("q", 0), play = false)
+    }
+
+    /** 알림을 띄우고 포그라운드로 (시스템이 막으면 조용히 넘어가고, 재생 시작 때 다시 시도) */
+    private var isFg = false
+    private fun fg() {
+        if (isFg) return
+        try {
+            val n = buildNotif()
+            if (Build.VERSION.SDK_INT >= 29) startForeground(NID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+            else startForeground(NID, n)
+            isFg = true
+        } catch (e: Exception) { }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -137,7 +147,8 @@ class PlayerService : Service() {
             "L" -> stepL(); "R" -> stepR(); "C" -> center()
             "QUIT" -> { player.pause(); stopForeground(STOP_FOREGROUND_REMOVE); stopSelf() }
         }
-        return START_STICKY
+        fg()
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {
@@ -447,6 +458,6 @@ class PlayerService : Service() {
             .putString(MediaMetadata.METADATA_KEY_TITLE, it?.s ?: "OX 듣기")
             .putString(MediaMetadata.METADATA_KEY_ARTIST, if (bmOnly) "★ 북마크" else Store.tracks.getOrNull(trackIdx)?.name ?: "")
             .build())
-        try { getSystemService(NotificationManager::class.java).notify(NID, buildNotif()) } catch (e: Exception) { }
+        if (isFg) try { getSystemService(NotificationManager::class.java).notify(NID, buildNotif()) } catch (e: Exception) { }
     }
 }

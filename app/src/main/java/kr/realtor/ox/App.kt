@@ -9,7 +9,7 @@ class App : Application() {
         super.onCreate()
         val prev = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { t, e ->
-            try { File(filesDir, "crash.txt").writeText(android.util.Log.getStackTraceString(e).take(4000)) } catch (x: Throwable) { }
+            try { File(filesDir, "crash.txt").appendText("----\n" + android.util.Log.getStackTraceString(e).take(3000) + "\n") } catch (x: Throwable) { }
             prev?.uncaughtException(t, e)
         }
     }
