@@ -245,10 +245,12 @@ def main():
         try:
             if os.path.exists(os.path.join(GEN, 'MC_DONE')):
                 log('객관식 완료'); return
-            if mc_explanations() and GKEY and mc_audio():
+            if mc_explanations():
                 open(os.path.join(GEN, 'MC_DONE'), 'w').write('ok'); log('객관식 해설·녹음 완료')
         except DailyLimit as e:
             log('오늘 무료 한도 — 다음 실행에서 이어서:', str(e)[:150])
+        finally:
+            pass
         return
     if mode == 'sounds':
         os.makedirs(GEN, exist_ok=True); print(sounds()); return
@@ -317,16 +319,54 @@ def main():
         log('오늘 무료 한도 도달 — 다음 실행에서 이어서:', str(e)[:200])
 
 
-MC_PROMPT = """너는 공인중개사 시험 강사야. 아래 객관식 기출문제마다 귀로 듣는 해설을 써 줘.
-규칙:
-- 문제마다 3~5문장, 250자 안팎. 부드러운 해요체.
-- 첫 문장에 정답 번호와 그 이유를 말해요. 이어서 헷갈리기 쉬운 다른 보기 한두 개가 왜 아닌지 짧게 말해요.
-- 근거 법령이나 개념은 이름만 짧게. 확실하지 않은 숫자는 쓰지 않아요.
-- 소리 내어 읽기 좋게: 괄호, 한자, 영어 약어, 특수기호를 쓰지 않아요. 보기 번호는 '1번'처럼 말해요.
-- 정답은 이미 정해져 있으니 바꾸지 말아요.
-JSON으로만 답해: {"items":[{"n":번호,"exp":"해설"}]}
+EX_TPL = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ex_prompt.txt'), encoding='utf8').read()
+SUBF = ['부동산학개론', '민법·민사특별법', '공인중개사법·중개실무', '부동산공법', '부동산공시법', '부동산세법']
+CT = {11: '1차', 21: '2차 1교시', 22: '2차 2교시'}
+MARK = '①②③④⑤'
 
-"""
+
+def js_parts(tpl):
+    """템플릿 문자열을 글자와 ${식} 조각으로 나눔"""
+    out, i = [], 0
+    while True:
+        j = tpl.find('${', i)
+        if j < 0:
+            out.append(('s', tpl[i:])); return out
+        out.append(('s', tpl[i:j]))
+        k, q = j + 2, None
+        while True:
+            ch = tpl[k]
+            if q:
+                if ch == '\\': k += 1
+                elif ch == q: q = None
+            elif ch in "'\"": q = ch
+            elif ch == '}': break
+            k += 1
+        out.append(('e', tpl[j + 2:k])); i = k + 1
+
+
+def strs(e):
+    return re.findall(r"'((?:[^'\\]|\\.)*)'", e)
+
+
+def ex_prompt(q):
+    """앱(Claude 해설)과 똑같은 해설 지시문을 만듦"""
+    calc = '계산' in q['k']
+    has = bool(re.fullmatch(r'[\d,]+', q['a']))
+    ans = '전항정답(모두 정답)' if q['a'] == '전항정답' else (', '.join(MARK[int(d) - 1] for d in q['a'].split(',')) if has else '정답 미공개(12/2 발표 후 추가)')
+    res = []
+    for kind, v in js_parts(EX_TPL):
+        if kind == 's': res.append(v); continue
+        e = v.strip()
+        val = {'q.n': q['n'], 'q.y': q['y'], 'CT[q.ct]': CT.get(q['ct'], ''), 'q.no': q['no'], 'SUB[q.s]': SUBF[q['s']],
+               'q.u': q['u'], 'q.t': q['t'], "q.k||'일반'": q['k'] or '일반', 'ansText(q)': ans, 'q.x': q['x']}.get(e)
+        if val is None:
+            ss = strs(e)
+            if e.startswith('q.ocr'): val = ss[0] if q.get('ocr') else ''
+            elif e.startswith('calc'): val = ss[0] if calc else ss[1]
+            else: val = '' if has else (ss[1] if len(ss) > 1 else '')
+        res.append(str(val))
+    return ''.join(res).replace('\\\\', '\\')
 
 
 def pick_flash():
@@ -345,28 +385,24 @@ def mc_explanations():
     path = os.path.join(GEN, 'mc_exp.json')
     exp = json.load(open(path, encoding='utf8')) if os.path.exists(path) else {}
     model = pick_flash()
-    todo = [x for x in data if x['id'] not in exp]
-    for k in range(0, len(todo), 6):
-        if time.time() > DEADLINE:
-            return False
-        chunk = [x for x in todo[k:k + 6] if x['id'] not in exp]
-        lines = [f"{n}. [{x['sub']} · {x['t']}] 정답 {x['a']}번\n{x['q'][:1500]}" for n, x in enumerate(chunk, 1)]
-        body = {'contents': [{'parts': [{'text': MC_PROMPT + '\n\n'.join(lines)}]}],
+    n0 = len(exp)
+    for q in data:
+        if q['id'] in exp: continue
+        if time.time() > DEADLINE: return False
+        body = {'contents': [{'parts': [{'text': ex_prompt(q)}]}],
                 'generationConfig': {'responseMimeType': 'application/json', 'temperature': .3}}
         try:
             r = call(f'models/{model}:generateContent', body)
             txt = ''.join(p.get('text', '') for p in r['candidates'][0]['content']['parts'])
-            items = json.loads(re.search(r'\{.*\}', txt, re.S).group(0))['items']
+            exp[q['id']] = json.loads(re.search(r'\{.*\}', txt, re.S).group(0))
         except DailyLimit:
             raise
         except Exception as e:
-            log('  묶음 건너뜀:', str(e)[:120]); continue
-        for x in items:
-            n = int(x.get('n', 0))
-            if 1 <= n <= len(chunk) and x.get('exp'):
-                exp[chunk[n - 1]['id']] = clean(x['exp'])
-        json.dump(exp, open(path, 'w', encoding='utf8'), ensure_ascii=False, indent=0)
-        log(f'객관식 해설 {len(exp)}/{len(data)}')
+            log('  건너뜀', q['id'], str(e)[:100]); continue
+        if (len(exp) - n0) % 10 == 0:
+            json.dump(exp, open(path, 'w', encoding='utf8'), ensure_ascii=False)
+            log(f'객관식 해설 {len(exp)}/{len(data)}')
+    json.dump(exp, open(path, 'w', encoding='utf8'), ensure_ascii=False)
     return len(exp) >= len(data)
 
 
