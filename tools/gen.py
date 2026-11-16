@@ -28,7 +28,7 @@ def call(path, body=None, tries=10):
         req = urllib.request.Request(url, data=json.dumps(body).encode() if body is not None else None,
                                      headers={'Content-Type': 'application/json'})
         try:
-            with urllib.request.urlopen(req, timeout=180) as r:
+            with urllib.request.urlopen(req, timeout=600) as r:
                 return json.loads(r.read())
         except urllib.error.HTTPError as e:
             msg = e.read().decode('utf8', 'replace')
@@ -43,10 +43,12 @@ def call(path, body=None, tries=10):
                 time.sleep(w)
                 continue
             if e.code >= 500:
+                log(f'  서버 오류 {e.code} → 다시 시도')
                 time.sleep(10 * (k + 1))
                 continue
             raise RuntimeError(f'HTTP {e.code}: {msg[:500]}')
-        except (urllib.error.URLError, TimeoutError) as e:
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            log(f'  연결 문제({type(e).__name__}: {str(e)[:120]}) → 다시 시도')
             time.sleep(10 * (k + 1))
     raise RuntimeError('too many retries')
 
@@ -170,10 +172,11 @@ def explanations(txt_model, data):
     path = os.path.join(GEN, 'exp.json')
     exp = json.load(open(path, encoding='utf8')) if os.path.exists(path) else {}
     todo = [(ti, i, it) for ti, t in enumerate(data) for i, it in enumerate(t['items']) if f'{ti}_{i}' not in exp]
-    for k in range(0, len(todo), 20):
+    for k in range(0, len(todo), 8):
         if time.time() > DEADLINE:
             return exp, False
-        chunk = todo[k:k + 20]
+        chunk = todo[k:k + 8]
+        t0 = time.time()
         lines = []
         for n, (ti, i, it) in enumerate(chunk, 1):
             lines.append(f"{n}. [{data[ti]['subName']} · {it['t']}] 지문: {it['s']}\n   정답: {'O (맞는 말)' if it['o'] else 'X (틀린 말)'}\n   원래 기출(정답 {it['a']}번): {it['q'][:500]}")
@@ -192,7 +195,7 @@ def explanations(txt_model, data):
                 ti, i, _ = chunk[n - 1]
                 exp[f'{ti}_{i}'] = clean(x['exp'])
         json.dump(exp, open(path, 'w', encoding='utf8'), ensure_ascii=False, indent=0)
-        log(f'해설 {len(exp)}/{sum(len(t["items"]) for t in data)}')
+        log(f'해설 {len(exp)}/{sum(len(t["items"]) for t in data)} ({time.time()-t0:.0f}초)')
     return exp, True
 
 
