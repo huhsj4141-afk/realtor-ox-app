@@ -40,3 +40,27 @@ object Store {
         return tracks.getOrNull(p[0].toIntOrNull() ?: -1)?.items?.getOrNull(p[1].toIntOrNull() ?: -1)
     }
 }
+
+/** 리모컨 입력 칸과 고를 수 있는 동작 (녹음한 링 리모컨 신호 기준) */
+object Remote {
+    val ACTIONS = listOf(
+        "none" to "없음", "toggle" to "재생 / 정지", "restart" to "처음부터 (지문·해설)",
+        "next" to "다음 (해설 → 다음 지문)", "prev" to "이전 지문", "nextItem" to "다음 지문",
+        "exp" to "해설 바로 듣기", "bookmark" to "★ 북마크"
+    )
+    /** 칸 이름, 화면에 보일 이름, 기본 동작 */
+    val SLOTS = listOf(
+        Triple("c1", "가운데 길게", "toggle"),
+        Triple("c2", "가운데 길게 두 번", "bookmark"),
+        Triple("l1", "왼쪽 길게", "restart"),
+        Triple("l2", "왼쪽 길게 두 번", "prev"),
+        Triple("r1", "오른쪽 길게", "next"),
+        Triple("r2", "오른쪽 길게 두 번", "none"),
+        Triple("kl", "왼쪽 짧게 · 검은 화면", "restart"),
+        Triple("kr", "오른쪽 짧게 · 검은 화면", "next"),
+        Triple("ku", "위 짧게 · 검은 화면", "bookmark"),
+        Triple("kd", "아래 짧게 · 검은 화면", "none"),
+        Triple("kc", "가운데·2번 짧게 · 검은 화면", "toggle")
+    )
+    fun label(a: String) = ACTIONS.firstOrNull { it.first == a }?.second ?: "없음"
+}
