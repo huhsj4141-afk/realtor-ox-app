@@ -124,6 +124,9 @@ class MainActivity : Activity() {
         pos = tv("", 13f, color = SUB).apply { setPadding(0, dp(8), 0, 0) }
         stmt = tv("", 19f).apply { setPadding(0, dp(8), 0, dp(8)) }
         expV = tv("", 15f, color = if (dk) "#C9D1D9" else "#374151")
+        Gloss.load(this)
+        stmt.movementMethod = android.text.method.LinkMovementMethod.getInstance()
+        expV.movementMethod = android.text.method.LinkMovementMethod.getInstance()
         todayV = tv("", 13f, color = SUB).apply { setPadding(0, dp(2), 0, 0) }
         listOf(spinner, todayV!!, pos, stmt, expV).forEach { c1.addView(it) }
         col.addView(c1)
@@ -255,7 +258,10 @@ class MainActivity : Activity() {
                 b.setSpan(android.text.style.StyleSpan(android.graphics.Typeface.BOLD), st, b.length, 0)
             }
         }
-        return b
+        return glossed(b)
+    }
+    private fun glossed(b: android.text.SpannableStringBuilder) = Gloss.apply(b, Color.parseColor(if (dk) "#C4B5FD" else "#7C3AED")) { k, v ->
+        AlertDialog.Builder(this).setTitle("📖 $k").setMessage(v).setPositiveButton("알겠어요", null).show()
     }
     private fun expText(it: Item?, showAns: Boolean, detail: String): CharSequence {
         val b = android.text.SpannableStringBuilder()
@@ -268,8 +274,9 @@ class MainActivity : Activity() {
             b.append("\n").append(it.exp)
         }
         if (detail.isNotEmpty()) b.append("\n\n🤖 ").append(detail)
-        return b
+        return glossed(b)
     }
+    private var textSig = ""
     private var usageV: TextView? = null
     private var todayV: TextView? = null
     private var timerV: TextView? = null
@@ -300,8 +307,12 @@ class MainActivity : Activity() {
         val bm = it != null && s.bookmarks().contains(it.key)
         pos.text = "$name · ${q + 1}/${s.queue.size}${if (bm) " · ★" else ""} · ${if (ph == 'S') "지문" else "해설"}" +
             s.flashText().let { f -> if (f.isNotEmpty()) "\n$f" else "" }
-        stmt.text = stmtText(it, ph == 'E')
-        expV.text = expText(it, ph == 'E', if (it != null && s.detailKey == it.key) s.detailText else "")
+        val sig = "${it?.key}|$ph|${s.detailKey}|${s.detailText.length}"
+        if (sig != textSig) {      // 내용이 바뀔 때만 다시 그림 (용어 누르기가 끊기지 않게)
+            textSig = sig
+            stmt.text = stmtText(it, ph == 'E')
+            expV.text = expText(it, ph == 'E', if (it != null && s.detailKey == it.key) s.detailText else "")
+        }
         playBtn.text = if (s.player.isPlaying) "⏸ 정지" else "▶ 재생"
         speedBtns.forEach { (v, b) -> b.alpha = if (abs(v - s.speed) < .01f) 1f else .45f }
         gapBtns.forEach { (v, b) -> b.alpha = if (v == s.gapSec) 1f else .45f }

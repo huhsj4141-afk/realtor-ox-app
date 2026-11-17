@@ -73,3 +73,30 @@ object Remote {
     val KEYS = mapOf(88 to "l", 89 to "l", 87 to "r", 90 to "r", 85 to "c", 79 to "c", 126 to "c", 127 to "c")
     fun label(a: String) = ACTIONS.firstOrNull { it.first == a }?.second ?: "없음"
 }
+
+
+/** 낯선 용어 쉬운 설명 (웹과 같은 web/glossary.json) */
+object Gloss {
+    var map: Map<String, String> = emptyMap(); private set
+    private var re: Regex? = null
+    fun load(ctx: Context) {
+        if (map.isNotEmpty()) return
+        try {
+            val j = JSONObject(ctx.assets.open("web/glossary.json").bufferedReader().readText())
+            map = j.keys().asSequence().associateWith { j.getString(it) }
+            re = Regex(map.keys.sortedByDescending { it.length }.joinToString("|") { Regex.escape(it) })
+        } catch (e: Exception) { }
+    }
+    /** 글 속 용어에 점선 같은 밑줄과 누르면 설명이 뜨는 링크를 붙임 */
+    fun apply(b: android.text.SpannableStringBuilder, color: Int, onTap: (String, String) -> Unit): android.text.SpannableStringBuilder {
+        val r = re ?: return b
+        r.findAll(b).forEach { m ->
+            val k = m.value
+            b.setSpan(object : android.text.style.ClickableSpan() {
+                override fun onClick(w: android.view.View) { onTap(k, map[k] ?: "") }
+                override fun updateDrawState(ds: android.text.TextPaint) { ds.isUnderlineText = true; ds.color = color }
+            }, m.range.first, m.range.last + 1, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+        return b
+    }
+}

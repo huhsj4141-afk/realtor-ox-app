@@ -44,6 +44,12 @@
     #aibox .exs{font-size:16px;font-weight:600;line-height:1.6;padding:10px 12px;border-left:4px solid #f59e0b;background:rgba(245,158,11,.1);border-radius:8px}
     #aibox .exh{font-size:15px;font-weight:800;margin-top:14px;padding-bottom:4px;border-bottom:2px solid var(--pri,#2f6fed);display:inline-block}
     #aibox .st li{margin:8px 0} #aibox .st .muted{color:inherit!important;opacity:.85;font-size:14px!important;line-height:1.6}
+    .gl{text-decoration:underline dotted #8b5cf6;text-underline-offset:3px;text-decoration-thickness:2px;cursor:help}
+    .glb{position:fixed;left:12px;right:12px;bottom:84px;z-index:150;background:#1e1b4b;color:#fff;border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.55;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+    .glb b{color:#c4b5fd;margin-right:6px}
+    .lg{font-size:14px} .lg .d{font-weight:700;margin:14px 0 4px;display:flex;justify-content:space-between}
+    .lg .it{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--line,#eee);align-items:center}
+    .lg .it span:first-child{opacity:.6;width:40px;flex:none} .lg .it .g{flex:1} .lg .it .sm{font-size:12px;opacity:.65}
     .sit{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     .sit button{text-align:left;padding:12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit}
     .sit b{display:block;font-size:15px} .sit span{font-size:12px;opacity:.7}
@@ -189,7 +195,8 @@
   function decorateWrong() {
     cleanCards([]);
     document.querySelectorAll('#view .card').forEach(c => { if (/claude\.ai에서 열면/.test(c.textContent) && c.textContent.length < 160) c.remove(); });
-    const first = document.querySelector('#view .card');
+    if (!$('#logc')) drawLog(null);
+    const first = document.querySelector('#view .card:not(#logc)');
     const un = unsureIds().length;
     if (first && un && !$('#wun')) {
       first.insertAdjacentHTML('beforeend', `<button class="btn full" id="wun" style="margin-top:10px">🤔 헷갈렸던 문제 ${un}개 다시 풀기</button>`);
@@ -361,6 +368,71 @@
   }
   setInterval(decorateChoices, 700);
 
+
+  /* ---------- 낯선 용어 풍선말: 앱 어디서든 용어에 점선 밑줄, 누르면 쉬운 설명 ---------- */
+  const GL = asset('glossary.json') || {};
+  const GK = Object.keys(GL).sort((a, b) => b.length - a.length);
+  const GRE = GK.length ? new RegExp('(' + GK.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'g') : null;
+  const SKIP = new Set(['BUTTON', 'SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT', 'SELECT', 'OPTION', 'svg', 'SUMMARY']);
+  function gloss(root) {
+    if (!GRE || !root) return;
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => {
+      for (let e = n.parentElement; e && e !== root.parentElement; e = e.parentElement) { if (SKIP.has(e.tagName) || e.classList.contains('gl') || e.classList.contains('glb') || e.closest('#tabs')) return NodeFilter.FILTER_REJECT; }
+      GRE.lastIndex = 0; return GRE.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP; } });
+    const list = []; while (w.nextNode()) list.push(w.currentNode);
+    list.forEach(n => {
+      const f = document.createDocumentFragment(); let last = 0, t = n.nodeValue; GRE.lastIndex = 0; let m;
+      while ((m = GRE.exec(t))) {
+        if (m.index > last) f.appendChild(document.createTextNode(t.slice(last, m.index)));
+        const sp = document.createElement('span'); sp.className = 'gl'; sp.dataset.k = m[1]; sp.textContent = m[1]; f.appendChild(sp); last = m.index + m[1].length;
+      }
+      if (last < t.length) f.appendChild(document.createTextNode(t.slice(last)));
+      n.parentNode.replaceChild(f, n);
+    });
+  }
+  let glT = 0;
+  new MutationObserver(() => { clearTimeout(glT); glT = setTimeout(() => { gloss(document.getElementById('view')); document.querySelectorAll('.kc').forEach(gloss); }, 120); })
+    .observe(document.documentElement, { childList: true, subtree: true });
+  document.addEventListener('click', e => {
+    const old = document.querySelector('.glb');
+    const g = e.target.closest && e.target.closest('.gl');
+    if (old) old.remove();
+    if (!g) return;
+    e.preventDefault(); e.stopPropagation();
+    const b = document.createElement('div'); b.className = 'glb';
+    b.innerHTML = `<b>${h(g.dataset.k)}</b>${h(GL[g.dataset.k] || '')}`;
+    document.body.appendChild(b); setTimeout(() => b.remove(), 9000);
+  }, true);
+
+  /* ---------- 공부 기록: 언제, 어디서(어떤 학습), 어느 과목·문제를 풀었나 ---------- */
+  const LOGK = 'reb_log';
+  function logAnswer(q, c) {
+    try {
+      const l = st(LOGK, []); l.push({ t: Date.now(), id: q.id, c, ok: isRight(q, c), w: (S && S.title) || '', f: (S && S.from) || '' });
+      if (l.length > 5000) l.splice(0, l.length - 5000); put(LOGK, l);
+    } catch (e) {}
+  }
+  function logCard(sub) {
+    const l = st(LOGK, []).slice().reverse(); const by = {};
+    l.filter(x => BYID[x.id] && (sub == null || BYID[x.id].s === sub)).forEach(x => { const d = new Date(x.t); const k = `${d.getMonth() + 1}/${d.getDate()} (${'일월화수목금토'[d.getDay()]})`; (by[k] = by[k] || []).push(x); });
+    const cf = conf(); let lj = {}; try { lj = LJ.d || {}; } catch (e) {}
+    const days = Object.keys(by).slice(0, 14);
+    return `<div class="card" id="logc"><h2>🗂 공부 기록</h2>
+      <div class="chips" id="logf" style="margin:6px 0"><span class="chip ${sub == null ? '' : 'g'}" data-s="">전체</span>${SUBS.map((n, i) => `<span class="chip ${sub === i ? '' : 'g'}" data-s="${i}">${n}</span>`).join('')}</div>
+      <div class="lg">${days.length ? days.map(k => { const xs = by[k], ok = xs.filter(x => x.ok).length;
+        const d0 = new Date(xs[0].t); const dk = `${d0.getFullYear()}-${String(d0.getMonth() + 1).padStart(2, '0')}-${String(d0.getDate()).padStart(2, '0')}`; const L = lj[dk];
+        return `<div class="d"><span>${k}</span><span class="muted">${xs.length}문제 · 정답 ${ok}${L && L.lsec ? ` · 🎧 ${Math.round(L.lsec / 60)}분` : ''}</span></div>` +
+          xs.slice(0, 40).map(x => { const q = BYID[x.id], d = new Date(x.t);
+            return `<div class="it" data-id="${x.id}"><span>${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}</span><div class="g">${x.ok === true ? '✅' : x.ok === false ? '❌' : '·'} ${SUBS[q.s]} · 제${q.n}회 ${CT[q.ct]} ${q.no}번 ${cf[x.id] === 'unsure' ? '🤔' : cf[x.id] === 'guess' ? '🎲' : ''}<div class="sm">${h(x.w || '')} · ${h(q.t)}</div></div></div>`; }).join(''); }).join('')
+        : '<div class="muted" style="margin-top:8px">아직 기록이 없어요. 문제를 풀면 여기에 쌓여요.</div>'}</div></div>`;
+  }
+  function drawLog(sub) {
+    const old = $('#logc'); const html = logCard(sub);
+    if (old) old.outerHTML = html; else { const first = document.querySelector('#view .card'); if (first) first.insertAdjacentHTML('beforebegin', html); else return; }
+    $('#logf').onclick = e => { const c = e.target.closest('[data-s]'); if (c) drawLog(c.dataset.s === '' ? null : +c.dataset.s); };
+    $('#logc .lg').onclick = e => { const it = e.target.closest('[data-id]'); if (it && !e.target.closest('.gl')) startQuiz([BYID[it.dataset.id]], { from: 'wrong', title: '기록에서 다시 보기' }); };
+  }
+
   /* ---------- 감싸기 ---------- */
   const wrap = (name, after) => {
     const f = window[name]; if (typeof f !== 'function' || f.__app) return;
@@ -379,7 +451,8 @@
     w.textContent = `⏳ ${Math.round((Date.now() - aiT0) / 1000)}초째 · 인터넷으로 만드는 중이라 보통 10~40초 걸려요`;
   }, 1000);
   window.addEventListener('load', () => setTimeout(() => {
-    wrap('quiz', () => { decorateQuiz(); decorateChoices(); }); wrap('home', decorateHome); wrap('setup', decorateSetup); wrap('wrong', decorateWrong);
+    wrap('quiz', () => { decorateQuiz(); decorateChoices(); });
+    const _rec = window.record; window.record = function (q, c) { const r = _rec.apply(this, arguments); logAnswer(q, c); return r; }; wrap('home', decorateHome); wrap('setup', decorateSetup); wrap('wrong', decorateWrong);
     const v = document.querySelector('#tabs button.on')?.dataset.v;
     if (v === 'home') decorateHome();
   }, 50));
