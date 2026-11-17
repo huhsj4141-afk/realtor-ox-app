@@ -28,16 +28,34 @@
     })
   };
 
-  /* ---- sample: Gemini ---- */
-  const MODELS = { quick: 'gemini-3.5-flash-lite', default: 'gemini-3.8-flash', complex: 'gemini-3.8-flash' };
+  /* ---- sample: Gemini ----
+     무료 등급은 모델마다 하루 한도가 따로 있어요. 앞 모델이 한도 초과(429)·없음(404)·과부하(503)면 다음 모델로.
+     한도 초과한 모델은 그날 하루 건너뛰어요. */
+  const CHAIN = {
+    quick: ['gemini-3.5-flash-lite', 'gemini-2.5-flash-lite', 'gemini-3.5-flash', 'gemini-2.5-flash'],
+    default: ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash-lite']
+  };
+  const today = () => new Date().toDateString();
+  const skipKey = m => 'gem_skip_' + m;
   async function gemini(prompt, opts, asJson) {
-    if (!N.key('gemini')) throw Object.assign(new Error('Gemini 키가 없어요 — OX 듣기 화면의 🔑 키 설정에서 넣어 주세요'), { code: 'no_key' });
+    if (!N.key('gemini')) throw Object.assign(new Error('Gemini 키가 없어요 — 귀로 듣기 화면의 🔑 키 설정에서 넣어 주세요'), { code: 'no_key' });
     const body = { contents: [{ parts: [{ text: String(prompt) }] }], generationConfig: { temperature: 0.4 } };
     if (asJson) body.generationConfig.responseMimeType = 'application/json';
-    const m = MODELS[(opts && opts.modelTier) || 'default'] || MODELS.default;
-    const t = await call('gemini', m, JSON.stringify(body));
-    const r = JSON.parse(t);
-    return (((r.candidates || [])[0] || {}).content || { parts: [] }).parts.map(p => p.text || '').join('');
+    const tier = (opts && opts.modelTier) === 'quick' ? 'quick' : 'default';
+    let last = null;
+    for (const m of CHAIN[tier]) {
+      if (localStorage.getItem(skipKey(m)) === today()) continue;
+      try {
+        const r = JSON.parse(await call('gemini', m, JSON.stringify(body)));
+        return (((r.candidates || [])[0] || {}).content || { parts: [] }).parts.map(p => p.text || '').join('');
+      } catch (e) {
+        last = e; const msg = String(e.message || '');
+        if (/HTTP 429/.test(msg)) { localStorage.setItem(skipKey(m), today()); continue; }
+        if (/HTTP (404|500|503)/.test(msg)) continue;
+        throw e;   // 키 오류 등은 바로 알려 주기
+      }
+    }
+    throw Object.assign(new Error('오늘 무료 AI 사용량을 다 썼어요. 내일 다시 쓸 수 있어요.'), { code: 'quota', cause: last });
   }
   const sample = async (prompt, opts) => ({ text: await gemini(prompt, opts, false) });
   sample.json = async (prompt, opts) => { const t = await gemini(prompt, opts, true); const m = t.match(/[\[{][\s\S]*[\]}]/); return JSON.parse(m ? m[0] : t); };

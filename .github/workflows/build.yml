@@ -34,7 +34,7 @@ jobs:
         run: '[ -f gen/DONE ] && python tools/gen.py cues || python tools/gen.py full'
       - name: 객관식 해설 (무료 Flash-Lite, 하루 한도만큼 이어서)
         if: github.event_name != 'push'
-        env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', MINUTES: '120' }
+        env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', MINUTES: '120', MC_MAX: '400' }
         run: python tools/gen.py mc
       - name: 진행 저장
         if: always()

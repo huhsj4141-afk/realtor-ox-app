@@ -541,7 +541,7 @@ async function explain(q){
     catch(err){if(err&&err.code)throw err;e=parseJSON((await sm(exPrompt(q)+'\n반드시 JSON 객체 하나만 출력.',opts)).text)}
     await saveEx(q,e);
     const b=document.getElementById('aibox');if(b&&S&&S.list[S.i]===q)b.innerHTML=renderEx(e);
-  }catch(err){const el=document.getElementById('aitxt');if(el)el.textContent=err&&err.code==='not_granted'?'AI 해설 사용이 허용되지 않았어요.':err&&err.code==='rate_limited'?'잠시 후 다시 시도해 주세요.':'해설을 만들지 못했어요. 다시 눌러 주세요.'}
+  }catch(err){const el=document.getElementById('aitxt');if(el)el.textContent=err&&err.code==='quota'?err.message:err&&err.code==='not_granted'?'AI 해설 사용이 허용되지 않았어요.':err&&err.code==='rate_limited'?'잠시 후 다시 시도해 주세요.':'해설을 만들지 못했어요. 다시 눌러 주세요.'}
 }
 
 /* 미니 수식 렌더러: \frac{}{}, ^{}, _{}, \sqrt{}, 기호 */

@@ -383,6 +383,8 @@ def mc_explanations():
     for q in data:
         if q['id'] in exp: continue
         if time.time() > DEADLINE: return False
+        if len(exp) - n0 >= int(os.environ.get('MC_MAX', '400')):   # 하루에 이만큼만 (폰에서 쓸 무료 한도 남겨 두기)
+            log('오늘 몫 완료'); break
         body = {'contents': [{'parts': [{'text': ex_prompt(q)}]}],
                 'generationConfig': {'responseMimeType': 'application/json', 'temperature': .3}}
         try:

@@ -11,6 +11,7 @@ import java.security.MessageDigest
 /** 인터넷이 필요한 기능: Gemini 답변, 구글 클라우드 Achernar 읽기 (키는 앱 설정에 직접 넣은 것) */
 object Net {
     const val VOICE = "ko-KR-Chirp3-HD-Achernar"
+    val CHAIN = listOf("gemini-3.8-flash", "gemini-3.5-flash", "gemini-2.5-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash-lite")
     fun key(ctx: Context, name: String) = ctx.getSharedPreferences("ox", Context.MODE_PRIVATE).getString("key_$name", "") ?: ""
 
     fun post(url: String, body: String): String {
@@ -36,14 +37,20 @@ object Net {
     fun geminiText(ctx: Context, prompt: String): String {
         val body = JSONObject().put("contents", org.json.JSONArray().put(JSONObject().put("parts",
             org.json.JSONArray().put(JSONObject().put("text", prompt))))).toString()
-        var last: Exception? = null
-        for (m in listOf("gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite")) {
+        // 무료 등급은 모델마다 하루 한도가 따로 → 한도 초과(429)한 모델은 그날 건너뛰고 다음 모델로
+        val sp = ctx.getSharedPreferences("ox", Context.MODE_PRIVATE); val day = Study.dayKey()
+        for (m in CHAIN) {
+            if (sp.getString("gem_skip_$m", "") == day) continue
             try { return parseText(gemini(ctx, m, body)) } catch (e: Exception) {
-                last = e; val msg = e.message ?: ""
-                if (msg.contains("키가 없어요") || msg.contains("API_KEY_INVALID") || msg.contains("HTTP 400") || msg.contains("HTTP 403")) throw e
+                val msg = e.message ?: ""
+                when {
+                    msg.contains("HTTP 429") -> sp.edit().putString("gem_skip_$m", day).apply()
+                    msg.contains("HTTP 404") || msg.contains("HTTP 500") || msg.contains("HTTP 503") -> {}
+                    else -> throw e
+                }
             }
         }
-        throw last ?: RuntimeException("Gemini 응답 없음")
+        throw RuntimeException("오늘 무료 AI 사용량을 다 썼어요. 내일 다시 쓸 수 있어요.")
     }
 
     private fun parseText(raw: String): String {
