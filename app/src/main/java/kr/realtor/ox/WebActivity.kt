@@ -56,7 +56,11 @@ class WebActivity : Activity() {
     }
 
     // 앱을 새로 켤 때뿐 아니라 다시 열 때(백그라운드에서 돌아올 때)도 새 버전 확인
-    override fun onResume() { super.onResume(); Updater.check(this) }
+    override fun onResume() {
+        super.onResume()
+        Updater.onLatest = { v -> js("window.__upd&&__upd($v)") }
+        Updater.check(this, quiet = true)                  // 첫 화면 맨 위 배너로 알림
+    }
 
     override fun onDestroy() { voice.release(); io.shutdown(); web.destroy(); super.onDestroy() }
 
@@ -72,6 +76,9 @@ class WebActivity : Activity() {
 
     inner class Bridge {
         @JavascriptInterface fun key(name: String): String = Net.key(this@WebActivity, name)
+        @JavascriptInterface fun appVersion(): Long = Updater.version(this@WebActivity)
+        @JavascriptInterface fun latestVersion(): Long = Updater.latestKnown(this@WebActivity)
+        @JavascriptInterface fun update() = runOnUiThread { Updater.install(this@WebActivity) }
         @JavascriptInterface fun asset(name: String): String =
             try { assets.open("web/$name").bufferedReader().readText() }
             catch (e: Exception) { try { assets.open(name).bufferedReader().readText() } catch (e2: Exception) { "" } }   // ox.json·exp.json 은 assets 바로 아래

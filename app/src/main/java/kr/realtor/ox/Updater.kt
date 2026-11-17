@@ -25,7 +25,13 @@ object Updater {
         if (Build.VERSION.SDK_INT >= 28) a.packageManager.getPackageInfo(a.packageName, 0).longVersionCode
         else @Suppress("DEPRECATION") a.packageManager.getPackageInfo(a.packageName, 0).versionCode.toLong()
 
-    fun check(a: Activity, force: Boolean = false) {
+    /** 새 버전 번호를 알게 되면 불림(웹 첫 화면 배너용). 0 = 최신 */
+    var onLatest: ((Long) -> Unit)? = null
+    fun version(a: Activity): Long = current(a)
+    fun latestKnown(a: Activity): Long = a.getSharedPreferences("ox", Activity.MODE_PRIVATE).getLong("upd_latest", 0)
+    fun install(a: Activity) = download(a)
+
+    fun check(a: Activity, force: Boolean = false, quiet: Boolean = false) {
         File(a.cacheDir, "update").deleteRecursively()      // 설치 끝난 업데이트 파일(약 40MB) 정리
         val sp = a.getSharedPreferences("ox", Activity.MODE_PRIVATE)
         val now = System.currentTimeMillis()
@@ -35,8 +41,10 @@ object Updater {
             try {
                 val latest = get(BASE + "version.txt").inputStream.bufferedReader().readText().trim().toLong()
                 val cur = current(a)
+                sp.edit().putLong("upd_latest", latest).apply()
                 a.runOnUiThread {
-                    if (latest > cur) ask(a, latest)
+                    onLatest?.invoke(if (latest > cur) latest else 0)
+                    if (latest > cur && !quiet) ask(a, latest)
                     else if (force) Toast.makeText(a, "최신 버전이에요 (v$cur)", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {

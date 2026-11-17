@@ -46,6 +46,7 @@
     #aibox .st li{margin:8px 0} #aibox .st .muted{color:inherit!important;opacity:.85;font-size:14px!important;line-height:1.6}
     .gl{text-decoration:underline dotted #8b5cf6;text-underline-offset:3px;text-decoration-thickness:2px;cursor:help}
     .elh{font-size:12.5px;color:var(--mut,#94a3b8);margin:8px 0 2px}.elc{padding:3px 4px;margin:0 -4px;border-radius:8px;cursor:pointer;white-space:pre-wrap;transition:opacity .15s}.elc:active{background:rgba(148,163,184,.12)}.elc.x{text-decoration:line-through;text-decoration-color:#ef4444;text-decoration-thickness:3px;opacity:.4}.choices button.elx{opacity:.35;text-decoration:line-through;text-decoration-color:#ef4444}
+    #ver{font-size:12px;font-weight:500;color:var(--mut,#94a3b8);margin-left:6px;vertical-align:middle}#updb{display:block;width:100%;margin:0 0 12px;padding:14px 16px;border:0;border-radius:14px;background:#2563eb;color:#fff;font:inherit;font-size:17px;font-weight:700;text-align:left;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,.35)}#updb small{display:block;font-size:12.5px;font-weight:500;opacity:.85;margin-top:2px}
     .glb{position:fixed;left:12px;right:12px;bottom:84px;z-index:150;background:#1e1b4b;color:#fff;border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.55;box-shadow:0 8px 24px rgba(0,0,0,.3)}
     .glb b{color:#c4b5fd;margin-right:6px}
     .lg{font-size:14px} .lg .d{font-weight:700;margin:14px 0 4px;display:flex;justify-content:space-between}
@@ -188,6 +189,7 @@
     document.querySelectorAll('#view .muted, #view div').forEach(e => { if (/claude\.ai에서 열면/.test(e.textContent) && e.children.length === 0) e.remove(); });
   }
   function decorateHome() {
+    showVer(); updBanner();
     cleanCards(['해설 미리 받기', '오늘의 처방']);
     // '오늘의 한 문제·귀로 듣기' 두 칸은 학습 매니저의 상황별 버튼과 겹쳐서 숨김
     const dup = [...document.querySelectorAll('#view *')].filter(e => e.textContent.includes('오늘의 한 문제') && e.textContent.includes('귀로 듣기') && e.textContent.length < 220).pop();
@@ -398,6 +400,30 @@
   }
   setInterval(decorateChoices, 700);
 
+
+  /* ---------- 버전 표시 + 새 버전 배너(첫 화면 맨 위) ---------- */
+  const NB = window.NativeBridge;
+  const appVer = () => { try { return NB && NB.appVersion ? +NB.appVersion() : 0; } catch (e) { return 0; } };
+  let LATEST = 0;
+  try { const lv = NB && NB.latestVersion ? +NB.latestVersion() : 0; if (lv > appVer()) LATEST = lv; } catch (e) {}
+  function showVer() {
+    const v = appVer(); if (!v) return;
+    const top = document.querySelector('header.top'); if (!top) return;
+    let el = document.getElementById('ver');
+    if (!el) { el = document.createElement('span'); el.id = 'ver'; top.querySelector('h1').appendChild(el); }
+    el.textContent = 'v' + v;
+    try { const pv = +localStorage.getItem('reb_ver') || 0; if (pv && pv < v && window.__toast) window.__toast('✅ v' + v + '로 업데이트됐어요'); localStorage.setItem('reb_ver', v); } catch (e) {}
+  }
+  function updBanner() {
+    const old = document.getElementById('updb');
+    const onHome = (document.querySelector('#tabs button.on') || {}).dataset?.v === 'home';
+    if (!LATEST || !onHome) { if (old) old.remove(); return; }
+    if (old) return;
+    const view = document.getElementById('view'); if (!view) return;
+    view.insertAdjacentHTML('afterbegin', `<button id="updb">🔄 새 버전 v${LATEST} 나왔어요 · 눌러서 업데이트<small>지금 v${appVer()} · 공부 기록은 그대로 남아요</small></button>`);
+    document.getElementById('updb').onclick = () => { try { NB.update(); } catch (e) {} };
+  }
+  window.__upd = v => { LATEST = +v || 0; updBanner(); };
   /* ---------- 보기 지우기: 답 고르기 전, 아닌 보기를 눌러(또는 옆으로 밀어) 줄 긋기 ---------- */
   const ELIM = {};
   function decorateElim() {

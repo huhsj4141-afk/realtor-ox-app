@@ -177,7 +177,7 @@ class MainActivity : Activity() {
         cu.addView(tv("💰 이번 달 사용량·요금", 16f, true))
         usageV = tv("", 14f, color = SUB).apply { setPadding(0, dp(6), 0, 0) }
         cu.addView(usageV)
-        cu.addView(wide(btn("🔄 업데이트 확인") { Updater.check(this, true) }))
+        cu.addView(wide(btn("🔄 업데이트 확인 (지금 v${Updater.version(this)})") { Updater.check(this, true) }))
         col.addView(cu)
 
         // 인터넷 기능 키 (더 자세히·문제 해설 AI): 직접 붙여넣어 폰에만 저장
