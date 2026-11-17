@@ -53,10 +53,8 @@ object Remote {
     /** 칸, 화면 이름, 기본 동작 */
     val SLOTS = listOf(
         Triple("l", "뒤로 길게", "stepBack"),
-        Triple("l2", "뒤로 길게 두 번", "itemPrev"),
         Triple("c", "재생/정지 길게", "toggle"),
         Triple("r", "앞으로 길게", "stepFwd"),
-        Triple("r2", "앞으로 길게 두 번", "itemNext"),
         Triple("b", "2번 길게", "bookmark")
     )
     /** 신호 맞추기 순서: 칸, 버튼 이름 */

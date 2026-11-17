@@ -42,7 +42,6 @@ class MainActivity : Activity() {
     private lateinit var expV: TextView
     private lateinit var playBtn: Button
     private var keyV: TextView? = null
-    private val waitBtns = ArrayList<Pair<Int, Button>>()
     private lateinit var mapBox: LinearLayout
     private val speedBtns = ArrayList<Pair<Float, Button>>()
     private val gapBtns = ArrayList<Pair<Int, Button>>()
@@ -178,8 +177,6 @@ class MainActivity : Activity() {
         c4.addView(mapBox)
         keyV = tv("", 13f, color = SUB).apply { setPadding(0, dp(6), 0, 0) }
         c4.addView(keyV)
-        c4.addView(tv("길게 두 번 기다리는 시간", 14f, true).apply { setPadding(0, dp(10), 0, dp(2)) })
-        c4.addView(row(*listOf(800, 1200, 1500, 2000).map { v -> btn("${v / 1000.0}초") { svc?.waitMs = v }.also { waitBtns.add(v to it) } }.toTypedArray()))
         c4.addView(wide(btn("🔧 버튼 신호 맞추기") { learnKeys() }))
         c4.addView(wide(btn("기본값으로") { svc?.resetMap(); drawMap() }))
         col.addView(c4)
@@ -260,6 +257,5 @@ class MainActivity : Activity() {
         playBtn.text = if (s.player.isPlaying) "⏸ 정지" else "▶ 재생"
         speedBtns.forEach { (v, b) -> b.alpha = if (abs(v - s.speed) < .01f) 1f else .45f }
         gapBtns.forEach { (v, b) -> b.alpha = if (v == s.gapSec) 1f else .45f }
-        waitBtns.forEach { (v, b) -> b.alpha = if (v == s.waitMs) 1f else .45f }
     }
 }
