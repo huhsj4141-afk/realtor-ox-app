@@ -150,6 +150,12 @@ class MainActivity : Activity() {
             btn(n) { prefs.edit().putString("theme", k).apply(); recreate() }.apply { alpha = if (k == th) 1f else .45f } }.toTypedArray()))
         col.addView(c3)
 
+        val cu = card()
+        cu.addView(tv("💰 이번 달 사용량·요금", 16f, true))
+        usageV = tv("", 14f, color = SUB).apply { setPadding(0, dp(6), 0, 0) }
+        cu.addView(usageV)
+        col.addView(cu)
+
         // 인터넷 기능 키 (더 자세히·문제 해설 AI): 직접 붙여넣어 폰에만 저장
         val c5 = card()
         c5.addView(tv("🔑 키 설정 (더 자세히·AI 해설용)", 16f, true))
@@ -268,7 +274,9 @@ class MainActivity : Activity() {
     // ---------- 화면 갱신 ----------
     private val tick = object : Runnable { override fun run() { refresh(); h.postDelayed(this, 300) } }
 
+    private var usageV: TextView? = null
     private fun refresh() {
+        usageV?.text = Usage.summary(this)
         val s = svc ?: return
         if (!synced) { synced = true; drawMap() }
         if (wantDark() != dk && dark.visibility != View.VISIBLE) { recreate(); return }

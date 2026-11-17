@@ -27,7 +27,10 @@ object Net {
     /** Gemini 글 생성 (본문 그대로 반환) */
     fun gemini(ctx: Context, model: String, body: String): String {
         val k = key(ctx, "gemini"); if (k.isBlank()) throw RuntimeException("Gemini 키가 없어요")
-        return post("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$k", body)
+        val out = post("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$k", body)
+        val tok = try { JSONObject(out).optJSONObject("usageMetadata")?.optLong("totalTokenCount") ?: 0L } catch (e: Exception) { 0L }
+        Usage.addGemini(ctx, tok)
+        return out
     }
 
     fun geminiText(ctx: Context, prompt: String): String {
@@ -62,6 +65,7 @@ object Net {
                     .put("audioConfig", JSONObject().put("audioEncoding", "OGG_OPUS")).toString()
                 val r = JSONObject(post("https://texttospeech.googleapis.com/v1/text:synthesize?key=$k", body))
                 f.writeBytes(Base64.decode(r.getString("audioContent"), Base64.DEFAULT))
+                Usage.addTts(ctx, t.length.toLong())
             }
             f
         }
@@ -84,4 +88,33 @@ object Net {
         "너는 공인중개사 시험 강사야. 아래 OX 지문을 더 자세히, 쉬운 말로 설명해 줘. 왜 맞거나 틀린지, 관련 개념과 헷갈리는 비슷한 내용, 암기 요령까지. " +
         "해요체로 6문장 안팎. 소리 내어 읽을 거라 괄호, 한자, 기호, 목록 표시는 쓰지 마.\n" +
         "[지문] ${it.s}\n[정답] ${if (it.o) "O, 맞는 말" else "X, 틀린 말"}\n[기본 해설] ${it.exp}")
+}
+
+
+/** 이 앱이 쓴 양을 직접 세서 요금을 추정 (구글 청구서와 몇 % 차이 날 수 있음) */
+object Usage {
+    const val TTS_FREE = 1_000_000L          // Chirp 3 HD 월 무료 글자 수
+    const val TTS_USD_PER_CHAR = 0.00003     // 무료 초과 시 글자당 $0.00003
+    const val KRW = 1470.0
+    private fun p(ctx: Context) = ctx.getSharedPreferences("usage", Context.MODE_PRIVATE)
+    private fun month() = java.text.SimpleDateFormat("yyyyMM", java.util.Locale.KOREA).format(java.util.Date())
+    private fun day() = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.KOREA).format(java.util.Date())
+    @Synchronized fun addTts(ctx: Context, n: Long) { val k = "tts_" + month(); p(ctx).edit().putLong(k, p(ctx).getLong(k, 0) + n).apply() }
+    @Synchronized fun addGemini(ctx: Context, tok: Long) {
+        val d = day(); val m = month(); val sp = p(ctx)
+        sp.edit().putLong("gc_$d", sp.getLong("gc_$d", 0) + 1).putLong("gt_$m", sp.getLong("gt_$m", 0) + tok)
+            .putLong("gcm_$m", sp.getLong("gcm_$m", 0) + 1).apply()
+    }
+    fun summary(ctx: Context): String {
+        val sp = p(ctx); val m = month()
+        val tts = sp.getLong("tts_$m", 0)
+        val over = (tts - TTS_FREE).coerceAtLeast(0)
+        val won = over * TTS_USD_PER_CHAR * KRW
+        val pct = tts * 100.0 / TTS_FREE
+        return "🗣 음성(Achernar) ${"%,d".format(tts)}자 / 무료 100만자 (${"%.2f".format(pct)}%)\n" +
+            "   예상 요금 ₩${"%,d".format(won.toLong())}" + (if (over > 0) " ⚠ 무료 초과" else " · 무료 안") + "\n" +
+            "🤖 제미나이 오늘 ${sp.getLong("gc_" + day(), 0)}회 · 이번 달 ${sp.getLong("gcm_$m", 0)}회 (${"%,d".format(sp.getLong("gt_$m", 0))}토큰)\n" +
+            "   무료 등급이라 요금 ₩0\n" +
+            "이 폰에서 쓴 양을 앱이 직접 센 값이에요. 매달 1일에 0부터 다시 세요."
+    }
 }
