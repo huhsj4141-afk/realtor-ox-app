@@ -50,6 +50,15 @@
     .lg{font-size:14px} .lg .d{font-weight:700;margin:14px 0 4px;display:flex;justify-content:space-between}
     .lg .it{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--line,#eee);align-items:center}
     .lg .it span:first-child{opacity:.6;width:40px;flex:none} .lg .it .g{flex:1} .lg .it .sm{font-size:12px;opacity:.65}
+    /* 문제 화면 정리: 큰 주요 버튼 + 작은 도구 줄 */
+    .tb{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+    .tb>*{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 2px!important;font-size:12px!important;min-height:52px;border-radius:12px!important;text-decoration:none;text-align:center;line-height:1.2}
+    .tb .ic{font-size:19px}
+    .bigai{display:block;width:100%;margin-top:12px;padding:15px!important;font-size:17px!important;font-weight:700;border-radius:14px!important}
+    .qmeta{font-size:12.5px;opacity:.65;margin:-2px 0 8px}
+    .conf{margin-top:12px} .conf .lb{font-size:12.5px}
+    .conf button{padding:7px 4px;font-size:13.5px}
+    #more{margin-top:10px}
     .sit{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     .sit button{text-align:left;padding:12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit}
     .sit b{display:block;font-size:15px} .sit span{font-size:12px;opacity:.7}
@@ -107,12 +116,28 @@
       chips.insertAdjacentHTML('beforeend', `<span class="chip hot">빈출 ${hotStars(q.t)} · ${freq()[q.t] || 1}회</span>`);
     }
     const row = document.getElementById('qb')?.parentElement;
-    if (row && !document.getElementById('qk')) {
-      row.insertAdjacentHTML('beforeend', '<button class="btn sm" id="qk">📇 핵심 카드</button>');
-      document.getElementById('qk').onclick = () => card(q.t);
-      row.insertAdjacentHTML('beforeend', '<button class="btn sm" id="qr">🚩 신고</button>');
-      document.getElementById('qr').onclick = () => report(q);
+    if (chips && !document.querySelector('.qmeta')) {
+      // 과목·빈출만 칩으로, 나머지(회차·단원·난이도)는 작은 글씨 한 줄로
+      const keep = [...chips.querySelectorAll('.chip')], meta = [];
+      keep.forEach((c, i) => { if (i > 0 && !c.classList.contains('hot')) { meta.push(c.textContent); c.remove(); } });
+      chips.insertAdjacentHTML('afterend', `<div class="qmeta">${h(meta.join(' · '))}</div>`);
     }
+    if (row && !row.classList.contains('tb')) {
+      const pickd = S.ans[q.id] && !(S.exam && !S.done);
+      const ai = document.getElementById('qa'), calc = document.getElementById('qv');
+      const pdfA = row.querySelector('a');
+      const mk = (el, ic, t) => { if (!el) return; el.className = 'btn'; el.innerHTML = `<span class="ic">${ic}</span>${t}`; };
+      mk(document.getElementById('qb'), BM[q.id] ? '★' : '☆', BM[q.id] ? '북마크됨' : '북마크');
+      mk(pdfA, '📄', '원본');
+      row.insertAdjacentHTML('beforeend', '<button id="qk"></button><button id="qr"></button>');
+      mk(document.getElementById('qk'), '📇', '핵심 카드'); mk(document.getElementById('qr'), '🚩', '신고');
+      document.getElementById('qk').onclick = () => card(q.t);
+      document.getElementById('qr').onclick = () => report(q);
+      if (ai) { ai.className = 'btn pri bigai'; row.parentElement.insertBefore(ai, row); if (!pickd) ai.style.display = 'none'; }
+      if (calc) { calc.className = 'btn full'; calc.style.marginTop = '8px'; row.parentElement.insertBefore(calc, row); if (!pickd) calc.style.display = 'none'; }
+      row.className = 'tb'; row.removeAttribute('style');
+    }
+    const mo = document.getElementById('more'); if (mo) mo.style.display = S.ans[q.id] ? '' : 'none';
     const ex = S.exam && !S.done, pick = S.ans[q.id];
     const fb = document.querySelector('#view .fb');
     if (pick && !ex && fb && !document.querySelector('.conf')) {
@@ -163,6 +188,9 @@
   }
   function decorateHome() {
     cleanCards(['해설 미리 받기', '오늘의 처방']);
+    // '오늘의 한 문제·귀로 듣기' 두 칸은 학습 매니저의 상황별 버튼과 겹쳐서 숨김
+    const dup = [...document.querySelectorAll('#view *')].filter(e => e.textContent.includes('오늘의 한 문제') && e.textContent.includes('귀로 듣기') && e.textContent.length < 220).pop();
+    if (dup) dup.remove();
     const hero = document.querySelector('#view .card');
     if (hero && !document.querySelector('.wk')) hero.insertAdjacentHTML('beforeend', weekStrip());
     if (hero && !$('#mgr')) {
@@ -170,8 +198,7 @@
       $('#mgr .sit').onclick = e => { const b = e.target.closest('[data-s]'); if (b) runSitu(b.dataset.s); };
     }
     if (!$('#rdcard')) {
-      const lv = [...document.querySelectorAll('#view .card')].find(c => c.textContent.includes('과목별 수준'));
-      (lv || hero)?.insertAdjacentHTML('afterend', roundCard());
+      ($('#mgr') || hero)?.insertAdjacentHTML('afterend', roundCard());
       const b = $('#rdun'); if (b) b.onclick = () => startQuiz(shuffle(unsureIds().map(k => BYID[k])), { from: 'home', title: '헷갈렸던 문제' });
     }
   }
