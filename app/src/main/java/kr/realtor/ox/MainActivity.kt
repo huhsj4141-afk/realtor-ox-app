@@ -58,6 +58,28 @@ class MainActivity : Activity() {
     private val SUB get() = if (dk) "#9AA4AF" else "#6B7280"
     private var spinBusy = false
 
+    /** 신호 확인: 화면이 켜져 있을 때 들어온 모든 키·클릭 신호 기록 */
+    private val sig = ArrayList<String>()
+    private fun logSig(t: String) {
+        sig.add(0, SimpleDateFormat("HH:mm:ss", Locale.KOREA).format(Date()) + "  " + t)
+        while (sig.size > 8) sig.removeAt(sig.size - 1)
+        sigV?.text = sig.joinToString("\n")
+    }
+    private var sigV: TextView? = null
+
+    override fun dispatchKeyEvent(e: android.view.KeyEvent): Boolean {
+        if (e.action == android.view.KeyEvent.ACTION_DOWN && e.repeatCount == 0)
+            logSig("키 ${android.view.KeyEvent.keyCodeToString(e.keyCode).removePrefix("KEYCODE_")} (${e.keyCode})")
+        if (e.action == android.view.KeyEvent.ACTION_DOWN && e.repeatCount == 1)
+            logSig("  └ 계속 누르는 중")
+        return super.dispatchKeyEvent(e)
+    }
+    override fun dispatchTouchEvent(e: android.view.MotionEvent): Boolean {
+        if (e.actionMasked == android.view.MotionEvent.ACTION_DOWN && e.getToolType(0) != android.view.MotionEvent.TOOL_TYPE_FINGER)
+            logSig("마우스 클릭 (리모컨 짧게)")
+        return super.dispatchTouchEvent(e)
+    }
+
     override fun onCreate(b: Bundle?) {
         dk = wantDark()
         setTheme(if (dk) android.R.style.Theme_Material_NoActionBar else android.R.style.Theme_Material_Light_NoActionBar)
@@ -178,6 +200,9 @@ class MainActivity : Activity() {
         keyV = tv("", 13f, color = SUB).apply { setPadding(0, dp(6), 0, 0) }
         c4.addView(keyV)
         c4.addView(wide(btn("🔧 버튼 신호 맞추기") { learnKeys() }))
+        c4.addView(tv("📡 신호 확인 (화면 켠 채로 리모컨 버튼을 눌러 보세요)", 14f, true).apply { setPadding(0, dp(10), 0, dp(2)) })
+        sigV = tv("아직 받은 신호 없음", 13f, color = SUB)
+        c4.addView(sigV)
         c4.addView(wide(btn("기본값으로") { svc?.resetMap(); drawMap() }))
         col.addView(c4)
 
