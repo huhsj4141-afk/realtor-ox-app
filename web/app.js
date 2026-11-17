@@ -45,6 +45,7 @@
     #aibox .exh{font-size:15px;font-weight:800;margin-top:14px;padding-bottom:4px;border-bottom:2px solid var(--pri,#2f6fed);display:inline-block}
     #aibox .st li{margin:8px 0} #aibox .st .muted{color:inherit!important;opacity:.85;font-size:14px!important;line-height:1.6}
     .gl{text-decoration:underline dotted #8b5cf6;text-underline-offset:3px;text-decoration-thickness:2px;cursor:help}
+    .elh{font-size:12.5px;color:var(--mut,#94a3b8);margin:8px 0 2px}.elc{padding:3px 4px;margin:0 -4px;border-radius:8px;cursor:pointer;white-space:pre-wrap;transition:opacity .15s}.elc:active{background:rgba(148,163,184,.12)}.elc.x{text-decoration:line-through;text-decoration-color:#ef4444;text-decoration-thickness:3px;opacity:.4}.choices button.elx{opacity:.35;text-decoration:line-through;text-decoration-color:#ef4444}
     .glb{position:fixed;left:12px;right:12px;bottom:84px;z-index:150;background:#1e1b4b;color:#fff;border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.55;box-shadow:0 8px 24px rgba(0,0,0,.3)}
     .glb b{color:#c4b5fd;margin-right:6px}
     .lg{font-size:14px} .lg .d{font-weight:700;margin:14px 0 4px;display:flex;justify-content:space-between}
@@ -397,6 +398,33 @@
   }
   setInterval(decorateChoices, 700);
 
+  /* ---------- 보기 지우기: 답 고르기 전, 아닌 보기를 눌러(또는 옆으로 밀어) 줄 긋기 ---------- */
+  const ELIM = {};
+  function decorateElim() {
+    if (typeof S === 'undefined' || !S || !S.list) return;
+    const q = S.list[S.i], pick = q && S.ans[q.id], ex = S.exam && !S.done;
+    const qt = document.querySelector('#view .qtext'); if (!q || !qt || (pick && !ex)) return;
+    if (qt.dataset.el === q.id) return;
+    const lines = q.x.split('\n'); const idx = lines.findIndex(l => /^\s*①/.test(l)); if (idx < 0) return;
+    const ch = [];
+    lines.slice(idx).forEach(l => { const m = /^\s*([①②③④⑤])/.exec(l); if (m) ch.push({ n: MK5.indexOf(m[1]) + 1, t: l.trim() }); else if (ch.length) ch[ch.length - 1].t += '\n' + l; });
+    if (ch.length !== 5) return;
+    const set = ELIM[q.id] = ELIM[q.id] || new Set();
+    qt.innerHTML = h(lines.slice(0, idx).join('\n')) + '<div class="elh">💡 아닌 보기는 눌러서 줄 긋기</div>' +
+      ch.map(c => `<div class="elc ${set.has(c.n) ? 'x' : ''}" data-n="${c.n}">${h(c.t)}</div>`).join('');
+    qt.dataset.el = q.id;
+    const sync = () => document.querySelectorAll('#view .choices button').forEach(b => b.classList.toggle('elx', set.has(+b.dataset.c)));
+    const tog = el => { const n = +el.dataset.n; set.has(n) ? set.delete(n) : set.add(n); el.classList.toggle('x', set.has(n)); sync(); };
+    qt.querySelectorAll('.elc').forEach(el => {
+      let x0 = 0, swiped = false;
+      el.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; swiped = false; }, { passive: true });
+      el.addEventListener('touchend', e => { if (Math.abs(e.changedTouches[0].clientX - x0) > 40) { swiped = true; tog(el); } }, { passive: true });
+      el.addEventListener('click', () => { if (swiped) { swiped = false; return; } tog(el); });
+    });
+    sync();
+  }
+  setInterval(decorateElim, 400);
+
 
   /* ---------- 낯선 용어 풍선말: 앱 어디서든 용어에 점선 밑줄, 누르면 쉬운 설명 ---------- */
   const GL = asset('glossary.json') || {};
@@ -503,7 +531,7 @@
     w.textContent = `⏳ ${Math.round((Date.now() - aiT0) / 1000)}초째 · 인터넷으로 만드는 중이라 보통 10~40초 걸려요`;
   }, 1000);
   window.addEventListener('load', () => setTimeout(() => {
-    wrap('quiz', () => { decorateQuiz(); decorateChoices(); });
+    wrap('quiz', () => { decorateQuiz(); decorateChoices(); decorateElim(); });
     const _rec = window.record; window.record = function (q, c) { const r = _rec.apply(this, arguments); logAnswer(q, c); return r; }; wrap('home', decorateHome); wrap('setup', decorateSetup); wrap('wrong', decorateWrong);
     const v = document.querySelector('#tabs button.on')?.dataset.v;
     if (v === 'home') decorateHome();
