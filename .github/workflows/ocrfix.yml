@@ -36,16 +36,20 @@ jobs:
           python3 tools/fixtext.py
           python3 - <<'PY'
           import json
+          import os
           fix = json.load(open('gen/ocrfix.json')); p = 'gen/mc_exp.json'; e = json.load(open(p))
+          ap = 'gen/ocrfix_applied.json'; done = set(json.load(open(ap))) if os.path.exists(ap) else set()
           for k in fix:
-              e.pop(k, None)          # 깨진 글로 만든 해설은 지우고 새 본문으로 다시 만들기
+              if k not in done:
+                  e.pop(k, None)      # 이번에 새로 고친 문항만: 깨진 글로 만든 해설 지우고 다시 만들기
           json.dump(e, open(p, 'w'), ensure_ascii=False)
+          json.dump(sorted(set(fix) | done), open(ap, 'w'))
           PY
       - name: 저장
         if: always()
         run: |
           git config user.name bot; git config user.email bot@users.noreply.github.com
-          git add -A private web/index.html data/mc.json gen/mc_exp.json 2>/dev/null || true; git add gen/ocrfix.json 2>/dev/null || true
+          git add -A private web/index.html data/mc.json gen/mc_exp.json 2>/dev/null || true; git add gen/ocrfix.json gen/ocrfix_applied.json 2>/dev/null || true
           git commit -m "OCR 다시 옮겨 적기 [skip ci]" || true
           git pull --rebase -q && git push || true
       - name: 새 앱 만들기
