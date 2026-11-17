@@ -1,6 +1,11 @@
 """앱의 🚩 신고(GitHub 이슈)를 받아 그 문항을 고치기
 1) 시험지 원본(암호화된 PDF)에서 그 문제를 다시 옮겨 적고  2) 해설을 새로 만들고  3) 결과를 이슈에 답글로
 사용: python3 tools/report.py <이슈 본문 파일> <PDF 폴더>   → 결과 요약을 /tmp/report_result.md 에, 종료 코드 0=고침, 3=사람 검토 필요"""
+def fixjson(t):
+    """Gemini가 수식 역슬래시(\\frac 등)를 한 번만 써서 JSON이 깨지는 것 바로잡기"""
+    t = re.sub(r'(?<!\\)\\(?=[A-Za-z]{2,})', r'\\\\', t)
+    return re.sub(r'(?<!\\)\\(?![\\"/bfnrtu])', r'\\\\', t)
+
 import json, os, re, subprocess, sys, base64
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
@@ -51,7 +56,7 @@ def main(body_path, pdf_dir):
         for model in ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite']:
             try:
                 txt = ocrfix.call(model, [{'text': gen.ex_prompt(mc[qid])}])
-                e = json.loads(re.search(r'\{.*\}', txt, re.S).group(0)); e['v'] = 2; exp[qid] = e; made = True; break
+                e = json.loads(fixjson(re.search(r'\{.*\}', txt, re.S).group(0))); e['v'] = 2; exp[qid] = e; made = True; break
             except Exception as er:
                 print('해설 실패', model, str(er)[:80])
     json.dump(exp, open(ep, 'w', encoding='utf8'), ensure_ascii=False)

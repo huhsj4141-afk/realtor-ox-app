@@ -4,6 +4,11 @@
 사용: python tools/gen.py samples | full
 환경변수: GEMINI_API_KEY, (선택) VOICE, MINUTES
 """
+def fixjson(t):
+    """Gemini가 수식 역슬래시(\\frac 등)를 한 번만 써서 JSON이 깨지는 것 바로잡기"""
+    t = re.sub(r'(?<!\\)\\(?=[A-Za-z]{2,})', r'\\\\', t)
+    return re.sub(r'(?<!\\)\\(?![\\"/bfnrtu])', r'\\\\', t)
+
 import base64, json, os, re, subprocess, sys, time, urllib.request, urllib.error, wave, math, struct
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -393,7 +398,7 @@ def mc_explanations():
         try:
             r = call(f'models/{model}:generateContent', body)
             txt = ''.join(p.get('text', '') for p in r['candidates'][0]['content']['parts'])
-            exp[q['id']] = json.loads(re.search(r'\{.*\}', txt, re.S).group(0)); exp[q['id']]['v'] = 2; made += 1
+            exp[q['id']] = json.loads(fixjson(re.search(r'\{.*\}', txt, re.S).group(0))); exp[q['id']]['v'] = 2; made += 1
         except DailyLimit:
             json.dump(exp, open(path, 'w', encoding='utf8'), ensure_ascii=False)
             if not models: raise
