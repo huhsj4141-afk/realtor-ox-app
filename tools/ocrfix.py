@@ -30,7 +30,7 @@ def call(model, parts):
                        'generationConfig': {'responseMimeType': 'application/json', 'temperature': 0}}).encode()
     url = f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={KEY}'
     req = urllib.request.Request(url, body, {'Content-Type': 'application/json'})
-    with urllib.request.urlopen(req, timeout=300) as r:
+    with urllib.request.urlopen(req, timeout=150) as r:
         j = json.load(r)
     return ''.join(p.get('text', '') for p in j['candidates'][0]['content']['parts'])
 
@@ -73,6 +73,8 @@ def main(folder):
                     time.sleep(10)
             except Exception as e:
                 print('  오류', str(e)[:100], flush=True); time.sleep(5)
+                if 'timed out' in str(e) and attempt >= 1 and len(models) > 1:
+                    models.append(models.pop(0))      # 느린 모델은 뒤로
         else:
             continue
         if not models:

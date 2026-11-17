@@ -1,6 +1,8 @@
 name: ocrfix
 # 원본 시험지 이미지(암호화)로 OCR이 깨진 객관식 문항을 다시 옮겨 적기
 on:
+  schedule:
+    - cron: '25 8 * * *'      # 매일 17:25(한국), 무료 한도가 새로 채워진 직후 남은 문항 이어서
   workflow_dispatch:
     inputs:
       step: { description: 'keygen 또는 run', default: run }
@@ -21,7 +23,7 @@ jobs:
           openssl rsa -in /tmp/priv.pem -pubout -out private/pub.pem
           openssl enc -aes-256-cbc -pbkdf2 -salt -pass env:K -in /tmp/priv.pem -out private/priv.enc
       - name: 옮겨 적기
-        if: github.event.inputs.step == 'run'
+        if: github.event.inputs.step != 'keygen'
         env: { K: '${{ secrets.GEMINI_API_KEY }}', GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}' }
         run: |
           openssl enc -d -aes-256-cbc -pbkdf2 -pass env:K -in private/priv.enc -out /tmp/priv.pem
