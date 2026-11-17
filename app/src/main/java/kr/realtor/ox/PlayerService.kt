@@ -66,7 +66,18 @@ class PlayerService : Service() {
     fun mapOf(slot: String): String =
         prefs.getString("map_$slot", null) ?: Remote.SLOTS.first { it.first == slot }.third
     fun setMap(slot: String, action: String) { prefs.edit().putString("map_$slot", action).apply() }
-    fun resetMap() { prefs.edit().apply { Remote.SLOTS.forEach { remove("map_${it.first}") } }.apply() }
+    fun resetMap() { prefs.edit().apply { prefs.all.keys.filter { it.startsWith("map_") || it.startsWith("key_") && it.removePrefix("key_").toIntOrNull() != null }.forEach { remove(it) } }.apply() }
+    /** 키 신호 번호 → 칸 */
+    fun slotOf(code: Int): String? = (prefs.getString("key_$code", null) ?: Remote.DEFAULT_KEYS[code])?.takeIf { it.isNotEmpty() }
+    fun learnKeys(codes: List<Int>) {   // 순서대로 l, c, r, b
+        prefs.edit().apply {
+            prefs.all.keys.filter { it.startsWith("key_") && it.removePrefix("key_").toIntOrNull() != null }.forEach { remove(it) }
+            Remote.DEFAULT_KEYS.keys.forEach { putString("key_$it", "") }
+            codes.forEachIndexed { i, c -> putString("key_$c", Remote.SLOTS[i].first) }
+        }.apply()
+    }
+    var learn: ((Int) -> Unit)? = null
+    var lastKey = ""
 
     var detailText = ""; var detailKey = ""
     private var flash = ""
@@ -133,7 +144,7 @@ class PlayerService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            "L" -> act("restart"); "R" -> act("next"); "C" -> act("toggle")
+            "L" -> act("stepBack"); "R" -> act("stepFwd"); "C" -> act("toggle")
             "QUIT" -> { player.pause(); stopForeground(STOP_FOREGROUND_REMOVE); isFg = false; stopSelf() }
             else -> fg()
         }
@@ -223,18 +234,17 @@ class PlayerService : Service() {
                 autoStopQ >= 0 -> advance()                    // 한 문항 끝난 뒤 재생 = 다음 문항
                 else -> { if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) go(q, 0) else player.play() }
             }
-            "restart" -> if (ph == 'E') go(q, 2) else say("restart", "현재 지문 처음부터") { go(q, 0) }
-            "next" -> if (ph == 'S') say("exp", "현재 지문 해설") { go(q, 2) } else act("nextItem")
-            "exp" -> say("exp", "해설") { go(q, 2) }
-            "nextItem" -> when {
+            "stepBack" -> when {
+                ph == 'E' -> say("cur", "현재 지문") { go(q, 0) }
+                q > 0 -> say("prev", "이전 지문") { go(q - 1, 0) }
+                !bmOnly && trackIdx > 0 -> say("prev", "이전 지문") { load(trackIdx - 1, false, Store.tracks[trackIdx - 1].items.size - 1, true) }
+                else -> say("cur", "현재 지문") { go(0, 0) }
+            }
+            "stepFwd" -> when {
+                ph == 'S' || (autoStopQ >= 0 && !player.isPlaying) -> say("curexp", "현재 해설") { go(q, 2) }
                 q + 1 < queue.size -> say("next", "다음 지문") { go(q + 1, 0) }
                 !bmOnly && trackIdx + 1 < Store.tracks.size -> say("nextpart", "다음 과목") { load(trackIdx + 1, false, 0, true) }
                 else -> say("last", "마지막 지문이에요")
-            }
-            "prev" -> when {
-                q > 0 -> say("prev", "이전 지문") { go(q - 1, 0) }
-                !bmOnly && trackIdx > 0 -> say("prev", "이전 지문") { load(trackIdx - 1, false, Store.tracks[trackIdx - 1].items.size - 1, true) }
-                else -> say("first", "첫 지문이에요") { go(0, 0) }
             }
             "detail" -> {
                 val it = currentItem() ?: return
@@ -260,26 +270,19 @@ class PlayerService : Service() {
         }
     }
 
-    // ================= 리모컨 =================
-    private val count = HashMap<String, Int>()
-    /** 길게 누른 미디어 키(c/l/r). 두 번 칸에 동작이 있으면 잠깐 기다려 한 번/두 번을 구분해요 */
-    fun press(key: String) {
-        if (mapOf(key + "2") == "none") { act(mapOf(key + "1")); return }
-        val n = (count[key] ?: 0) + 1
-        count[key] = n
-        h.removeCallbacksAndMessages(key)
-        if (n >= 2) { count[key] = 0; act(mapOf(key + "2")); return }
-        h.postAtTime({ count[key] = 0; act(mapOf(key + "1")) }, key, SystemClock.uptimeMillis() + 500)
+    // ================= 리모컨 (길게 누르기) =================
+    private val tone by lazy { try { android.media.ToneGenerator(android.media.AudioManager.STREAM_MUSIC, 70) } catch (e: Exception) { null } }
+    fun press(slot: String) {
+        try { tone?.startTone(android.media.ToneGenerator.TONE_PROP_BEEP, 90) } catch (e: Exception) { }
+        act(mapOf(slot))
     }
 
     fun handleKey(ev: KeyEvent): Boolean {
-        val k = when (ev.keyCode) {
-            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.KEYCODE_MEDIA_PLAY, KeyEvent.KEYCODE_MEDIA_PAUSE -> "c"
-            KeyEvent.KEYCODE_MEDIA_PREVIOUS, KeyEvent.KEYCODE_MEDIA_REWIND -> "l"
-            KeyEvent.KEYCODE_MEDIA_NEXT, KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> "r"
-            else -> return false
-        }
-        if (ev.action == KeyEvent.ACTION_DOWN && ev.repeatCount == 0) press(k)
+        if (ev.action != KeyEvent.ACTION_DOWN || ev.repeatCount != 0) return slotOf(ev.keyCode) != null || learn != null
+        lastKey = "${KeyEvent.keyCodeToString(ev.keyCode).removePrefix("KEYCODE_")} (${ev.keyCode})"
+        learn?.let { h.post { it(ev.keyCode) }; return true }
+        val slot = slotOf(ev.keyCode) ?: return false
+        press(slot)
         return true
     }
 

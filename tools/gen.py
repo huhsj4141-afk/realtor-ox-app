@@ -235,7 +235,7 @@ def explanations(txt_model, data):
 
 CUES = {'next': '다음 지문', 'exp': '현재 지문 해설', 'restart': '현재 지문 처음부터', 'prev': '이전 지문',
         'stop': '정지', 'play': '재생', 'bookmark': '북마크', 'unbookmark': '북마크 해제', 'nextpart': '다음 과목',
-        'first': '첫 지문이에요', 'last': '마지막 지문이에요', 'bmonly': '북마크만 들어요', 'all': '전체를 들어요'}
+        'cur': '현재 지문', 'curexp': '현재 해설', 'first': '첫 지문이에요', 'last': '마지막 지문이에요', 'bmonly': '북마크만 들어요', 'all': '전체를 들어요'}
 
 
 def main():
@@ -251,6 +251,13 @@ def main():
             log('오늘 무료 한도 — 다음 실행에서 이어서:', str(e)[:150])
         finally:
             pass
+        return
+    if mode == 'cues':      # 빠진 안내 음성만 만들기
+        c = os.path.join(GEN, 'cue'); tmp = os.path.join(GEN, 'tmp'); os.makedirs(c, exist_ok=True); os.makedirs(tmp, exist_ok=True)
+        for k, t in CUES.items():
+            out = os.path.join(c, k + '.ogg')
+            if not os.path.exists(out):
+                w = os.path.join(tmp, 'c.wav'); say_wav('', '', t, w); encode([w], out); log('안내', k)
         return
     if mode == 'sounds':
         os.makedirs(GEN, exist_ok=True); print(sounds()); return

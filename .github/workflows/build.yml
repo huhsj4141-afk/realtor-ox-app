@@ -39,7 +39,7 @@ jobs:
       - name: 해설·음성 생성 (이어서)
         if: steps.pre.outputs.mode == 'full'
         env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', GCLOUD_TTS_KEY: '${{ secrets.GCLOUD_TTS_KEY }}', MINUTES: '300' }
-        run: '[ -f gen/DONE ] && echo "이미 완료" || python tools/gen.py full'
+        run: '[ -f gen/DONE ] && python tools/gen.py cues || python tools/gen.py full'
       - name: 객관식 해설·녹음 (이어서) — 무료 유지 위해 잠시 멈춤
         if: false
         env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', MINUTES: '40' }
