@@ -14,8 +14,21 @@ object Store {
     var tracks: List<Track> = emptyList()
     val SUBS = listOf("학개론", "민법", "중개사법", "공법", "공시법", "세법")
 
+    /** X 지문의 틀린 부분과 바른 말 (gen/ox_mark.json) — 없으면 해설의 "A가 아니라 B"에서 찾음 */
+    val marks = HashMap<String, Pair<String, String>>()
+    fun markOf(it: Item): Pair<String, String>? {
+        if (it.o) return null
+        marks[it.key]?.let { return it }
+        val m = Regex("([가-힣A-Za-z0-9·]{2,15})\\s*(?:이|가|은|는)?\\s*아니(?:라|고)\\s*([가-힣A-Za-z0-9·]{2,15})").find(it.exp) ?: return null
+        val a = m.groupValues[1]; return if (it.s.contains(a)) a to m.groupValues[2] else null
+    }
+
     fun load(ctx: Context) {
         if (tracks.isNotEmpty()) return
+        try {
+            val mk = JSONObject(ctx.assets.open("ox_mark.json").bufferedReader().readText())
+            mk.keys().forEach { k -> mk.optJSONObject(k)?.let { marks[k] = it.optString("bad") to it.optString("fix") } }
+        } catch (e: Exception) { }
         val raw = JSONArray(ctx.assets.open("ox.json").bufferedReader().readText())
         val exp = try {
             JSONObject(ctx.assets.open("exp.json").bufferedReader().readText())

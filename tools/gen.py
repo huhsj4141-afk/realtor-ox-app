@@ -380,17 +380,20 @@ def mc_explanations():
     exp = json.load(open(path, encoding='utf8')) if os.path.exists(path) else {}
     models = pick_flash(); model = models.pop(0)
     n0 = len(exp)
+    # 해설 없는 문항 먼저, 그다음 예전(간단한) 해설을 자세한 판(v2)으로 다시
+    made = 0
+    data = [q for q in data if q['id'] not in exp] + [q for q in data if q['id'] in exp and exp[q['id']].get('v') != 2]
     for q in data:
-        if q['id'] in exp: continue
+        if exp.get(q['id'], {}).get('v') == 2: continue
         if time.time() > DEADLINE: return False
-        if len(exp) - n0 >= int(os.environ.get('MC_MAX', '400')):   # 하루에 이만큼만 (폰에서 쓸 무료 한도 남겨 두기)
+        if made >= int(os.environ.get('MC_MAX', '400')):   # 하루에 이만큼만 (폰에서 쓸 무료 한도 남겨 두기)
             log('오늘 몫 완료'); break
         body = {'contents': [{'parts': [{'text': ex_prompt(q)}]}],
                 'generationConfig': {'responseMimeType': 'application/json', 'temperature': .3}}
         try:
             r = call(f'models/{model}:generateContent', body)
             txt = ''.join(p.get('text', '') for p in r['candidates'][0]['content']['parts'])
-            exp[q['id']] = json.loads(re.search(r'\{.*\}', txt, re.S).group(0))
+            exp[q['id']] = json.loads(re.search(r'\{.*\}', txt, re.S).group(0)); exp[q['id']]['v'] = 2; made += 1
         except DailyLimit:
             json.dump(exp, open(path, 'w', encoding='utf8'), ensure_ascii=False)
             if not models: raise

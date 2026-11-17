@@ -29,6 +29,7 @@ jobs:
           openssl enc -d -aes-256-cbc -pbkdf2 -pass env:K -in private/priv.enc -out /tmp/priv.pem
           openssl pkeyutl -decrypt -inkey /tmp/priv.pem -in private/key.enc -out /tmp/aes.key
           openssl enc -d -aes-256-cbc -pbkdf2 -pass file:/tmp/aes.key -in private/pages.enc | tar xf - -C /tmp
+          python3 tools/oxmark.py || true          # OX 틀린 지문의 틀린 부분 표시 (먼저, 금방 끝남)
           python3 tools/ocrfix.py /tmp/pg2
       - name: 앱 문항에 반영
         if: github.event.inputs.step != 'keygen'
@@ -49,7 +50,7 @@ jobs:
         if: always()
         run: |
           git config user.name bot; git config user.email bot@users.noreply.github.com
-          git add -A private web/index.html data/mc.json gen/mc_exp.json 2>/dev/null || true; git add gen/ocrfix.json gen/ocrfix_applied.json 2>/dev/null || true
+          git add -A private web/index.html data/mc.json gen/mc_exp.json 2>/dev/null || true; git add gen/ocrfix.json gen/ocrfix_applied.json gen/ox_mark.json 2>/dev/null || true
           git commit -m "OCR 다시 옮겨 적기 [skip ci]" || true
           git pull --rebase -q && git push || true
       - name: 새 앱 만들기

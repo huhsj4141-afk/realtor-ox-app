@@ -240,6 +240,36 @@ class MainActivity : Activity() {
     // ---------- 화면 갱신 ----------
     private val tick = object : Runnable { override fun run() { refresh(); h.postDelayed(this, 300) } }
 
+    /** 해설 차례면 틀린 부분을 빨간 굵은 밑줄로, 바른 말을 아래에 */
+    private fun stmtText(it: Item?, showAns: Boolean): CharSequence {
+        if (it == null) return ""
+        val mk = if (showAns) Store.markOf(it) else null
+        val b = android.text.SpannableStringBuilder(it.s)
+        if (mk != null) {
+            val i = it.s.indexOf(mk.first)
+            if (i >= 0) listOf(android.text.style.ForegroundColorSpan(Color.parseColor("#DC2626")), android.text.style.StyleSpan(android.graphics.Typeface.BOLD),
+                android.text.style.UnderlineSpan()).forEach { sp -> b.setSpan(sp, i, i + mk.first.length, 0) }
+            if (mk.second.isNotBlank()) {
+                val st = b.length; b.append("\n→ 바르게: ").append(mk.second)
+                b.setSpan(android.text.style.ForegroundColorSpan(Color.parseColor("#16A34A")), st, b.length, 0)
+                b.setSpan(android.text.style.StyleSpan(android.graphics.Typeface.BOLD), st, b.length, 0)
+            }
+        }
+        return b
+    }
+    private fun expText(it: Item?, showAns: Boolean, detail: String): CharSequence {
+        val b = android.text.SpannableStringBuilder()
+        if (it != null && showAns) {
+            val head = if (it.o) "⭕ 정답 O · 맞는 말" else "❌ 정답 X · 틀린 말"
+            b.append(head)
+            b.setSpan(android.text.style.ForegroundColorSpan(Color.parseColor(if (it.o) "#16A34A" else "#DC2626")), 0, head.length, 0)
+            b.setSpan(android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, head.length, 0)
+            b.setSpan(android.text.style.RelativeSizeSpan(1.1f), 0, head.length, 0)
+            b.append("\n").append(it.exp)
+        }
+        if (detail.isNotEmpty()) b.append("\n\n🤖 ").append(detail)
+        return b
+    }
     private var usageV: TextView? = null
     private var todayV: TextView? = null
     private var timerV: TextView? = null
@@ -270,9 +300,8 @@ class MainActivity : Activity() {
         val bm = it != null && s.bookmarks().contains(it.key)
         pos.text = "$name · ${q + 1}/${s.queue.size}${if (bm) " · ★" else ""} · ${if (ph == 'S') "지문" else "해설"}" +
             s.flashText().let { f -> if (f.isNotEmpty()) "\n$f" else "" }
-        stmt.text = it?.s ?: ""
-        expV.text = (if (it != null && ph == 'E') "정답 ${if (it.o) "O" else "X"}\n${it.exp}" else "") +
-            (if (it != null && s.detailKey == it.key && s.detailText.isNotEmpty()) "\n\n🤖 ${s.detailText}" else "")
+        stmt.text = stmtText(it, ph == 'E')
+        expV.text = expText(it, ph == 'E', if (it != null && s.detailKey == it.key) s.detailText else "")
         playBtn.text = if (s.player.isPlaying) "⏸ 정지" else "▶ 재생"
         speedBtns.forEach { (v, b) -> b.alpha = if (abs(v - s.speed) < .01f) 1f else .45f }
         gapBtns.forEach { (v, b) -> b.alpha = if (v == s.gapSec) 1f else .45f }

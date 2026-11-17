@@ -60,7 +60,8 @@ class WebActivity : Activity() {
     inner class Bridge {
         @JavascriptInterface fun key(name: String): String = Net.key(this@WebActivity, name)
         @JavascriptInterface fun asset(name: String): String =
-            try { assets.open("web/$name").bufferedReader().readText() } catch (e: Exception) { "" }
+            try { assets.open("web/$name").bufferedReader().readText() }
+            catch (e: Exception) { try { assets.open(name).bufferedReader().readText() } catch (e2: Exception) { "" } }   // ox.json·exp.json 은 assets 바로 아래
         /** 웹 기출 풀이에서 틀린 문제 번호들 → 듣기의 '틀린 문제'·복습 목록 */
         @JavascriptInterface fun setWrong(json: String) = try {
             val a = org.json.JSONArray(json); Study.setWrong(this@WebActivity, (0 until a.length()).map { a.getString(it) }.toSet())
