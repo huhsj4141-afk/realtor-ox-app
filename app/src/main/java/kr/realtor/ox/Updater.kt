@@ -26,6 +26,7 @@ object Updater {
         else @Suppress("DEPRECATION") a.packageManager.getPackageInfo(a.packageName, 0).versionCode.toLong()
 
     fun check(a: Activity, force: Boolean = false) {
+        File(a.cacheDir, "update").deleteRecursively()      // 설치 끝난 업데이트 파일(약 40MB) 정리
         val sp = a.getSharedPreferences("ox", Activity.MODE_PRIVATE)
         val now = System.currentTimeMillis()
         if (!force && now - sp.getLong("upd_at", 0) < EVERY) return
