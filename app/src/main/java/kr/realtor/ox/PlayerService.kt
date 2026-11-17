@@ -119,6 +119,9 @@ class PlayerService : Service() {
                 override fun onSkipToPrevious() = press("l")
                 override fun onStop() { player.pause() }
             })
+            // 앱이 꺼져 있어도 리모컨 버튼을 이 앱이 받도록
+            setMediaButtonReceiver(PendingIntent.getBroadcast(this@PlayerService, 9,
+                Intent(Intent.ACTION_MEDIA_BUTTON).setClass(this@PlayerService, ButtonReceiver::class.java), PendingIntent.FLAG_IMMUTABLE))
             isActive = true
         }
         createChannel()
@@ -141,6 +144,11 @@ class PlayerService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             "L" -> act("stepBack"); "R" -> act("stepFwd"); "C" -> act("toggle")
+            "WAKE" -> {      // 앱이 꺼진 상태에서 리모컨: 가운데 = 바로 재생, 나머지 = 준비됐다고 알려 주기
+                fg()
+                if (intent.getStringExtra("slot") == "c") act("toggle") else say("ready", "🎧 OX 듣기 준비됐어요")
+                openScreen()
+            }
             "QUIT" -> { player.pause(); stopForeground(STOP_FOREGROUND_REMOVE); isFg = false; stopSelf() }
             else -> fg()
         }
@@ -361,6 +369,11 @@ class PlayerService : Service() {
         press(slot)
         return true
     }
+
+    /** 화면이 켜져 있으면 듣기 화면 띄우기 (화면이 꺼져 있으면 안드로이드가 막아서 알림만 남음) */
+    private fun openScreen() = try {
+        startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP))
+    } catch (e: Exception) { }
 
     // ================= 알림·세션 =================
     private fun createChannel() {

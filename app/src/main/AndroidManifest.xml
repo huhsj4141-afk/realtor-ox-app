@@ -19,5 +19,8 @@
             android:label="OX 듣기"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation" />
         <service android:name=".PlayerService" android:exported="false" android:foregroundServiceType="mediaPlayback" />
+        <receiver android:name=".ButtonReceiver" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MEDIA_BUTTON" /></intent-filter>
+        </receiver>
     </application>
 </manifest>
