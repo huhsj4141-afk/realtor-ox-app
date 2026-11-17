@@ -194,7 +194,7 @@ class MainActivity : Activity() {
         // 리모컨 매핑
         val c4 = card()
         c4.addView(tv("🎮 링 리모컨", 16f, true))
-        c4.addView(tv("버튼을 길게 누르면 화면이 꺼져 있어도 작동해요. 오른쪽 칸을 눌러 동작을 바꿀 수 있어요.", 13f, color = SUB).apply { setPadding(0, dp(4), 0, dp(4)) })
+        c4.addView(tv("화면이 꺼져도 되는 건 왼쪽·가운데·오른쪽 길게 누르기 3개뿐이에요. 오른쪽 칸을 눌러 동작을 바꿀 수 있어요.", 13f, color = SUB).apply { setPadding(0, dp(4), 0, dp(4)) })
         mapBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         c4.addView(mapBox)
         keyV = tv("", 13f, color = SUB).apply { setPadding(0, dp(6), 0, 0) }
@@ -240,15 +240,15 @@ class MainActivity : Activity() {
         val msg = tv("", 18f).apply { setPadding(dp(24), dp(16), dp(24), dp(8)) }
         val dlg = AlertDialog.Builder(this).setTitle("🔧 버튼 신호 맞추기").setView(msg)
             .setNegativeButton("취소") { _, _ -> s.learn = null }.setOnCancelListener { s.learn = null }.show()
-        fun ask() { msg.text = "${Remote.BUTTONS[got.size].second}을(를) 길게 누르세요\n(${got.size + 1}/4)" }
+        fun ask() { msg.text = "${Remote.BUTTONS[got.size].second}을(를) 길게 누르세요\n(${got.size + 1}/${Remote.BUTTONS.size})" }
         ask()
         s.learn = { code ->
             if (got.contains(code)) msg.text = "이미 다른 버튼에 쓴 신호예요.\n${Remote.BUTTONS[got.size].second}을(를) 다시 길게 누르세요"
             else {
                 got.add(code)
-                if (got.size < 4) ask() else {
+                if (got.size < Remote.BUTTONS.size) ask() else {
                     s.learn = null; s.learnKeys(got); dlg.dismiss(); drawMap()
-                    android.widget.Toast.makeText(this, "4개 버튼 신호를 저장했어요", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(this, "버튼 신호를 저장했어요", android.widget.Toast.LENGTH_SHORT).show()
                 }
             }
         }

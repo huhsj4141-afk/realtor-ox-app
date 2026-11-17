@@ -52,13 +52,12 @@ object Remote {
     )
     /** 칸, 화면 이름, 기본 동작 */
     val SLOTS = listOf(
-        Triple("l", "뒤로 길게", "stepBack"),
-        Triple("c", "재생/정지 길게", "toggle"),
-        Triple("r", "앞으로 길게", "stepFwd"),
-        Triple("b", "2번 길게", "bookmark")
+        Triple("l", "뒤로(왼쪽) 길게", "stepBack"),
+        Triple("c", "가운데 길게", "toggle"),
+        Triple("r", "앞으로(오른쪽) 길게", "stepFwd")
     )
     /** 신호 맞추기 순서: 칸, 버튼 이름 */
-    val BUTTONS = listOf("l" to "뒤로 버튼", "c" to "재생/정지 버튼", "r" to "앞으로 버튼", "b" to "2번 버튼")
+    val BUTTONS = listOf("l" to "뒤로(왼쪽) 버튼", "c" to "가운데 버튼", "r" to "앞으로(오른쪽) 버튼")
     /** 키 신호 → 칸 (기본값, '버튼 신호 맞추기'로 바꿀 수 있음) */
     val DEFAULT_KEYS = mapOf(88 to "l", 89 to "l", 87 to "r", 90 to "r", 85 to "c", 79 to "c", 126 to "c", 127 to "c")
     fun label(a: String) = ACTIONS.firstOrNull { it.first == a }?.second ?: "없음"
