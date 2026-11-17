@@ -25,7 +25,6 @@ class WebActivity : Activity() {
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
         if (java.io.File(filesDir, "crash.txt").exists()) startActivity(Intent(this, MainActivity::class.java))
-        Updater.check(this)
         voice = ExoPlayer.Builder(this).build()
         voice.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(s: Int) { if (s == Player.STATE_ENDED) done("done") }
@@ -55,6 +54,9 @@ class WebActivity : Activity() {
         val dark = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
         setContentView(safeArea(web, if (dark) 0xFF12151B.toInt() else 0xFFF6F7F9.toInt()))
     }
+
+    // 앱을 새로 켤 때뿐 아니라 다시 열 때(백그라운드에서 돌아올 때)도 새 버전 확인
+    override fun onResume() { super.onResume(); Updater.check(this) }
 
     override fun onDestroy() { voice.release(); io.shutdown(); web.destroy(); super.onDestroy() }
 

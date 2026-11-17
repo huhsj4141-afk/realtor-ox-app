@@ -15,7 +15,7 @@ import java.net.URL
 /** 앱 자동 업데이트: GitHub 최신 릴리스의 version.txt 가 지금보다 크면 받아서 설치 화면을 띄움 */
 object Updater {
     private const val BASE = "https://github.com/huhsj4141-afk/realtor-ox-app/releases/latest/download/"
-    private const val EVERY = 3 * 60 * 60 * 1000L          // 3시간마다 확인
+    private const val EVERY = 20 * 60 * 1000L          // 앱을 열 때마다(20분에 한 번까지) 확인
 
     private fun get(url: String): HttpURLConnection = (URL(url).openConnection() as HttpURLConnection).apply {
         connectTimeout = 10_000; readTimeout = 60_000; instanceFollowRedirects = true

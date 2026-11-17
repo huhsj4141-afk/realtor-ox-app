@@ -82,6 +82,8 @@ class MainActivity : Activity() {
         h.post(tick)
     }
 
+    override fun onResume() { super.onResume(); Updater.check(this) }
+
     override fun onDestroy() { h.removeCallbacksAndMessages(null); super.onDestroy() }
 
     // ---------- 화면 구성 ----------
