@@ -60,6 +60,10 @@
   const sample = async (prompt, opts) => ({ text: await gemini(prompt, opts, false) });
   sample.json = async (prompt, opts) => { const t = await gemini(prompt, opts, true); const m = t.match(/[\[{][\s\S]*[\]}]/); return JSON.parse(m ? m[0] : t); };
 
+  const toast = (m) => { const d = document.createElement('div'); d.textContent = m;
+    d.style.cssText = 'position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#111c;color:#fff;padding:10px 16px;border-radius:12px;z-index:200;font-size:14px;max-width:86%';
+    document.body.appendChild(d); setTimeout(() => d.remove(), 3500); };
+  window.__toast = toast;
   /* ---- tts: Achernar ---- */
   const lineCbs = [], stateCbs = [];
   let cur = null;
@@ -83,6 +87,7 @@
       if (cur === me) cur = null;
       stateCbs.forEach(f => { try { f('idle'); } catch (e) {} });
     },
+    busy: () => !!cur,
     pause() { N.ttsPause(); }, resume() { N.ttsResume(); },
     stop() { if (cur) { cur.stopped = true; const w = cur.wait; cur.wait = null; if (w) w.res('stopped'); cur = null; } N.ttsStop(); }
   };
@@ -146,6 +151,7 @@
   document.head.insertAdjacentHTML('beforeend', '<style>.spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px}@keyframes sp{to{transform:rotate(360deg)}}</style>');
   /* ---- 화면 연결: OX 듣기는 앱 전용 화면, 문제 해설 아래 '더 자세히' ---- */
   window.addEventListener('load', () => {
+    const _go = window.go; window.go = function (v) { if (v !== 'quiz' && tts.busy()) { try { tts.stop(); } catch (e) {} } return _go.apply(this, arguments); };   // 화면을 옮기면 읽기 멈춤
     setTimeout(() => { pushWrong(); pullListen(); if (document.querySelector('#tabs button.on')?.dataset.v === 'home') resume(); }, 1500);
     if (typeof go === 'function') {
       const _go = go;
@@ -154,6 +160,8 @@
     if (typeof quiz === 'function') {
       const _q = quiz;
       quiz = window.quiz = function () {
+        const qid = S && S.list && S.list[S.i] && S.list[S.i].id;
+        if (qid !== window.__lastQ) { window.__lastQ = qid; if (tts.busy()) try { tts.stop(); } catch (e) {} }
         const r = _q.apply(this, arguments);
         saveResume();
         try {
@@ -163,7 +171,13 @@
             const MK = 'reb_more_' + q.id;
             const show = (b, t) => {
               b.innerHTML = '<div class="fb" style="white-space:pre-wrap;font-weight:400;margin-top:8px">' + t.replace(/</g, '&lt;') + '</div><button class="btn full" id="moreSay">🔊 읽어 주기</button>';
-              document.getElementById('moreSay').onclick = () => tts.speak([{ text: t }], {}).catch(e => alert(e.message));
+              const sb = document.getElementById('moreSay');
+              sb.onclick = () => {      // 누르면 읽기, 읽는 중에 누르면 멈춤
+                if (sb.dataset.on) { tts.stop(); return; }
+                sb.dataset.on = 1; sb.textContent = '⏹ 그만 읽기';
+                tts.speak([{ text: t }], {}).catch(e => { if (e.code !== 'viewer_stopped') toast(e.message); })
+                  .finally(() => { delete sb.dataset.on; sb.textContent = '🔊 읽어 주기'; });
+              };
             };
             const saved = localStorage.getItem(MK);
             if (saved) { document.getElementById('more').textContent = '🤖 더 자세히 (저장됨)'; }
