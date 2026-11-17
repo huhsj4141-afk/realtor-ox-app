@@ -33,7 +33,18 @@ object Net {
     fun geminiText(ctx: Context, prompt: String): String {
         val body = JSONObject().put("contents", org.json.JSONArray().put(JSONObject().put("parts",
             org.json.JSONArray().put(JSONObject().put("text", prompt))))).toString()
-        val r = JSONObject(gemini(ctx, "gemini-3.8-flash", body))
+        var last: Exception? = null
+        for (m in listOf("gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite")) {
+            try { return parseText(gemini(ctx, m, body)) } catch (e: Exception) {
+                last = e; val msg = e.message ?: ""
+                if (msg.contains("키가 없어요") || msg.contains("API_KEY_INVALID") || msg.contains("HTTP 400") || msg.contains("HTTP 403")) throw e
+            }
+        }
+        throw last ?: RuntimeException("Gemini 응답 없음")
+    }
+
+    private fun parseText(raw: String): String {
+        val r = JSONObject(raw)
         val parts = r.getJSONArray("candidates").getJSONObject(0).getJSONObject("content").getJSONArray("parts")
         return (0 until parts.length()).joinToString("") { parts.getJSONObject(it).optString("text") }.trim()
     }

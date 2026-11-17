@@ -128,7 +128,7 @@ class MainActivity : Activity() {
         val c2 = card()
         playBtn = btn("▶ 재생", true) { svc?.act("toggle") }
         c2.addView(row(btn("◀ 처음부터") { svc?.act("restart") }, playBtn, btn("다음 ▶") { svc?.act("next") }))
-        c2.addView(row(btn("⏮ 이전 지문") { svc?.act("prev") }, btn("★ 북마크") { svc?.act("bookmark") }, btn("🤖 더 자세히") { svc?.act("detail") }))
+        c2.addView(row(btn("⏮ 이전 지문") { svc?.act("prev") }, btn("★ 북마크") { svc?.act("bookmark") }, btn("🤖 더 자세히") { svc?.act("detail") ?: android.widget.Toast.makeText(this, "먼저 ▶ 재생을 눌러 주세요", android.widget.Toast.LENGTH_SHORT).show() }))
         c2.addView(wide(btn("🌙 검은 화면") { showDark(true) }))
         col.addView(c2)
 
@@ -278,7 +278,8 @@ class MainActivity : Activity() {
         val it = s.queue.getOrNull(q)
         val name = if (it != null) Store.tracks[it.ti].name else ""
         val bm = it != null && s.bookmarks().contains(it.key)
-        pos.text = "$name · ${q + 1}/${s.queue.size}${if (bm) " · ★" else ""} · ${if (ph == 'S') "지문" else "해설"}"
+        pos.text = "$name · ${q + 1}/${s.queue.size}${if (bm) " · ★" else ""} · ${if (ph == 'S') "지문" else "해설"}" +
+            s.flashText().let { f -> if (f.isNotEmpty()) "\n$f" else "" }
         stmt.text = it?.s ?: ""
         expV.text = (if (it != null && ph == 'E') "정답 ${if (it.o) "O" else "X"}\n${it.exp}" else "") +
             (if (it != null && s.detailKey == it.key && s.detailText.isNotEmpty()) "\n\n🤖 ${s.detailText}" else "")

@@ -196,7 +196,7 @@ class PlayerService : Service() {
     fun currentItem(): Item? = queue.getOrNull(phase().first)
 
     // ================= 안내 음성 =================
-    private fun note(t: String) { flash = t; flashUntil = SystemClock.elapsedRealtime() + 2500 }
+    private fun note(t: String, ms: Long = 2500) { flash = t; flashUntil = SystemClock.elapsedRealtime() + ms }
 
     private fun say(name: String, text: String, then: (() -> Unit)? = null) {
         note(text)
@@ -239,13 +239,15 @@ class PlayerService : Service() {
             "detail" -> {
                 val it = currentItem() ?: return
                 if (player.isPlaying) player.pause()
-                note("🤖 더 자세히 준비 중…"); detailText = ""
+                note("🤖 더 자세히 준비 중…", 120000); detailText = ""
                 Thread {
                     try {
-                        val t = Net.detail(this, it); val files = Net.speech(this, t)
-                        h.post { detailText = t; detailKey = it.key
+                        val t = Net.detail(this, it)
+                        h.post { detailText = t; detailKey = it.key; note("🤖 음성 만드는 중…", 120000) }
+                        val files = Net.speech(this, t)
+                        h.post { note("")
                             cue.setMediaItems(files.map { f -> MediaItem.fromUri(Uri.fromFile(f)) }); cue.setPlaybackSpeed(speed); cue.prepare(); cue.play() }
-                    } catch (e: Exception) { h.post { note("더 자세히 실패: ${e.message?.take(60)}") } }
+                    } catch (e: Exception) { h.post { note("더 자세히 실패: ${e.message?.take(160)}", 15000) } }
                 }.start()
             }
             "bookmark" -> {
