@@ -38,7 +38,7 @@ object Net {
         val body = JSONObject().put("contents", org.json.JSONArray().put(JSONObject().put("parts",
             org.json.JSONArray().put(JSONObject().put("text", prompt))))).toString()
         // 무료 등급은 모델마다 하루 한도가 따로 → 한도 초과(429)한 모델은 그날 건너뛰고 다음 모델로
-        val sp = ctx.getSharedPreferences("ox", Context.MODE_PRIVATE); val day = Study.dayKey()
+        val sp = ctx.getSharedPreferences("ox", Context.MODE_PRIVATE); val day = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).apply { timeZone = java.util.TimeZone.getTimeZone("America/Los_Angeles") }.format(java.util.Date())   // 무료 한도 초기화 기준(한국 오후 5시)
         for (m in CHAIN) {
             if (sp.getString("gem_skip_$m", "") == day) continue
             try { return parseText(gemini(ctx, m, body)) } catch (e: Exception) {

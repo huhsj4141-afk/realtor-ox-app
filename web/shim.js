@@ -35,7 +35,7 @@
     quick: ['gemini-3.5-flash-lite', 'gemini-2.5-flash-lite', 'gemini-3.5-flash', 'gemini-2.5-flash'],
     default: ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash-lite']
   };
-  const today = () => new Date().toDateString();
+  const today = () => new Date().toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' });   // 무료 한도는 미국 서부 자정(한국 오후 5시)에 다시 채워짐
   const skipKey = m => 'gem_skip_' + m;
   async function gemini(prompt, opts, asJson) {
     if (!N.key('gemini')) throw Object.assign(new Error('Gemini 키가 없어요 — 귀로 듣기 화면의 🔑 키 설정에서 넣어 주세요'), { code: 'no_key' });
