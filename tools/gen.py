@@ -235,7 +235,7 @@ def explanations(txt_model, data):
 
 CUES = {'next': '다음 지문', 'exp': '현재 지문 해설', 'restart': '현재 지문 처음부터', 'prev': '이전 지문',
         'stop': '정지', 'play': '재생', 'bookmark': '북마크', 'unbookmark': '북마크 해제', 'nextpart': '다음 과목',
-        'cur': '현재 지문', 'curexp': '현재 해설', 'first': '첫 지문이에요', 'last': '마지막 지문이에요', 'bmonly': '북마크만 들어요', 'all': '전체를 들어요'}
+        'cur': '현재 지문', 'prevexp': '이전 해설', 'curexp': '현재 해설', 'first': '첫 지문이에요', 'last': '마지막 지문이에요', 'bmonly': '북마크만 들어요', 'all': '전체를 들어요'}
 
 
 def main():

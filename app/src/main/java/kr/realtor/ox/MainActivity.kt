@@ -127,6 +127,7 @@ class MainActivity : Activity() {
         val c2 = card()
         playBtn = btn("▶ 재생", true) { svc?.act("toggle") }
         c2.addView(row(btn("◀ 뒤로") { svc?.act("stepBack") }, playBtn, btn("앞으로 ▶") { svc?.act("stepFwd") }))
+        c2.addView(row(btn("⏮ 이전 문항") { svc?.act("itemPrev") }, btn("다음 문항 ⏭") { svc?.act("itemNext") }))
         c2.addView(row(btn("★ 북마크") { svc?.act("bookmark") }, btn("🤖 더 자세히") { svc?.act("detail") ?: android.widget.Toast.makeText(this, "먼저 ▶ 재생을 눌러 주세요", android.widget.Toast.LENGTH_SHORT).show() }))
         col.addView(c2)
 
@@ -214,10 +215,10 @@ class MainActivity : Activity() {
         val msg = tv("", 18f).apply { setPadding(dp(24), dp(16), dp(24), dp(8)) }
         val dlg = AlertDialog.Builder(this).setTitle("🔧 버튼 신호 맞추기").setView(msg)
             .setNegativeButton("취소") { _, _ -> s.learn = null }.setOnCancelListener { s.learn = null }.show()
-        fun ask() { msg.text = "${Remote.SLOTS[got.size].second}을(를) 길게 누르세요\n(${got.size + 1}/4)" }
+        fun ask() { msg.text = "${Remote.BUTTONS[got.size].second}을(를) 길게 누르세요\n(${got.size + 1}/4)" }
         ask()
         s.learn = { code ->
-            if (got.contains(code)) msg.text = "이미 다른 버튼에 쓴 신호예요.\n${Remote.SLOTS[got.size].second}을(를) 다시 길게 누르세요"
+            if (got.contains(code)) msg.text = "이미 다른 버튼에 쓴 신호예요.\n${Remote.BUTTONS[got.size].second}을(를) 다시 길게 누르세요"
             else {
                 got.add(code)
                 if (got.size < 4) ask() else {

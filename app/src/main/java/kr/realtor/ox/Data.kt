@@ -45,17 +45,22 @@ object Store {
 object Remote {
     val ACTIONS = listOf(
         "none" to "없음", "toggle" to "재생 / 정지",
-        "stepBack" to "뒤로 (해설 중→현재 지문, 지문 중→이전 지문)",
-        "stepFwd" to "앞으로 (지문 중→현재 해설, 해설 중→다음 지문)",
+        "stepBack" to "한 단계 뒤로 (지문·해설)",
+        "stepFwd" to "한 단계 앞으로 (지문·해설)",
+        "itemPrev" to "이전 문항", "itemNext" to "다음 문항",
         "bookmark" to "★ 북마크", "detail" to "🤖 더 자세히 (인터넷)"
     )
     /** 칸, 화면 이름, 기본 동작 */
     val SLOTS = listOf(
-        Triple("l", "뒤로 버튼", "stepBack"),
-        Triple("c", "재생/정지 버튼", "toggle"),
-        Triple("r", "앞으로 버튼", "stepFwd"),
-        Triple("b", "2번 버튼", "bookmark")
+        Triple("l", "뒤로 길게", "stepBack"),
+        Triple("l2", "뒤로 길게 두 번", "itemPrev"),
+        Triple("c", "재생/정지 길게", "toggle"),
+        Triple("r", "앞으로 길게", "stepFwd"),
+        Triple("r2", "앞으로 길게 두 번", "itemNext"),
+        Triple("b", "2번 길게", "bookmark")
     )
+    /** 신호 맞추기 순서: 칸, 버튼 이름 */
+    val BUTTONS = listOf("l" to "뒤로 버튼", "c" to "재생/정지 버튼", "r" to "앞으로 버튼", "b" to "2번 버튼")
     /** 키 신호 → 칸 (기본값, '버튼 신호 맞추기'로 바꿀 수 있음) */
     val DEFAULT_KEYS = mapOf(88 to "l", 89 to "l", 87 to "r", 90 to "r", 85 to "c", 79 to "c", 126 to "c", 127 to "c")
     fun label(a: String) = ACTIONS.firstOrNull { it.first == a }?.second ?: "없음"

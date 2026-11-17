@@ -73,7 +73,7 @@ class PlayerService : Service() {
         prefs.edit().apply {
             prefs.all.keys.filter { it.startsWith("key_") && it.removePrefix("key_").toIntOrNull() != null }.forEach { remove(it) }
             Remote.DEFAULT_KEYS.keys.forEach { putString("key_$it", "") }
-            codes.forEachIndexed { i, c -> putString("key_$c", Remote.SLOTS[i].first) }
+            codes.forEachIndexed { i, c -> putString("key_$c", Remote.BUTTONS[i].first) }
         }.apply()
     }
     var learn: ((Int) -> Unit)? = null
@@ -236,9 +236,18 @@ class PlayerService : Service() {
             }
             "stepBack" -> when {
                 ph == 'E' -> say("cur", "현재 지문") { go(q, 0) }
+                q > 0 -> say("prevexp", "이전 해설") { go(q - 1, 2) }
+                else -> say("cur", "현재 지문") { go(0, 0) }
+            }
+            "itemPrev" -> when {
                 q > 0 -> say("prev", "이전 지문") { go(q - 1, 0) }
                 !bmOnly && trackIdx > 0 -> say("prev", "이전 지문") { load(trackIdx - 1, false, Store.tracks[trackIdx - 1].items.size - 1, true) }
-                else -> say("cur", "현재 지문") { go(0, 0) }
+                else -> say("first", "첫 지문이에요") { go(0, 0) }
+            }
+            "itemNext" -> when {
+                q + 1 < queue.size -> say("next", "다음 지문") { go(q + 1, 0) }
+                !bmOnly && trackIdx + 1 < Store.tracks.size -> say("nextpart", "다음 과목") { load(trackIdx + 1, false, 0, true) }
+                else -> say("last", "마지막 지문이에요")
             }
             "stepFwd" -> when {
                 ph == 'S' || (autoStopQ >= 0 && !player.isPlaying) -> say("curexp", "현재 해설") { go(q, 2) }
@@ -272,9 +281,16 @@ class PlayerService : Service() {
 
     // ================= 리모컨 (길게 누르기) =================
     private val tone by lazy { try { android.media.ToneGenerator(android.media.AudioManager.STREAM_MUSIC, 70) } catch (e: Exception) { null } }
+    private val count = HashMap<String, Int>()
+    /** 두 번 칸에 동작이 있으면 0.5초 기다려 한 번/두 번을 구분해요 */
     fun press(slot: String) {
         try { tone?.startTone(android.media.ToneGenerator.TONE_PROP_BEEP, 90) } catch (e: Exception) { }
-        act(mapOf(slot))
+        val two = Remote.SLOTS.any { it.first == slot + "2" } && mapOf(slot + "2") != "none"
+        if (!two) { act(mapOf(slot)); return }
+        val n = (count[slot] ?: 0) + 1; count[slot] = n
+        h.removeCallbacksAndMessages(slot)
+        if (n >= 2) { count[slot] = 0; act(mapOf(slot + "2")); return }
+        h.postAtTime({ count[slot] = 0; act(mapOf(slot)) }, slot, SystemClock.uptimeMillis() + 500)
     }
 
     fun handleKey(ev: KeyEvent): Boolean {
