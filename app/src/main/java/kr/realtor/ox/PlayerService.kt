@@ -78,6 +78,11 @@ class PlayerService : Service() {
     }
     var learn: ((Int) -> Unit)? = null
     var lastKey = ""
+    private var lastAt = 0L
+    /** 길게 두 번을 기다리는 시간(밀리초) */
+    var waitMs: Int
+        get() = prefs.getInt("waitMs", 1200)
+        set(v) { prefs.edit().putInt("waitMs", v).apply() }
 
     var detailText = ""; var detailKey = ""
     private var flash = ""
@@ -282,7 +287,7 @@ class PlayerService : Service() {
     // ================= 리모컨 (길게 누르기) =================
     private val tone by lazy { try { android.media.ToneGenerator(android.media.AudioManager.STREAM_MUSIC, 70) } catch (e: Exception) { null } }
     private val count = HashMap<String, Int>()
-    /** 두 번 칸에 동작이 있으면 0.5초 기다려 한 번/두 번을 구분해요 */
+    /** 두 번 칸에 동작이 있으면 waitMs 동안 기다려 한 번/두 번을 구분해요 */
     fun press(slot: String) {
         try { tone?.startTone(android.media.ToneGenerator.TONE_PROP_BEEP, 90) } catch (e: Exception) { }
         val two = Remote.SLOTS.any { it.first == slot + "2" } && mapOf(slot + "2") != "none"
@@ -290,12 +295,15 @@ class PlayerService : Service() {
         val n = (count[slot] ?: 0) + 1; count[slot] = n
         h.removeCallbacksAndMessages(slot)
         if (n >= 2) { count[slot] = 0; act(mapOf(slot + "2")); return }
-        h.postAtTime({ count[slot] = 0; act(mapOf(slot)) }, slot, SystemClock.uptimeMillis() + 500)
+        h.postAtTime({ count[slot] = 0; act(mapOf(slot)) }, slot, SystemClock.uptimeMillis() + waitMs)
     }
 
     fun handleKey(ev: KeyEvent): Boolean {
         if (ev.action != KeyEvent.ACTION_DOWN || ev.repeatCount != 0) return slotOf(ev.keyCode) != null || learn != null
-        lastKey = "${KeyEvent.keyCodeToString(ev.keyCode).removePrefix("KEYCODE_")} (${ev.keyCode})"
+        val now = SystemClock.elapsedRealtime()
+        val gap = if (lastAt > 0 && now - lastAt < 10000) " · 바로 전 신호와 간격 ${"%.2f".format((now - lastAt) / 1000.0)}초" else ""
+        lastAt = now
+        lastKey = "${KeyEvent.keyCodeToString(ev.keyCode).removePrefix("KEYCODE_")} (${ev.keyCode})$gap"
         learn?.let { h.post { it(ev.keyCode) }; return true }
         val slot = slotOf(ev.keyCode) ?: return false
         press(slot)
