@@ -235,7 +235,7 @@ def explanations(txt_model, data):
 
 CUES = {'next': '다음 지문', 'exp': '현재 지문 해설', 'restart': '현재 지문 처음부터', 'prev': '이전 지문',
         'stop': '정지', 'play': '재생', 'bookmark': '북마크', 'unbookmark': '북마크 해제', 'nextpart': '다음 과목',
-        'cur': '현재 지문', 'prevexp': '이전 해설', 'curexp': '현재 해설', 'first': '첫 지문이에요', 'last': '마지막 지문이에요', 'bmonly': '북마크만 들어요', 'all': '전체를 들어요'}
+        'busalert': '내리실 때가 됐어요. 하차 준비하세요.', 'buspre': '2분 뒤 내릴 시간이에요.', 'cur': '현재 지문', 'prevexp': '이전 해설', 'curexp': '현재 해설', 'first': '첫 지문이에요', 'last': '마지막 지문이에요', 'bmonly': '북마크만 들어요', 'all': '전체를 들어요'}
 
 
 def main():
@@ -368,7 +368,8 @@ def pick_flash():
     for m in r.get('models', []):
         if 'generateContent' in m.get('supportedGenerationMethods', []):
             names.append(m['name'].split('/', 1)[1])
-    fl = [n for n in names if 'flash' in n and 'lite' not in n and not re.search(r'tts|image|live|audio|embed|vision|thinking|robotics|computer', n)]
+    # 무료 등급 한도가 넉넉한 Flash-Lite를 씀 (정식판 우선, 최신 버전)
+    fl = [n for n in names if 'flash-lite' in n and not re.search(r'tts|image|live|audio|embed|vision|thinking|robotics|computer', n)]
     fl.sort(key=lambda n: ('preview' not in n and 'exp' not in n, ver(n)), reverse=True)
     log('객관식 해설 모델:', fl[0]); return fl[0]
 

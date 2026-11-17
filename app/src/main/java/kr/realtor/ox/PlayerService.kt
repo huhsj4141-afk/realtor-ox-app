@@ -46,7 +46,9 @@ class PlayerService : Service() {
 
     var queue: List<Item> = emptyList(); private set
     var trackIdx = 0; private set
-    var bmOnly = false; private set
+    /** 듣는 목록: all(과목 순서) / bm(★ 북마크) / wrong(틀린 문제) / review(오늘 복습) */
+    var mode = "all"; private set
+    val isList get() = mode != "all"
     private var loadedQ = -1
     private var autoStopQ = -1
 
@@ -94,6 +96,7 @@ class PlayerService : Service() {
         player.addListener(object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO && player.currentMediaItemIndex == 3) {
+                    queue.getOrNull(loadedQ)?.let { done(it) }
                     if (continuous) advance() else { player.pause(); autoStopQ = loadedQ }
                 }
                 updateSession()
@@ -120,8 +123,8 @@ class PlayerService : Service() {
         }
         createChannel()
         fg()
-        bmOnly = prefs.getBoolean("bmOnly", false)
-        load(prefs.getInt("ti", 0), bmOnly, prefs.getInt("q", 0), false)
+        load(prefs.getInt("ti", 0), prefs.getString("mode", "all")!!, prefs.getInt("q", 0), false)
+        h.post(tick)
     }
 
     private var isFg = false
@@ -146,6 +149,7 @@ class PlayerService : Service() {
 
     override fun onDestroy() {
         inst = null
+        h.removeCallbacksAndMessages(null)
         session.release(); player.release(); cue.release()
         super.onDestroy()
     }
@@ -161,12 +165,27 @@ class PlayerService : Service() {
 
     fun bookmarks(): MutableSet<String> = HashSet(prefs.getStringSet("bm", emptySet()) ?: emptySet())
 
-    fun load(ti: Int, onlyBm: Boolean, q: Int, play: Boolean) {
-        trackIdx = ti.coerceIn(0, Store.tracks.size - 1); bmOnly = onlyBm
-        queue = if (onlyBm) { val b = bookmarks(); Store.tracks.flatMap { it.items }.filter { b.contains(it.key) } }
-                else Store.tracks[trackIdx].items
-        if (queue.isEmpty()) { bmOnly = false; queue = Store.tracks[trackIdx].items; note("북마크가 없어요") }
-        prefs.edit().putInt("ti", trackIdx).putBoolean("bmOnly", bmOnly).apply()
+    /** 북마크 + 틀린 문제 지문 (복습 대상) */
+    private fun reviewKeys(): Set<String> {
+        val w = Study.wrong(this)
+        return bookmarks() + Store.tracks.flatMap { it.items }.filter { w.contains(it.ref) }.map { it.key }
+    }
+    fun itemsOf(m: String): List<Item> {
+        val all = Store.tracks.flatMap { it.items }
+        return when (m) {
+            "bm" -> bookmarks().let { b -> all.filter { b.contains(it.key) } }
+            "wrong" -> Study.wrong(this).let { w -> all.filter { w.contains(it.ref) } }
+            "review" -> Study.dueOf(this, reviewKeys()).let { d -> all.filter { d.contains(it.key) } }
+            else -> Store.tracks[trackIdx].items
+        }
+    }
+    val LIST_NAMES = kotlin.collections.mapOf("bm" to "★ 북마크", "wrong" to "❌ 틀린 문제", "review" to "🔁 오늘 복습")
+
+    fun load(ti: Int, m: String, q: Int, play: Boolean) {
+        trackIdx = ti.coerceIn(0, Store.tracks.size - 1); mode = m
+        queue = itemsOf(m)
+        if (queue.isEmpty()) { if (m != "all") note("${LIST_NAMES[m]} 목록이 비어 있어요", 4000); mode = "all"; queue = Store.tracks[trackIdx].items }
+        prefs.edit().putInt("ti", trackIdx).putString("mode", mode).apply()
         loadedQ = -1
         go(q.coerceIn(0, queue.size - 1), 0, play)
     }
@@ -186,7 +205,7 @@ class PlayerService : Service() {
         val q = loadedQ
         when {
             q + 1 < queue.size -> go(q + 1, 0)
-            !bmOnly && trackIdx + 1 < Store.tracks.size -> say("nextpart", "다음 과목") { load(trackIdx + 1, false, 0, true) }
+            !isList && trackIdx + 1 < Store.tracks.size -> say("nextpart", "다음 과목") { load(trackIdx + 1, "all", 0, true) }
             else -> { player.pause(); autoStopQ = q; say("last", "마지막 지문이에요") }
         }
     }
@@ -234,18 +253,18 @@ class PlayerService : Service() {
             }
             "itemPrev" -> when {
                 q > 0 -> say("prev", "이전 지문") { go(q - 1, 0) }
-                !bmOnly && trackIdx > 0 -> say("prev", "이전 지문") { load(trackIdx - 1, false, Store.tracks[trackIdx - 1].items.size - 1, true) }
+                !isList && trackIdx > 0 -> say("prev", "이전 지문") { load(trackIdx - 1, "all", Store.tracks[trackIdx - 1].items.size - 1, true) }
                 else -> say("first", "첫 지문이에요") { go(0, 0) }
             }
             "itemNext" -> when {
                 q + 1 < queue.size -> say("next", "다음 지문") { go(q + 1, 0) }
-                !bmOnly && trackIdx + 1 < Store.tracks.size -> say("nextpart", "다음 과목") { load(trackIdx + 1, false, 0, true) }
+                !isList && trackIdx + 1 < Store.tracks.size -> say("nextpart", "다음 과목") { load(trackIdx + 1, "all", 0, true) }
                 else -> say("last", "마지막 지문이에요")
             }
             "stepFwd" -> when {
                 ph == 'S' || (autoStopQ >= 0 && !player.isPlaying) -> say("curexp", "현재 해설") { go(q, 2) }
                 q + 1 < queue.size -> say("next", "다음 지문") { go(q + 1, 0) }
-                !bmOnly && trackIdx + 1 < Store.tracks.size -> say("nextpart", "다음 과목") { load(trackIdx + 1, false, 0, true) }
+                !isList && trackIdx + 1 < Store.tracks.size -> say("nextpart", "다음 과목") { load(trackIdx + 1, "all", 0, true) }
                 else -> say("last", "마지막 지문이에요")
             }
             "detail" -> {
@@ -272,10 +291,66 @@ class PlayerService : Service() {
         }
     }
 
+    // ================= 공부 기록 =================
+    /** 한 지문을 해설까지 다 들음 */
+    private fun done(it: Item) {
+        Study.addOx(this, Store.tracks[it.ti].sub)
+        if (reviewKeys().contains(it.key)) Study.heard(this, it.key)
+    }
+
+    // ================= 타이머: 잠자기 · 하차 알림 =================
+    var sleepEnd = 0L; private set      // elapsedRealtime, 0 = 꺼짐
+    var busEnd = 0L; private set
+    var alerting = false; private set
+    private var busWarned = false
+    private var secAcc = 0
+    fun setSleep(min: Int) { sleepEnd = if (min > 0) SystemClock.elapsedRealtime() + min * 60_000L else 0; player.volume = 1f
+        note(if (min > 0) "⏲ ${min}분 뒤 멈춰요" else "⏲ 잠자기 타이머 끔") }
+    fun setBus(min: Int) { busEnd = if (min > 0) SystemClock.elapsedRealtime() + min * 60_000L else 0; busWarned = false
+        if (alerting) stopAlert()
+        note(if (min > 0) "🚌 ${min}분 뒤 하차 알림" else "🚌 하차 알림 끔") }
+    fun left(end: Long) = if (end == 0L) 0 else ((end - SystemClock.elapsedRealtime()) / 1000).toInt().coerceAtLeast(0)
+
+    private val vib by lazy {
+        if (Build.VERSION.SDK_INT >= 31) getSystemService(android.os.VibratorManager::class.java).defaultVibrator
+        else @Suppress("DEPRECATION") getSystemService(VIBRATOR_SERVICE) as android.os.Vibrator
+    }
+    private fun buzz(ms: LongArray) = try {
+        if (Build.VERSION.SDK_INT >= 26) vib.vibrate(android.os.VibrationEffect.createWaveform(ms, -1)) else @Suppress("DEPRECATION") vib.vibrate(ms, -1)
+    } catch (e: Exception) { }
+
+    private var alertN = 0
+    private val alertLoop = object : Runnable { override fun run() {
+        if (!alerting) return
+        if (++alertN > 25) { stopAlert(); return }             // 약 3분 동안 반복
+        buzz(longArrayOf(0, 700, 300, 700, 300, 700))
+        say("busalert", "🚌 내릴 때가 됐어요 (아무 버튼이나 누르면 꺼져요)")
+        h.postDelayed(this, 8000)
+    } }
+    private fun startAlert() { alerting = true; alertN = 0; if (player.isPlaying) player.pause(); h.post(alertLoop) }
+    fun stopAlert() { alerting = false; h.removeCallbacks(alertLoop); try { vib.cancel() } catch (e: Exception) { }; note("🚌 하차 알림 끔") }
+
+    /** 1초마다: 듣기 시간 기록, 타이머 확인 */
+    private val tick = object : Runnable { override fun run() {
+        h.postDelayed(this, 1000)
+        if (player.isPlaying && ++secAcc >= 15) { Study.addSec(this@PlayerService, secAcc); secAcc = 0 }
+        if (sleepEnd > 0) {
+            val r = sleepEnd - SystemClock.elapsedRealtime()
+            if (r <= 0) { player.pause(); player.volume = 1f; sleepEnd = 0; note("⏲ 잠자기 타이머로 멈췄어요") }
+            else if (r < 10_000) player.volume = r / 10_000f          // 마지막 10초 동안 작아지기
+        }
+        if (busEnd > 0) {
+            val r = busEnd - SystemClock.elapsedRealtime()
+            if (!busWarned && r in 1..120_000) { busWarned = true; buzz(longArrayOf(0, 300)); say("buspre", "🚌 2분 뒤 내릴 시간이에요") }
+            if (r <= 0) { busEnd = 0; startAlert() }
+        }
+    } }
+
     // ================= 리모컨 (길게 누르기) =================
     private val tone by lazy { try { android.media.ToneGenerator(android.media.AudioManager.STREAM_MUSIC, 70) } catch (e: Exception) { null } }
     fun press(slot: String) {
         try { tone?.startTone(android.media.ToneGenerator.TONE_PROP_BEEP, 90) } catch (e: Exception) { }
+        if (alerting) { stopAlert(); return }      // 하차 알림 중엔 아무 버튼이나 = 알림 끄기
         act(mapOf(slot))
     }
 
@@ -297,7 +372,7 @@ class PlayerService : Service() {
         PendingIntent.getService(this, code, Intent(this, PlayerService::class.java).setAction(a),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
-    private fun title() = if (bmOnly) "★ 북마크" else Store.tracks.getOrNull(trackIdx)?.name ?: "OX 듣기"
+    private fun title() = LIST_NAMES[mode] ?: Store.tracks.getOrNull(trackIdx)?.name ?: "OX 듣기"
 
     private fun buildNotif(): Notification {
         val b = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(this, CH) else @Suppress("DEPRECATION") Notification.Builder(this)

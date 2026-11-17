@@ -59,6 +59,12 @@ class WebActivity : Activity() {
         @JavascriptInterface fun key(name: String): String = Net.key(this@WebActivity, name)
         @JavascriptInterface fun asset(name: String): String =
             try { assets.open("web/$name").bufferedReader().readText() } catch (e: Exception) { "" }
+        /** 웹 기출 풀이에서 틀린 문제 번호들 → 듣기의 '틀린 문제'·복습 목록 */
+        @JavascriptInterface fun setWrong(json: String) = try {
+            val a = org.json.JSONArray(json); Study.setWrong(this@WebActivity, (0 until a.length()).map { a.getString(it) }.toSet())
+        } catch (e: Exception) { }
+        /** 날짜별 듣기 통계 → 웹 학습 일지 */
+        @JavascriptInterface fun listenStats(): String = Study.statsJson(this@WebActivity)
         @JavascriptInterface fun openOx() = runOnUiThread { startActivity(Intent(this@WebActivity, MainActivity::class.java)) }
 
         @JavascriptInterface fun gemini(id: String, model: String, body: String) {

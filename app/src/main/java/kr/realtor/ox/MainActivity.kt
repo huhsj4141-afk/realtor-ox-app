@@ -107,12 +107,12 @@ class MainActivity : Activity() {
         // 지금 듣는 문항
         val c1 = card()
         spinner = Spinner(this).apply {
-            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, Store.tracks.map { it.name } + "★ 북마크만 듣기")
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, Store.tracks.map { it.name } + LISTS.map { it.second })
             onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(p: AdapterView<*>?, v: View?, n: Int, id: Long) {
                     val s = svc ?: return
                     if (spinBusy || !synced) return
-                    if (n == Store.tracks.size) s.load(s.trackIdx, true, 0, false) else s.load(n, false, 0, false)
+                    if (n >= Store.tracks.size) s.load(s.trackIdx, LISTS[n - Store.tracks.size].first, 0, false) else s.load(n, "all", 0, false)
                 }
                 override fun onNothingSelected(p: AdapterView<*>?) {}
             }
@@ -120,7 +120,8 @@ class MainActivity : Activity() {
         pos = tv("", 13f, color = SUB).apply { setPadding(0, dp(8), 0, 0) }
         stmt = tv("", 19f).apply { setPadding(0, dp(8), 0, dp(8)) }
         expV = tv("", 15f, color = if (dk) "#C9D1D9" else "#374151")
-        listOf(spinner, pos, stmt, expV).forEach { c1.addView(it) }
+        todayV = tv("", 13f, color = SUB).apply { setPadding(0, dp(2), 0, 0) }
+        listOf(spinner, todayV!!, pos, stmt, expV).forEach { c1.addView(it) }
         col.addView(c1)
 
         // 조작 버튼 (리모컨 동작과 같은 것만)
@@ -129,7 +130,21 @@ class MainActivity : Activity() {
         c2.addView(row(btn("◀ 뒤로") { svc?.act("stepBack") }, playBtn, btn("앞으로 ▶") { svc?.act("stepFwd") }))
         c2.addView(row(btn("⏮ 이전 문항") { svc?.act("itemPrev") }, btn("다음 문항 ⏭") { svc?.act("itemNext") }))
         c2.addView(row(btn("★ 북마크") { svc?.act("bookmark") }, btn("🤖 더 자세히") { svc?.act("detail") ?: android.widget.Toast.makeText(this, "먼저 ▶ 재생을 눌러 주세요", android.widget.Toast.LENGTH_SHORT).show() }))
+        alertBtn = wide(btn("🚌 하차 알림 끄기", true) { svc?.stopAlert() }).apply { visibility = View.GONE }
+        c2.addView(alertBtn)
         col.addView(c2)
+
+        // 타이머
+        val ct = card()
+        ct.addView(tv("⏲ 타이머", 16f, true))
+        ct.addView(tv("잠자기: 정한 시간 뒤 소리가 작아지다 멈춰요", 13f, color = SUB).apply { setPadding(0, dp(6), 0, 0) })
+        ct.addView(row(*listOf(0, 15, 30, 60).map { m -> btn(if (m == 0) "끄기" else "${m}분") { svc?.setSleep(m) } }.toTypedArray()))
+        ct.addView(tv("🚌 하차 알림: 2분 전 한 번, 시간이 되면 진동과 음성으로 계속 알려요 (아무 버튼이나 누르면 꺼짐)", 13f, color = SUB).apply { setPadding(0, dp(10), 0, 0) })
+        ct.addView(row(*listOf(0, 5, 10, 15).map { m -> btn(if (m == 0) "끄기" else "${m}분") { svc?.setBus(m) } }.toTypedArray()))
+        ct.addView(row(*listOf(20, 30, 40, 60).map { m -> btn("${m}분") { svc?.setBus(m) } }.toTypedArray()))
+        timerV = tv("", 14f).apply { setPadding(0, dp(6), 0, 0) }
+        ct.addView(timerV)
+        col.addView(ct)
 
         // 듣는 방식
         val c3 = card()
@@ -211,13 +226,28 @@ class MainActivity : Activity() {
     private val tick = object : Runnable { override fun run() { refresh(); h.postDelayed(this, 300) } }
 
     private var usageV: TextView? = null
+    private var todayV: TextView? = null
+    private var timerV: TextView? = null
+    private lateinit var alertBtn: Button
+    private var slowAt = 0L
+    private val LISTS = listOf("bm" to "★ 북마크만 듣기", "wrong" to "❌ 틀린 문제 지문만", "review" to "🔁 오늘 복습 (북마크·틀린 문제)")
+    private fun mmss(sec: Int) = "%d:%02d".format(sec / 60, sec % 60)
     private fun refresh() {
         usageV?.text = Usage.summary(this)
         val s = svc ?: return
         if (!synced) { synced = true; drawMap() }
         if (wantDark() != dk) { recreate(); return }
         keyV?.text = if (s.lastKey.isEmpty()) "마지막으로 받은 신호: 아직 없음" else "마지막으로 받은 신호: ${s.lastKey}"
-        val want = if (s.bmOnly) Store.tracks.size else s.trackIdx
+        val want = if (s.isList) Store.tracks.size + LISTS.indexOfFirst { it.first == s.mode } else s.trackIdx
+        alertBtn.visibility = if (s.alerting) View.VISIBLE else View.GONE
+        timerV?.text = listOfNotNull(
+            if (s.sleepEnd > 0) "⏲ 잠자기 ${mmss(s.left(s.sleepEnd))} 남음" else null,
+            if (s.busEnd > 0) "🚌 하차 알림 ${mmss(s.left(s.busEnd))} 남음" else null,
+            if (s.alerting) "🚌 지금 하차 알림 중!" else null).joinToString("\n").ifEmpty { "켜진 타이머 없음" }
+        if (SystemClock.elapsedRealtime() - slowAt > 5000) {      // 무거운 계산은 5초마다
+            slowAt = SystemClock.elapsedRealtime()
+            todayV?.text = "${Study.todayLine(this)} · 오늘 복습할 지문 ${s.itemsOf("review").size}개"
+        }
         if (spinner.selectedItemPosition != want) { spinBusy = true; spinner.setSelection(want, false); h.post { spinBusy = false } }
         val (q, ph) = s.phase()
         val it = s.queue.getOrNull(q)

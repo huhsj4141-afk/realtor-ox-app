@@ -4,7 +4,7 @@ import android.content.Context
 import org.json.JSONObject
 import org.json.JSONArray
 
-class Item(val ti: Int, val i: Int, val s: String, val o: Boolean, val theme: String, val exp: String) {
+class Item(val ti: Int, val i: Int, val s: String, val o: Boolean, val theme: String, val exp: String, val ref: String = "") {
     val key get() = "${ti}_$i"
 }
 
@@ -27,7 +27,7 @@ object Store {
             val items = ArrayList<Item>()
             for (i in 0 until arr.length()) {
                 val x = arr.getJSONObject(i)
-                items.add(Item(ti, i, x.getString("s"), x.getInt("o") == 1, x.optString("t"), exp.optString("${ti}_$i", "")))
+                items.add(Item(ti, i, x.getString("s"), x.getInt("o") == 1, x.optString("t"), exp.optString("${ti}_$i", ""), x.optString("ref")))
             }
             out.add(Track(t.getString("name"), t.getInt("sub"), items))
         }

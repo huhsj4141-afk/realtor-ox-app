@@ -74,8 +74,38 @@
     declare: () => {}, ready: () => {}
   };
 
+  /* ---- 앱 듣기 화면과 기록 주고받기 ---- */
+  // 틀린 문제(마지막 풀이가 오답) 번호 → 듣기의 '틀린 문제'·'오늘 복습'
+  let lastWrong = '';
+  function pushWrong() {
+    try { if (typeof P === 'undefined') return; const w = Object.keys(P).filter(k => P[k] && P[k][1] === 0).sort();
+      const j = JSON.stringify(w); if (j !== lastWrong) { lastWrong = j; N.setWrong(j); } } catch (e) {}
+  }
+  // 듣기 화면에서 들은 시간·지문 수 → 학습 일지 (이미 더한 만큼은 빼고 차이만 더함)
+  function pullListen() {
+    try {
+      if (!window.LJ) return; const st = JSON.parse(N.listenStats() || '{}');
+      let ap = {}; try { ap = JSON.parse(localStorage.getItem('nat_applied') || '{}'); } catch (e) {}
+      let ch = false;
+      for (const k in st) {
+        const n = st[k], a = ap[k] || { lsec: 0, ox: 0, oxs: {} };
+        const x = LJ.d[k] || (LJ.d[k] = { sec: 0, lsec: 0, q: 0, ok: 0, s: {}, ox: 0, oxs: {}, ex: 0, ses: [], seq: [] });
+        const dl = (n.lsec || 0) - (a.lsec || 0), dx = (n.ox || 0) - (a.ox || 0);
+        if (dl > 0) { x.lsec = (x.lsec || 0) + dl; x.sec = (x.sec || 0) + dl; ch = true; }
+        if (dx > 0) { x.ox = (x.ox || 0) + dx; ch = true; }
+        x.oxs = x.oxs || {};
+        for (const s in (n.oxs || {})) { const d = n.oxs[s] - ((a.oxs || {})[s] || 0); if (d > 0) { x.oxs[s] = (x.oxs[s] || 0) + d; ch = true; } }
+        ap[k] = n;
+      }
+      if (ch) { localStorage.setItem('reb_journal', JSON.stringify({ v: 1, days: LJ.d })); localStorage.setItem('nat_applied', JSON.stringify(ap)); }
+    } catch (e) {}
+  }
+  setInterval(pushWrong, 5000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { pullListen(); pushWrong(); } });
+
   /* ---- 화면 연결: OX 듣기는 앱 전용 화면, 문제 해설 아래 '더 자세히' ---- */
   window.addEventListener('load', () => {
+    setTimeout(() => { pushWrong(); pullListen(); }, 1500);
     if (typeof go === 'function') {
       const _go = go;
       go = window.go = function (v, a) { if (v === 'ox' || v === 'listen') { N.openOx(); return; } return _go(v, a); };

@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
     paths-ignore: ['gen/**', '**.md']
+  schedule:
+    - cron: '17 18 * * *'      # 매일 03:17(한국) 객관식 해설을 무료 한도만큼 이어서 만들기
 permissions:
   contents: write
 concurrency:
@@ -16,6 +18,7 @@ jobs:
     outputs:
       done: ${{ steps.st.outputs.done }}
       newly: ${{ steps.st.outputs.newly }}
+      mcnew: ${{ steps.st.outputs.mcnew }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -25,12 +28,13 @@ jobs:
         id: pre
         run: |
           echo "had=$([ -f gen/DONE ] && echo 1 || echo 0)" >> $GITHUB_OUTPUT
+          echo "mc0=$(python -c "import json;print(len(json.load(open('gen/mc_exp.json'))))" 2>/dev/null || echo 0)" >> $GITHUB_OUTPUT
       - name: 해설·음성 생성 (이어서)
         env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', GCLOUD_TTS_KEY: '${{ secrets.GCLOUD_TTS_KEY }}', MINUTES: '300' }
         run: '[ -f gen/DONE ] && python tools/gen.py cues || python tools/gen.py full'
-      - name: 객관식 해설·녹음 (이어서) — 무료 유지 위해 잠시 멈춤
-        if: false
-        env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', MINUTES: '40' }
+      - name: 객관식 해설 (무료 Flash-Lite, 하루 한도만큼 이어서)
+        if: github.event_name != 'push'
+        env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', MINUTES: '120' }
         run: python tools/gen.py mc
       - name: 진행 저장
         if: always()
@@ -49,9 +53,11 @@ jobs:
         run: |
           echo "done=$([ -f gen/DONE ] && echo true || echo false)" >> $GITHUB_OUTPUT
           echo "newly=$([ -f gen/DONE ] && [ '${{ steps.pre.outputs.had }}' = 0 ] && echo true || echo false)" >> $GITHUB_OUTPUT
+          mc1=$(python -c "import json;print(len(json.load(open('gen/mc_exp.json'))))" 2>/dev/null || echo 0)
+          echo "mcnew=$([ "$mc1" != '${{ steps.pre.outputs.mc0 }}' ] && echo true || echo false)" >> $GITHUB_OUTPUT
   apk:
     needs: gen
-    if: always()
+    if: always() && (github.event_name != 'schedule' || needs.gen.outputs.mcnew == 'true')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
