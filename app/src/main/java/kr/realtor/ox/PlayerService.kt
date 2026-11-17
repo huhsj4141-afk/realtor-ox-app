@@ -144,6 +144,12 @@ class PlayerService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             "L" -> act("stepBack"); "R" -> act("stepFwd"); "C" -> act("toggle")
+            "PRESET" -> {   // 상황별 학습에서: 듣는 목록·잠자기 타이머를 정하고 바로 시작
+                fg()
+                load(trackIdx, intent.getStringExtra("mode") ?: "mix", 0, true)
+                intent.getIntExtra("sleep", 0).let { if (it > 0) setSleep(it) }
+                intent.getIntExtra("bus", 0).let { if (it > 0) setBus(it) }
+            }
             "WAKE" -> {      // 앱이 꺼진 상태에서 리모컨: 가운데 = 바로 재생, 나머지 = 준비됐다고 알려 주기
                 fg()
                 if (intent.getStringExtra("slot") == "c") act("toggle") else say("ready", "🎧 OX 듣기 준비됐어요")
@@ -184,10 +190,11 @@ class PlayerService : Service() {
             "bm" -> bookmarks().let { b -> all.filter { b.contains(it.key) } }
             "wrong" -> Study.wrong(this).let { w -> all.filter { w.contains(it.ref) } }
             "review" -> Study.dueOf(this, reviewKeys()).let { d -> all.filter { d.contains(it.key) } }
+            "mix" -> Study.mix(this, Store.tracks)
             else -> Store.tracks[trackIdx].items
         }
     }
-    val LIST_NAMES = kotlin.collections.mapOf("bm" to "★ 북마크", "wrong" to "❌ 틀린 문제", "review" to "🔁 오늘 복습")
+    val LIST_NAMES = kotlin.collections.mapOf("mix" to "🔀 골고루 섞기", "bm" to "★ 북마크", "wrong" to "❌ 틀린 문제", "review" to "🔁 오늘 복습")
 
     fun load(ti: Int, m: String, q: Int, play: Boolean) {
         trackIdx = ti.coerceIn(0, Store.tracks.size - 1); mode = m
@@ -303,6 +310,7 @@ class PlayerService : Service() {
     /** 한 지문을 해설까지 다 들음 */
     private fun done(it: Item) {
         Study.addOx(this, Store.tracks[it.ti].sub)
+        Study.heardOnce(this, it.key)
         if (reviewKeys().contains(it.key)) Study.heard(this, it.key)
     }
 

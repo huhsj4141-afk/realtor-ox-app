@@ -67,6 +67,10 @@ class WebActivity : Activity() {
         } catch (e: Exception) { }
         /** 날짜별 듣기 통계 → 웹 학습 일지 */
         @JavascriptInterface fun listenStats(): String = Study.statsJson(this@WebActivity)
+        /** 상황별 학습: 듣기를 정한 목록·타이머로 바로 시작 (mode: mix/review/wrong/bm/all) */
+        @JavascriptInterface fun openOxWith(mode: String, sleepMin: Int, busMin: Int) = runOnUiThread {
+            startActivity(Intent(this@WebActivity, MainActivity::class.java).putExtra("mode", mode).putExtra("sleep", sleepMin).putExtra("bus", busMin))
+        }
         @JavascriptInterface fun openOx() = runOnUiThread { startActivity(Intent(this@WebActivity, MainActivity::class.java)) }
 
         @JavascriptInterface fun gemini(id: String, model: String, body: String) {

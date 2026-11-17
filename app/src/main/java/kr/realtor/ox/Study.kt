@@ -32,6 +32,24 @@ object Study {
         p(ctx).edit().putString("rv", r.toString()).apply()
     }
 
+    // ---------- 지문별 들은 횟수·마지막으로 들은 때 (골고루 섞기용) ----------
+    private fun hc(ctx: Context) = try { JSONObject(p(ctx).getString("hc", "{}")!!) } catch (e: Exception) { JSONObject() }
+    fun heardOnce(ctx: Context, key: String) {
+        val h = hc(ctx); val a = h.optJSONArray(key)
+        h.put(key, org.json.JSONArray().put((a?.optInt(0) ?: 0) + 1).put(System.currentTimeMillis()))
+        p(ctx).edit().putString("hc", h.toString()).apply()
+    }
+    /** 과목을 번갈아 가며, 과목 안에서는 덜 들은·오래전에 들은 지문부터 n개 */
+    fun mix(ctx: Context, tracks: List<Track>, n: Int = 60): List<Item> {
+        val h = hc(ctx); val rnd = java.util.Random()
+        fun score(it: Item): Double { val a = h.optJSONArray(it.key); return (a?.optInt(0) ?: 0) * 1e13 + (a?.optLong(1) ?: 0L) + rnd.nextInt(3_600_000) }
+        val bySub = tracks.flatMap { it.items }.groupBy { tracks[it.ti].sub }.mapValues { (_, v) -> v.sortedBy { score(it) }.toMutableList() }
+        val out = ArrayList<Item>(); val subs = bySub.keys.shuffled()
+        while (out.size < n && bySub.values.any { it.isNotEmpty() })
+            for (s in subs) { val l = bySub[s]!!; if (l.isNotEmpty() && out.size < n) out.add(l.removeAt(0)) }
+        return out
+    }
+
     // ---------- 날짜별 듣기 통계: 들은 시간(초), 끝까지 들은 지문 수, 과목별 수 ----------
     private fun stats(ctx: Context) = try { JSONObject(p(ctx).getString("st", "{}")!!) } catch (e: Exception) { JSONObject() }
     private fun bump(ctx: Context, f: (JSONObject) -> Unit) {

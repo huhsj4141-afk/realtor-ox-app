@@ -73,6 +73,9 @@ class MainActivity : Activity() {
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
         val i = Intent(this, PlayerService::class.java)
+        intent?.getStringExtra("mode")?.let { m ->    // 상황별 학습에서 열었을 때
+            i.action = "PRESET"; i.putExtra("mode", m).putExtra("sleep", intent.getIntExtra("sleep", 0)).putExtra("bus", intent.getIntExtra("bus", 0))
+        }
         if (Build.VERSION.SDK_INT >= 26) startForegroundService(i) else startService(i)
         setContentView(buildUi())
         h.post(tick)
@@ -241,7 +244,7 @@ class MainActivity : Activity() {
     private var timerV: TextView? = null
     private lateinit var alertBtn: Button
     private var slowAt = 0L
-    private val LISTS = listOf("bm" to "★ 북마크만 듣기", "wrong" to "❌ 틀린 문제 지문만", "review" to "🔁 오늘 복습 (북마크·틀린 문제)")
+    private val LISTS = listOf("mix" to "🔀 골고루 섞기 (과목·단원 번갈아, 덜 들은 것부터)", "bm" to "★ 북마크만 듣기", "wrong" to "❌ 틀린 문제 지문만", "review" to "🔁 오늘 복습 (북마크·틀린 문제)")
     private fun mmss(sec: Int) = "%d:%02d".format(sec / 60, sec % 60)
     private fun refresh() {
         usageV?.text = Usage.summary(this)
