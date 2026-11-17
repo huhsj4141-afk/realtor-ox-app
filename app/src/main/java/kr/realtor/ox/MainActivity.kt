@@ -72,7 +72,7 @@ class MainActivity : Activity() {
             logSig("키 ${android.view.KeyEvent.keyCodeToString(e.keyCode).removePrefix("KEYCODE_")} (${e.keyCode})")
         if (e.action == android.view.KeyEvent.ACTION_DOWN && e.repeatCount == 1)
             logSig("  └ 계속 누르는 중")
-        return super.dispatchKeyEvent(e)
+        return svc?.handleKey(e) == true || super.dispatchKeyEvent(e)
     }
     override fun dispatchTouchEvent(e: android.view.MotionEvent): Boolean {
         if (e.actionMasked == android.view.MotionEvent.ACTION_DOWN && e.getToolType(0) != android.view.MotionEvent.TOOL_TYPE_FINGER)
@@ -254,9 +254,6 @@ class MainActivity : Activity() {
         }
     }
 
-
-    // 화면이 켜져 있을 때 들어오는 미디어 키도 같은 매핑으로
-    override fun dispatchKeyEvent(e: KeyEvent): Boolean = svc?.handleKey(e) == true || super.dispatchKeyEvent(e)
 
     // ---------- 화면 갱신 ----------
     private val tick = object : Runnable { override fun run() { refresh(); h.postDelayed(this, 300) } }
