@@ -76,7 +76,8 @@ class MainActivity : Activity() {
         intent?.getStringExtra("mode")?.let { m ->    // 상황별 학습에서 열었을 때
             i.action = "PRESET"; i.putExtra("mode", m).putExtra("sleep", intent.getIntExtra("sleep", 0)).putExtra("bus", intent.getIntExtra("bus", 0))
         }
-        if (Build.VERSION.SDK_INT >= 26) startForegroundService(i) else startService(i)
+        // 화면이 떠 있을 때는 일반 시작으로 충분(앞에 보이는 앱은 서비스 시작 제한이 없음)
+        try { startService(i) } catch (e: Exception) { if (Build.VERSION.SDK_INT >= 26) startForegroundService(i) }
         setContentView(buildUi())
         h.post(tick)
     }

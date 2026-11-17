@@ -131,8 +131,8 @@ class PlayerService : Service() {
     }
 
     private var isFg = false
-    private fun fg() {
-        if (isFg) return
+    private fun fg(force: Boolean = false) {
+        if (isFg && !force) return
         try {
             val n = buildNotif()
             if (Build.VERSION.SDK_INT >= 29) startForeground(NID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
@@ -142,6 +142,7 @@ class PlayerService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        fg(true)    // startForegroundService 로 불렸으면 5초 안에 꼭 다시 알려야 함(안 하면 앱이 강제 종료)
         when (intent?.action) {
             "L" -> act("stepBack"); "R" -> act("stepFwd"); "C" -> act("toggle")
             "PRESET" -> {   // 상황별 학습에서: 듣는 목록·잠자기 타이머를 정하고 바로 시작
