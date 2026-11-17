@@ -299,6 +299,15 @@
     try { eval(name + ' = window.' + name); } catch (e) {}
   };
   window.__unsureIds = unsureIds;
+  // AI 해설을 만드는 동안 몇 초째인지 보여 주기 (멈춘 게 아니라는 걸 알 수 있게)
+  let aiT0 = 0;
+  setInterval(() => {
+    const el = document.getElementById('aitxt');
+    if (!el) { aiT0 = 0; return; }
+    if (!aiT0) aiT0 = Date.now();
+    let w = el.querySelector('.aiw'); if (!w) { el.insertAdjacentHTML('beforeend', '<div class="aiw muted" style="font-size:13px;margin-top:4px"></div>'); w = el.querySelector('.aiw'); }
+    w.textContent = `⏳ ${Math.round((Date.now() - aiT0) / 1000)}초째 · 인터넷으로 만드는 중이라 보통 10~40초 걸려요`;
+  }, 1000);
   window.addEventListener('load', () => setTimeout(() => {
     wrap('quiz', decorateQuiz); wrap('home', decorateHome); wrap('setup', decorateSetup); wrap('wrong', decorateWrong);
     const v = document.querySelector('#tabs button.on')?.dataset.v;

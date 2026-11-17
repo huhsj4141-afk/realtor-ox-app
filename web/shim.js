@@ -143,6 +143,7 @@
     } catch (e) {}
   }
 
+  document.head.insertAdjacentHTML('beforeend', '<style>.spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px}@keyframes sp{to{transform:rotate(360deg)}}</style>');
   /* ---- 화면 연결: OX 듣기는 앱 전용 화면, 문제 해설 아래 '더 자세히' ---- */
   window.addEventListener('load', () => {
     setTimeout(() => { pushWrong(); pullListen(); if (document.querySelector('#tabs button.on')?.dataset.v === 'home') resume(); }, 1500);
@@ -159,13 +160,30 @@
           const q = S.list[S.i], box = document.getElementById('aibox');
           if (q && box && !document.getElementById('more')) {
             box.insertAdjacentHTML('afterend', '<button class="btn full" id="more" style="margin-top:8px">🤖 더 자세히 (Gemini)</button><div id="moreBox"></div>');
+            const MK = 'reb_more_' + q.id;
+            const show = (b, t) => {
+              b.innerHTML = '<div class="fb" style="white-space:pre-wrap;font-weight:400;margin-top:8px">' + t.replace(/</g, '&lt;') + '</div><button class="btn full" id="moreSay">🔊 읽어 주기</button>';
+              document.getElementById('moreSay').onclick = () => tts.speak([{ text: t }], {}).catch(e => alert(e.message));
+            };
+            const saved = localStorage.getItem(MK);
+            if (saved) { document.getElementById('more').textContent = '🤖 더 자세히 (저장됨)'; }
             document.getElementById('more').onclick = async () => {
-              const b = document.getElementById('moreBox'); b.innerHTML = '<div class="muted">Gemini가 설명을 쓰는 중…</div>';
+              const btn = document.getElementById('more'), b = document.getElementById('moreBox');
+              if (localStorage.getItem(MK)) return show(b, localStorage.getItem(MK));   // 한 번 받은 설명은 바로
+              if (btn.disabled) return;
+              btn.disabled = true; const t0 = Date.now();
+              b.innerHTML = '<div class="fb na" style="font-weight:400;margin-top:8px"><span class="spin"></span> <b id="moreT">설명을 만드는 중이에요… 0초</b><div class="muted" style="font-size:13px;margin-top:4px">인터넷으로 Gemini에게 물어보는 중이라 보통 10~30초 걸려요. 다른 문제로 넘어가도 괜찮아요.</div></div>';
+              const tick = setInterval(() => { const e = document.getElementById('moreT'); if (e) e.textContent = '설명을 만드는 중이에요… ' + Math.round((Date.now() - t0) / 1000) + '초'; else clearInterval(tick); }, 1000);
+              btn.textContent = '⏳ 기다려 주세요…';
               try {
                 const t = await gemini(`너는 공인중개사 시험 강사야. 아래 기출문제를 수험생이 완전히 이해하도록 더 자세히, 쉬운 말로 설명해 줘. 왜 그 보기가 정답인지, 헷갈리는 보기는 왜 아닌지, 관련 개념과 암기 요령까지. 해요체, 8문장 안팎. 소리 내어 읽기 좋게 괄호·한자·기호는 쓰지 마.\n[정답] ${q.a}번\n[문제]\n${q.x}`, { modelTier: 'default' }, false);
-                b.innerHTML = '<div class="fb" style="white-space:pre-wrap;font-weight:400;margin-top:8px">' + t.replace(/</g, '&lt;') + '</div><button class="btn full" id="moreSay">🔊 읽어 주기</button>';
-                document.getElementById('moreSay').onclick = () => tts.speak([{ text: t }], {}).catch(e => alert(e.message));
-              } catch (e) { b.innerHTML = '<div class="fb no">' + (e.message || '실패') + '</div>'; }
+                try { localStorage.setItem(MK, t); } catch (e) {}
+                const nb = document.getElementById('moreBox'); if (nb) show(nb, t);
+              } catch (e) {
+                const nb = document.getElementById('moreBox'); if (nb) nb.innerHTML = '<div class="fb no">' + (e.message || '실패') + '</div>';
+              } finally {
+                clearInterval(tick); const nbtn = document.getElementById('more'); if (nbtn) { nbtn.disabled = false; nbtn.textContent = '🤖 더 자세히 (Gemini)'; }
+              }
             };
           }
         } catch (e) {}
