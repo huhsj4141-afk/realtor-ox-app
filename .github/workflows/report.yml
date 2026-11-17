@@ -1,0 +1,39 @@
+name: report
+# 앱의 🚩 신고 → 시험지 원본으로 문제 글 다시 옮겨 적기 + 해설 새로 만들기 → 새 버전 → 이슈에 답글
+on:
+  issues: { types: [opened] }
+concurrency: { group: build, cancel-in-progress: false }
+permissions: { contents: write, issues: write, actions: write }
+jobs:
+  fix:
+    if: startsWith(github.event.issue.title, '[신고]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get install -y -qq poppler-utils >/dev/null
+      - name: 원본 시험지 풀기
+        env: { K: '${{ secrets.GEMINI_API_KEY }}' }
+        run: |
+          openssl enc -d -aes-256-cbc -pbkdf2 -pass env:K -in private/priv.enc -out /tmp/priv.pem
+          openssl pkeyutl -decrypt -inkey /tmp/priv.pem -in private/key.enc -out /tmp/aes.key
+          mkdir -p /tmp/pdfs && openssl enc -d -aes-256-cbc -pbkdf2 -pass file:/tmp/aes.key -in private/pdfs.enc | tar xf - -C /tmp
+      - name: 고치기
+        id: fx
+        env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', BODY: '${{ github.event.issue.body }}' }
+        run: |
+          printf '%s' "$BODY" > /tmp/body.md
+          set +e; python3 tools/report.py /tmp/body.md /tmp/pdfs; echo "code=$?" >> $GITHUB_OUTPUT
+      - name: 저장·새 버전
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          git config user.name bot; git config user.email bot@users.noreply.github.com
+          git add web/index.html data/mc.json gen/mc_exp.json gen/ocrfix.json
+          git commit -m "신고 #${{ github.event.issue.number }} 반영 [skip ci]" || true
+          git pull --rebase -q && git push || true
+          gh workflow run build.yml --ref main
+      - name: 답글
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          gh issue comment ${{ github.event.issue.number }} -F /tmp/report_result.md
+          if [ "${{ steps.fx.outputs.code }}" = "0" ]; then gh issue close ${{ github.event.issue.number }}; else gh issue edit ${{ github.event.issue.number }} --add-label "검토 필요" || true; fi

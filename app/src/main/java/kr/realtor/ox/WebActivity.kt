@@ -38,6 +38,17 @@ class WebActivity : Activity() {
             settings.allowFileAccess = true
             settings.mediaPlaybackRequiresUserGesture = false
             webChromeClient = WebChromeClient()
+            // 인터넷 주소(원본 PDF·신고 등)는 앱 밖 브라우저로 열기
+            webViewClient = object : android.webkit.WebViewClient() {
+                override fun shouldOverrideUrlLoading(v: WebView, r: android.webkit.WebResourceRequest): Boolean {
+                    val u = r.url
+                    if (u.scheme == "http" || u.scheme == "https") {
+                        try { startActivity(Intent(Intent.ACTION_VIEW, u)) } catch (e: Exception) { }
+                        return true
+                    }
+                    return false
+                }
+            }
             addJavascriptInterface(Bridge(), "NativeBridge")
             loadUrl("file:///android_asset/web/index.html")
         }
