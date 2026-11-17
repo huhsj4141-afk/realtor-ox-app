@@ -7,7 +7,7 @@ on:
     inputs:
       step: { description: 'keygen 또는 run', default: run }
 concurrency: { group: build, cancel-in-progress: false }
-permissions: { contents: write }
+permissions: { contents: write, actions: write }
 jobs:
   ocr:
     runs-on: ubuntu-latest
@@ -30,10 +30,25 @@ jobs:
           openssl pkeyutl -decrypt -inkey /tmp/priv.pem -in private/key.enc -out /tmp/aes.key
           openssl enc -d -aes-256-cbc -pbkdf2 -pass file:/tmp/aes.key -in private/pages.enc | tar xf - -C /tmp
           python3 tools/ocrfix.py /tmp/pg2
+      - name: 앱 문항에 반영
+        if: github.event.inputs.step != 'keygen'
+        run: |
+          python3 tools/fixtext.py
+          python3 - <<'PY'
+          import json
+          fix = json.load(open('gen/ocrfix.json')); p = 'gen/mc_exp.json'; e = json.load(open(p))
+          for k in fix:
+              e.pop(k, None)          # 깨진 글로 만든 해설은 지우고 새 본문으로 다시 만들기
+          json.dump(e, open(p, 'w'), ensure_ascii=False)
+          PY
       - name: 저장
         if: always()
         run: |
           git config user.name bot; git config user.email bot@users.noreply.github.com
-          git add -A private 2>/dev/null || true; git add gen/ocrfix.json 2>/dev/null || true
+          git add -A private web/index.html data/mc.json gen/mc_exp.json 2>/dev/null || true; git add gen/ocrfix.json 2>/dev/null || true
           git commit -m "OCR 다시 옮겨 적기 [skip ci]" || true
           git pull --rebase -q && git push || true
+      - name: 새 앱 만들기
+        if: github.event.inputs.step != 'keygen'
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: gh workflow run build.yml --ref main
