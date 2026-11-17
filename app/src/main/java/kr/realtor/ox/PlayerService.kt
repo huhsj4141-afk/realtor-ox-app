@@ -66,17 +66,9 @@ class PlayerService : Service() {
     fun mapOf(slot: String): String =
         prefs.getString("map_$slot", null) ?: Remote.SLOTS.first { it.first == slot }.third
     fun setMap(slot: String, action: String) { prefs.edit().putString("map_$slot", action).apply() }
-    fun resetMap() { prefs.edit().apply { prefs.all.keys.filter { it.startsWith("map_") || it.startsWith("key_") && it.removePrefix("key_").toIntOrNull() != null }.forEach { remove(it) } }.apply() }
-    /** 키 신호 번호 → 칸 */
-    fun slotOf(code: Int): String? = (prefs.getString("key_$code", null) ?: Remote.DEFAULT_KEYS[code])?.takeIf { it.isNotEmpty() }
-    fun learnKeys(codes: List<Int>) {   // 순서대로 l, c, r, b
-        prefs.edit().apply {
-            prefs.all.keys.filter { it.startsWith("key_") && it.removePrefix("key_").toIntOrNull() != null }.forEach { remove(it) }
-            Remote.DEFAULT_KEYS.keys.forEach { putString("key_$it", "") }
-            codes.forEachIndexed { i, c -> putString("key_$c", Remote.BUTTONS[i].first) }
-        }.apply()
-    }
-    var learn: ((Int) -> Unit)? = null
+    fun resetMap() { prefs.edit().apply { prefs.all.keys.filter { it.startsWith("map_") || it.startsWith("key_") && it.removePrefix("key_").toIntOrNull() != null }.forEach { remove(it) } }.apply() }   // 옛 버전 키 기록도 정리
+    /** 키 신호 번호 → 칸 (링 리모컨 길게 누르기 = 표준 미디어 키) */
+    private fun slotOf(code: Int): String? = Remote.KEYS[code]
     var lastKey = ""
 
     var detailText = ""; var detailKey = ""
@@ -288,9 +280,8 @@ class PlayerService : Service() {
     }
 
     fun handleKey(ev: KeyEvent): Boolean {
-        if (ev.action != KeyEvent.ACTION_DOWN || ev.repeatCount != 0) return slotOf(ev.keyCode) != null || learn != null
+        if (ev.action != KeyEvent.ACTION_DOWN || ev.repeatCount != 0) return slotOf(ev.keyCode) != null
         lastKey = "${KeyEvent.keyCodeToString(ev.keyCode).removePrefix("KEYCODE_")} (${ev.keyCode})"
-        learn?.let { h.post { it(ev.keyCode) }; return true }
         val slot = slotOf(ev.keyCode) ?: return false
         press(slot)
         return true

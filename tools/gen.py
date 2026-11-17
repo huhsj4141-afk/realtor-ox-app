@@ -268,20 +268,6 @@ def main():
     tts_model, txt_model = pick_models() if KEY else ('', '')
     if GKEY: log('목소리(클라우드):', GVOICE)
     snd = sounds()
-    if mode == 'samples':
-        d = os.path.join(ROOT, 'samples'); os.makedirs(d, exist_ok=True)
-        it = data[2]['items'][0]
-        text = clean(it['s'])
-        for v in ['Kore', 'Aoede', 'Leda', 'Zephyr', 'Despina', 'Achernar', 'Sulafat', 'Charon']:
-            out = os.path.join(d, f'{v}.mp3')
-            if os.path.exists(out):
-                continue
-            w = os.path.join(d, v + '.wav')
-            say_wav(tts_model, v, text + ' ... 정답은 엑스예요. 계약명의신탁에서 수탁자가 소유권을 취득하는지는 매도인의 선의 여부에 따라 달라져요.', w)
-            subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', w, '-b:a', '64k', out], check=True)
-            os.remove(w)
-            log('샘플', v)
-        return
     voice = (open(os.path.join(ROOT, 'voice.txt')).read().strip() if os.path.exists(os.path.join(ROOT, 'voice.txt'))
              else os.environ.get('VOICE', 'Kore'))
     log('목소리:', voice)

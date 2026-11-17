@@ -828,10 +828,7 @@ setTimeout(()=>{backfill();pull()},3000);
     const f=t=>window.lxFmt?lxFmt(t):t,n=x=>(x||0).toLocaleString();
     return `<div id="uzfoot" class="muted" style="font-size:12px;line-height:1.75;margin:18px 4px 8px;padding-top:10px;border-top:1px solid var(--line)">
     <b>📅 내용 업데이트</b>${row('앱',f(window.AU_BUILD))}${row('기출 문제·정답 DB',String(window.DB_DATE||'').replace(/-/g,'.'))}${row('법령 변동 확인',L.checked?f(L.checked):'—')}
-    <div style="margin-top:8px"><b>🔋 Claude 사용량 (이 앱이 쓴 양·추정)</b></div>
-    ${row('오늘','AI 해설 '+n(d.ai)+'회 · 약 '+n(d.tok)+'토큰 · 읽어준 글자 '+n(d.tts))}
-    ${row('이번 달','AI 해설 '+n(m.ai)+'회 · 약 '+n(m.tok)+'토큰 · 읽어준 글자 '+n(m.tts))}
-    <div style="margin-top:4px">남은 사용량은 Claude가 앱에 알려주지 않아요 → Claude 앱 <b>설정 › 사용량</b>에서 확인</div></div>`};
+    <div style="margin-top:8px">💰 AI·음성 사용량과 요금은 <b>귀로 듣기</b> 화면 아래에서 볼 수 있어요</div></div>`};
   const _h2=home;home=function(){_h2.apply(this,arguments);try{const h=document.querySelector('.card.hero');if(h){const o=document.getElementById('uzfoot');if(o)o.remove();h.parentElement.insertAdjacentHTML('beforeend',footer())}}catch(e){console.warn('uzfoot',e)}};
   window.home=home;
 })();
@@ -911,49 +908,4 @@ setTimeout(()=>{backfill();pull()},3000);
     anchor.insertAdjacentHTML('afterend',`<div class="card" id="lvcard"><h2>📊 과목별 수준</h2>${need?`<button class="btn pri full" id="lvh2" style="margin:6px 0">📏 오늘 공부 끝 — 수준 체크 (1~2분)</button>`:''}${table()}
       ${need?'':`<button class="btn full" id="lvh2" style="margin-top:8px">📏 수준 체크 하기</button>`}<div class="muted" style="font-size:12px;margin-top:6px">${last?'마지막 체크 '+(window.lxFmt?lxFmt(last):''):'아직 체크 전 — 한 번 해보세요'}</div></div>`);
     document.getElementById('lvh2').onclick=()=>start(need?'공부 후':'직접')}catch(e){console.warn('lv',e)}};
-})();
-
-/* ---- 🎙 리모컨 신호 녹음 (안내에 따라 버튼별로 눌러 신호 기록 → 저장) ---- */
-(function(){
-  const BT=[['가운데','⏺'],['왼쪽','◀'],['오른쪽','▶'],['위','▲'],['아래','▼'],['1번(전원) 버튼','①'],['2번 버튼','②']];
-  const STEPS=[];[['길게','1초 이상 꾹 눌렀다 떼기'],['1번','짧게 한 번 톡']].forEach(([m,how])=>BT.forEach(([b,ic])=>STEPS.push({b,ic,m,how})));
-  let R=null;const now=()=>Date.now();
-  const push=(kind,txt)=>{if(!R||R.wait||R.i<0||R.i>=STEPS.length)return;const st=R.st[R.i];if(!st.ev.length)st.t0=now();st.ev.push({k:kind,v:txt,t:now()-(st.t0||now())});R.last=now();paint()};
-  const _al=auLog;auLog=function(kind,txt){if(R){push(kind,txt);return}return _al.apply(this,arguments)};
-  let pd=null;
-  const on=(t,f,o)=>window.addEventListener(t,e=>{if(R&&!(e.target&&e.target.closest&&e.target.closest('#rcstop')))f(e)},o||true);
-  on('keydown',e=>{push('키다운',`${e.key}|${e.code}|${e.keyCode}${e.repeat?'|반복':''}`);e.preventDefault();e.stopImmediatePropagation()});
-  on('keyup',e=>{push('키업',`${e.key}|${e.keyCode}`);e.preventDefault();e.stopImmediatePropagation()});
-  on('pointerdown',e=>{pd={x:e.clientX,y:e.clientY,t:now(),n:0,ty:e.pointerType}});
-  on('pointermove',e=>{if(pd)pd.n++});
-  on('pointerup',e=>{if(!pd)return;const dx=Math.round(e.clientX-pd.x),dy=Math.round(e.clientY-pd.y);
-    push('터치',`${pd.ty} 시작(${Math.round(pd.x)},${Math.round(pd.y)}) 이동(${dx},${dy}) ${now()-pd.t}ms 움직임${pd.n}`);pd=null;e.preventDefault();e.stopImmediatePropagation()});
-  on('contextmenu',e=>{push('길게누름메뉴','contextmenu');e.preventDefault()});
-  window.addEventListener('wheel',e=>{if(R)push('스크롤',`${Math.round(e.deltaX)},${Math.round(e.deltaY)}`)},{capture:true,passive:true});
-  function paint(){const m=document.getElementById('rcbox');if(!m||!R)return;
-    if(R.i>=STEPS.length){m.innerHTML=`<div class="card" style="margin:0;border-radius:18px 18px 0 0;max-height:88vh;overflow:auto"><h2>✅ 녹음 끝</h2>
-      <div class="muted" style="font-size:13px">${R.saved?'저장했어요. Claude 대화에 "녹음 끝"이라고 알려주세요.':'저장 중…'}</div>
-      ${R.st.map(s=>`<div style="padding:5px 0;border-bottom:1px solid var(--line);font-size:13px"><b>${s.ic} ${s.b} ${s.m}</b><br>${s.ev.length?s.ev.slice(0,8).map(e=>esc(e.k+' '+e.v)).join('<br>'):'<span class="muted">신호 없음</span>'}</div>`).join('')}
-      <button class="btn pri full" id="rcstop" style="margin-top:10px">닫기</button></div>`;document.getElementById('rcstop').onclick=end;return}
-    const s=R.st[R.i],left=s.ev.length?Math.max(0,Math.ceil((2500-(now()-R.last))/1000)):Math.max(0,Math.ceil((15000-(now()-R.t))/1000));
-    m.innerHTML=`<div class="card" style="margin:0;border-radius:18px 18px 0 0;text-align:center">
-      <div class="muted" style="font-size:13px">🎙 리모컨 신호 녹음 ${R.i+1}/${STEPS.length}</div>
-      <div style="font-size:44px;margin:10px 0">${s.ic}</div>
-      <div style="font-size:24px;font-weight:800">${s.b} — <span style="color:var(--pri)">${s.m}</span></div>
-      <div class="muted" style="margin:6px 0 10px">${s.how}${R.wait?'':' · 한 번만 누르세요'}</div>
-      <div style="min-height:70px;font-size:13px;text-align:left;background:var(--bg);border-radius:10px;padding:8px">${R.wait?'준비…':s.ev.length?s.ev.slice(-5).map(e=>esc(e.k+' '+e.v)).join('<br>')+`<div class="muted">${left}초 뒤 다음으로</div>`:`<span class="muted">기다리는 중… (${left}초 안에 신호가 없으면 '신호 없음'으로 넘어가요)</span>`}</div>
-      <button class="btn sm" id="rcstop" style="margin-top:12px">그만하기</button></div>`;
-    document.getElementById('rcstop').onclick=end}
-  function next(){R.i++;R.wait=true;R.t=now();if(R.i<STEPS.length){const s=STEPS[R.i];try{apSayNow(s.b+' '+s.m)}catch(e){}}else{finish()}paint();setTimeout(()=>{if(R){R.wait=false;R.t=now();paint()}},1200)}
-  function loop(){if(!R)return;if(R.i<STEPS.length&&!R.wait){const s=R.st[R.i];if((s.ev.length&&now()-R.last>2500)||(!s.ev.length&&now()-R.t>15000))next();else paint()}R.tm=setTimeout(loop,500)}
-  async function finish(){const out={ts:now(),ua:navigator.userAgent,steps:R.st.map(s=>({b:s.b,m:s.m,ev:s.ev}))};
-    try{localStorage.setItem('reb_rclog',JSON.stringify(out))}catch(e){}
-    try{if(typeof db!=='undefined'&&db&&uid){await db.collection('data/users/'+uid).doc('remotelog').set({j:JSON.stringify(out)})}}catch(e){console.warn('rc save',e)}
-    if(R){R.saved=true;paint()}}
-  function end(){if(R&&R.tm)clearTimeout(R.tm);R=null;AU.test=false;const m=document.getElementById('rcbox');if(m)m.remove();try{auRefresh()}catch(e){}}
-  window.rcStart=function(){AU.test=true;try{if(!AU.el||AU.ti<0){const r=auResume();auLoad(r&&OXA[r.ti]?r.ti:0,r?r.t:0,true)}else if(AU.el.paused)AU.el.play().catch(()=>{});setTimeout(()=>{try{AU.el.pause()}catch(e){}},700)}catch(e){}
-    R={i:-1,st:STEPS.map(s=>({...s,ev:[]})),t:now(),last:0};let m=document.getElementById('rcbox');if(!m){m=document.createElement('div');m.id='rcbox';document.body.appendChild(m)}
-    m.style.cssText='position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center';next();loop()};
-  /* 홈 맨 위 + 리모컨 설정에 시작 버튼 */
-  const _h4=home;home=function(){_h4.apply(this,arguments);try{const v=document.getElementById('view');v.insertAdjacentHTML('afterbegin',`<div class="card"><button class="btn pri full" id="rcgo" style="padding:14px;font-size:17px">🎙 리모컨 신호 녹음 시작</button><div class="muted" style="font-size:12px;margin-top:6px">화면 안내대로 버튼을 하나씩 누르면 신호를 기록해요 (14단계, 약 2분)</div></div>`);document.getElementById('rcgo').onclick=rcStart}catch(e){}};
 })();

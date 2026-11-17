@@ -1,15 +1,9 @@
 name: build
 on:
   workflow_dispatch:
-    inputs:
-      mode:
-        description: samples(목소리 샘플) 또는 full(전체 생성+APK)
-        default: full
   push:
     branches: [main]
-    paths-ignore: ['gen/**', 'samples/**']
-  schedule:
-    - cron: '23 */3 * * *'
+    paths-ignore: ['gen/**', '**.md']
 permissions:
   contents: write
 concurrency:
@@ -31,13 +25,7 @@ jobs:
         id: pre
         run: |
           echo "had=$([ -f gen/DONE ] && echo 1 || echo 0)" >> $GITHUB_OUTPUT
-          if [ "${{ github.event.inputs.mode }}" = samples ] || [ ! -f voice.txt ]; then echo "mode=samples" >> $GITHUB_OUTPUT; else echo "mode=full" >> $GITHUB_OUTPUT; fi
-      - name: 음성 샘플
-        if: steps.pre.outputs.mode == 'samples'
-        env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}' }
-        run: python tools/gen.py samples
       - name: 해설·음성 생성 (이어서)
-        if: steps.pre.outputs.mode == 'full'
         env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', GCLOUD_TTS_KEY: '${{ secrets.GCLOUD_TTS_KEY }}', MINUTES: '300' }
         run: '[ -f gen/DONE ] && python tools/gen.py cues || python tools/gen.py full'
       - name: 객관식 해설·녹음 (이어서) — 무료 유지 위해 잠시 멈춤
@@ -49,19 +37,13 @@ jobs:
         run: |
           rm -rf gen/tmp
           git config user.name "ox-bot"; git config user.email "ox-bot@users.noreply.github.com"
-          git add -A gen samples 2>/dev/null || true
+          git add -A gen 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git commit -m "음성 생성 진행 [skip ci]"
             for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done
           fi
           echo "객관식 해설 $(python -c "import json;print(len(json.load(open('gen/mc_exp.json'))))" 2>/dev/null || echo 0)개, 녹음 $(ls gen/m 2>/dev/null | wc -l)개" >> $GITHUB_STEP_SUMMARY
           echo "해설 $(python -c "import json;print(len(json.load(open('gen/exp.json'))))" 2>/dev/null || echo 0)개, 음성 $(ls gen/a 2>/dev/null | wc -l)개" >> $GITHUB_STEP_SUMMARY
-      - name: 샘플 올리기
-        if: steps.pre.outputs.mode == 'samples'
-        env: { GH_TOKEN: '${{ github.token }}' }
-        run: |
-          gh release delete samples -y --cleanup-tag 2>/dev/null || true
-          gh release create samples samples/*.mp3 -t "목소리 샘플" -n "듣고 마음에 드는 목소리 이름을 알려주세요"
       - name: state
         id: st
         run: |
@@ -69,7 +51,7 @@ jobs:
           echo "newly=$([ -f gen/DONE ] && [ '${{ steps.pre.outputs.had }}' = 0 ] && echo true || echo false)" >> $GITHUB_OUTPUT
   apk:
     needs: gen
-    if: always() && (github.event_name != 'schedule' || needs.gen.outputs.newly == 'true')
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

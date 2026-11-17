@@ -15,9 +15,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.view.Gravity
 import android.view.KeyEvent
-import android.view.MotionEvent
 import android.view.View
-import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
@@ -31,7 +29,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
-import kotlin.math.hypot
 
 class MainActivity : Activity() {
     private val h = Handler(Looper.getMainLooper())
@@ -58,27 +55,8 @@ class MainActivity : Activity() {
     private val SUB get() = if (dk) "#9AA4AF" else "#6B7280"
     private var spinBusy = false
 
-    /** 신호 확인: 화면이 켜져 있을 때 들어온 모든 키·클릭 신호 기록 */
-    private val sig = ArrayList<String>()
-    private fun logSig(t: String) {
-        sig.add(0, SimpleDateFormat("HH:mm:ss", Locale.KOREA).format(Date()) + "  " + t)
-        while (sig.size > 8) sig.removeAt(sig.size - 1)
-        sigV?.text = sig.joinToString("\n")
-    }
-    private var sigV: TextView? = null
-
-    override fun dispatchKeyEvent(e: android.view.KeyEvent): Boolean {
-        if (e.action == android.view.KeyEvent.ACTION_DOWN && e.repeatCount == 0)
-            logSig("키 ${android.view.KeyEvent.keyCodeToString(e.keyCode).removePrefix("KEYCODE_")} (${e.keyCode})")
-        if (e.action == android.view.KeyEvent.ACTION_DOWN && e.repeatCount == 1)
-            logSig("  └ 계속 누르는 중")
-        return svc?.handleKey(e) == true || super.dispatchKeyEvent(e)
-    }
-    override fun dispatchTouchEvent(e: android.view.MotionEvent): Boolean {
-        if (e.actionMasked == android.view.MotionEvent.ACTION_DOWN && e.getToolType(0) != android.view.MotionEvent.TOOL_TYPE_FINGER)
-            logSig("마우스 클릭 (리모컨 짧게)")
-        return super.dispatchTouchEvent(e)
-    }
+    // 화면이 켜져 있을 때 들어오는 리모컨 키도 같은 매핑으로
+    override fun dispatchKeyEvent(e: KeyEvent): Boolean = svc?.handleKey(e) == true || super.dispatchKeyEvent(e)
 
     override fun onCreate(b: Bundle?) {
         dk = wantDark()
@@ -199,10 +177,6 @@ class MainActivity : Activity() {
         c4.addView(mapBox)
         keyV = tv("", 13f, color = SUB).apply { setPadding(0, dp(6), 0, 0) }
         c4.addView(keyV)
-        c4.addView(wide(btn("🔧 버튼 신호 맞추기") { learnKeys() }))
-        c4.addView(tv("📡 신호 확인 (화면 켠 채로 리모컨 버튼을 눌러 보세요)", 14f, true).apply { setPadding(0, dp(10), 0, dp(2)) })
-        sigV = tv("아직 받은 신호 없음", 13f, color = SUB)
-        c4.addView(sigV)
         c4.addView(wide(btn("기본값으로") { svc?.resetMap(); drawMap() }))
         col.addView(c4)
 
@@ -232,28 +206,6 @@ class MainActivity : Activity() {
             })
         }
     }
-
-    // ---------- 버튼 신호 맞추기: 4개 버튼을 차례로 길게 눌러 신호를 기록 ----------
-    private fun learnKeys() {
-        val s = svc ?: run { android.widget.Toast.makeText(this, "먼저 ▶ 재생을 한 번 눌러 주세요", android.widget.Toast.LENGTH_SHORT).show(); return }
-        val got = ArrayList<Int>()
-        val msg = tv("", 18f).apply { setPadding(dp(24), dp(16), dp(24), dp(8)) }
-        val dlg = AlertDialog.Builder(this).setTitle("🔧 버튼 신호 맞추기").setView(msg)
-            .setNegativeButton("취소") { _, _ -> s.learn = null }.setOnCancelListener { s.learn = null }.show()
-        fun ask() { msg.text = "${Remote.BUTTONS[got.size].second}을(를) 길게 누르세요\n(${got.size + 1}/${Remote.BUTTONS.size})" }
-        ask()
-        s.learn = { code ->
-            if (got.contains(code)) msg.text = "이미 다른 버튼에 쓴 신호예요.\n${Remote.BUTTONS[got.size].second}을(를) 다시 길게 누르세요"
-            else {
-                got.add(code)
-                if (got.size < Remote.BUTTONS.size) ask() else {
-                    s.learn = null; s.learnKeys(got); dlg.dismiss(); drawMap()
-                    android.widget.Toast.makeText(this, "버튼 신호를 저장했어요", android.widget.Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-
 
     // ---------- 화면 갱신 ----------
     private val tick = object : Runnable { override fun run() { refresh(); h.postDelayed(this, 300) } }
