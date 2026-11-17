@@ -121,9 +121,31 @@
   setInterval(pushWrong, 5000);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { pullListen(); pushWrong(); } });
 
+  /* ---- 마지막으로 풀던 문제 기억 → 다음에 앱을 켜면 거기서 이어서 ---- */
+  const RK = 'reb_resume';
+  function saveResume() {
+    try {
+      if (typeof S === 'undefined' || !S || S.exam) return;
+      const last = S.list[S.list.length - 1];
+      if (S.i >= S.list.length - 1 && S.ans[last.id]) { localStorage.removeItem(RK); return; }   // 끝까지 풀었으면 지움
+      const o = {};
+      for (const k in S) if (!['list', 'i', 'ans', 'ai', 'end', 'done'].includes(k) && typeof S[k] !== 'function') o[k] = S[k];
+      localStorage.setItem(RK, JSON.stringify({ ids: S.list.map(q => q.id), i: S.i, ans: S.ans, o }));
+    } catch (e) {}
+  }
+  function resume() {
+    try {
+      const r = JSON.parse(localStorage.getItem(RK) || 'null'); if (!r || typeof Q === 'undefined') return;
+      const by = {}; Q.forEach(q => by[q.id] = q);
+      const list = r.ids.map(id => by[id]).filter(Boolean); if (!list.length) return;
+      startQuiz(list, r.o || {});
+      S.i = Math.min(r.i || 0, list.length - 1); S.ans = r.ans || {}; quiz();
+    } catch (e) {}
+  }
+
   /* ---- 화면 연결: OX 듣기는 앱 전용 화면, 문제 해설 아래 '더 자세히' ---- */
   window.addEventListener('load', () => {
-    setTimeout(() => { pushWrong(); pullListen(); }, 1500);
+    setTimeout(() => { pushWrong(); pullListen(); if (document.querySelector('#tabs button.on')?.dataset.v === 'home') resume(); }, 1500);
     if (typeof go === 'function') {
       const _go = go;
       go = window.go = function (v, a) { if (v === 'ox' || v === 'listen') { N.openOx(); return; } return _go(v, a); };
@@ -132,6 +154,7 @@
       const _q = quiz;
       quiz = window.quiz = function () {
         const r = _q.apply(this, arguments);
+        saveResume();
         try {
           const q = S.list[S.i], box = document.getElementById('aibox');
           if (q && box && !document.getElementById('more')) {

@@ -196,9 +196,10 @@ class MainActivity : Activity() {
         c4.addView(wide(btn("기본값으로") { svc?.resetMap(); drawMap() }))
         col.addView(c4)
 
-        val root = FrameLayout(this)
-        root.addView(ScrollView(this).apply { addView(col) })
-        return root
+        // 가운데 정렬, 넓은 화면에서도 너무 퍼지지 않게
+        col.layoutParams = FrameLayout.LayoutParams(minOf(resources.displayMetrics.widthPixels, dp(640)), FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL)
+        val center = FrameLayout(this).apply { addView(col) }
+        return safeArea(ScrollView(this).apply { addView(center); isFillViewport = true }, c("#F5F6F8", "#0B0F14"))
     }
 
     private fun drawMap() {

@@ -41,7 +41,8 @@ class WebActivity : Activity() {
             addJavascriptInterface(Bridge(), "NativeBridge")
             loadUrl("file:///android_asset/web/index.html")
         }
-        setContentView(web)
+        val dark = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        setContentView(safeArea(web, if (dark) 0xFF12151B.toInt() else 0xFFF6F7F9.toInt()))
     }
 
     override fun onDestroy() { voice.release(); io.shutdown(); web.destroy(); super.onDestroy() }

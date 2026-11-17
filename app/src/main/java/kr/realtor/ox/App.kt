@@ -14,3 +14,15 @@ class App : Application() {
         }
     }
 }
+
+/** 상태 표시줄·내비게이션 바·키보드에 내용이 가리지 않게 안쪽 여백을 줌 (안드로이드 15는 화면 끝까지 그림) */
+fun safeArea(v: android.view.View, bg: Int): android.view.View {
+    val box = android.widget.FrameLayout(v.context).apply { setBackgroundColor(bg); addView(v) }
+    androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(box) { b, ins ->
+        val t = androidx.core.view.WindowInsetsCompat.Type.systemBars() or androidx.core.view.WindowInsetsCompat.Type.displayCutout()
+        val s = ins.getInsets(t); val k = ins.getInsets(androidx.core.view.WindowInsetsCompat.Type.ime())
+        b.setPadding(s.left, s.top, s.right, maxOf(s.bottom, k.bottom))
+        androidx.core.view.WindowInsetsCompat.CONSUMED
+    }
+    return box
+}
