@@ -461,7 +461,7 @@ function quiz(){
   V.querySelectorAll('.choices button').forEach(b=>b.onclick=()=>{const c=+b.dataset.c;if(!ex&&pick)return;S.ans[q.id]=c;if(!ex){record(q,c)}quiz();if(!ex&&isCalc(q)&&isRight(q,c)===false)explain(q);if(ex&&S.i<S.list.length-1)setTimeout(()=>{S.i++;quiz()},180)});
   $('qx').onclick=()=>{if(S.exam&&!S.done){openModal('모의고사를 그만둘까요?','지금까지 표시한 답은 저장되지 않아요.',[['계속 풀기',closeModal],['그만두기',()=>{closeModal();clearInterval(tick);go('exam')}]])}else go(S.from||'home')};
   $('qb').onclick=()=>{if(BM[q.id])delete BM[q.id];else BM[q.id]=1;touch('meta');quiz()};
-  if($('qa'))$('qa').onclick=()=>explain(q);if($('qv'))$('qv').onclick=()=>variant({q});
+  if($('qa'))$('qa').onclick=()=>explain(q);if($('qv'))$('qv').onclick=()=>go('variant',{q});
   $('qp').onclick=()=>{S.i--;quiz()};
   if($('qn'))$('qn').onclick=()=>{if(S.ad&&S.i===S.list.length-1){const nx=pickNext(S.ad.pool,new Set(S.list.map(x=>x.id)));if(!nx){go('result');return}S.list.push(nx)}S.i++;quiz()};
   if($('tune'))$('tune').onclick=e=>{const b=e.target.closest('button');if(!b)return;const d=+b.dataset.d;TG=Math.max(.5,Math.min(.9,TG+d*.07));TU=Date.now();touch('meta');
@@ -844,7 +844,7 @@ async function variant(arg){
   renderVariant()}
 async function genVariant(){const v=VAR;const sm=await getSample();if(!sm){v.err='계산 변형은 claude.ai에서 열었을 때만 쓸 수 있어요.';v.loading=false;if(cur==='variant')renderVariant();return}
   try{const d=await sm.json(varPrompt(v.base),{modelTier:'complex',cache:false});if(!d||!Array.isArray(d.choices)||d.choices.length<5)throw{code:'invalid_json'};v.data=d}
-  catch(e){v.err=e&&e.code==='not_granted'?'AI 사용이 허용되지 않았어요.':e&&e.code==='rate_limited'?'잠시 후 다시 시도해 주세요.':'문제를 만들지 못했어요. 다시 눌러 주세요.'}
+  catch(e){v.err=e&&e.code==='not_granted'?'AI 사용이 허용되지 않았어요.':e&&e.code==='rate_limited'?'잠시 후 다시 시도해 주세요.':e&&(e.code==='quota'||e.code==='no_key')?e.message:'문제를 만들지 못했어요. 다시 눌러 주세요.'}
   v.loading=false;if(cur==='variant'&&VAR===v)renderVariant()}
 function renderVariant(){const v=VAR,b=v.base,d=v.data;
   V.innerHTML=backBar('🔁 계산 변형 연습')+`<div class="card"><div class="chips"><span class="chip">${SUB[b.s]}</span><span class="chip g">${esc(b.t)}</span><span class="chip g">원문제 제${b.n}회 ${b.no}번</span></div>
