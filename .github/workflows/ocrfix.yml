@@ -1,0 +1,37 @@
+name: ocrfix
+# 원본 시험지 이미지(암호화)로 OCR이 깨진 객관식 문항을 다시 옮겨 적기
+on:
+  workflow_dispatch:
+    inputs:
+      step: { description: 'keygen 또는 run', default: run }
+concurrency: { group: build, cancel-in-progress: false }
+permissions: { contents: write }
+jobs:
+  ocr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - name: 열쇠 만들기 (처음 한 번)
+        if: github.event.inputs.step == 'keygen'
+        env: { K: '${{ secrets.GEMINI_API_KEY }}' }
+        run: |
+          mkdir -p private
+          openssl genrsa -out /tmp/priv.pem 3072
+          openssl rsa -in /tmp/priv.pem -pubout -out private/pub.pem
+          openssl enc -aes-256-cbc -pbkdf2 -salt -pass env:K -in /tmp/priv.pem -out private/priv.enc
+      - name: 옮겨 적기
+        if: github.event.inputs.step == 'run'
+        env: { K: '${{ secrets.GEMINI_API_KEY }}', GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}' }
+        run: |
+          openssl enc -d -aes-256-cbc -pbkdf2 -pass env:K -in private/priv.enc -out /tmp/priv.pem
+          openssl pkeyutl -decrypt -inkey /tmp/priv.pem -in private/key.enc -out /tmp/aes.key
+          openssl enc -d -aes-256-cbc -pbkdf2 -pass file:/tmp/aes.key -in private/pages.enc | tar xf - -C /tmp
+          python3 tools/ocrfix.py /tmp/pg2
+      - name: 저장
+        if: always()
+        run: |
+          git config user.name bot; git config user.email bot@users.noreply.github.com
+          git add -A private gen/ocrfix.json 2>/dev/null || true
+          git commit -m "OCR 다시 옮겨 적기 [skip ci]" || true
+          git pull --rebase -q && git push || true
