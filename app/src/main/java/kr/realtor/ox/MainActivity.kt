@@ -196,6 +196,15 @@ class MainActivity : Activity() {
         c4.addView(wide(btn("기본값으로") { svc?.resetMap(); drawMap() }))
         col.addView(c4)
 
+        // 자주 안 쓰는 설정(사용량·키·리모컨)은 접어 두기. 키가 비어 있으면 펼쳐서 보여 줌
+        val more = listOf(cu, c5, c4)
+        val needKey = prefs.getString("key_gemini", "").isNullOrBlank() || prefs.getString("key_tts", "").isNullOrBlank()
+        var open = needKey || prefs.getBoolean("moreOpen", false)
+        val tg = btn("") { }
+        fun apply() { more.forEach { it.visibility = if (open) View.VISIBLE else View.GONE }; tg.text = if (open) "⚙ 설정 접기" else "⚙ 사용량·키·리모컨 설정" }
+        tg.setOnClickListener { open = !open; prefs.edit().putBoolean("moreOpen", open).apply(); apply() }
+        col.addView(wide(tg), col.indexOfChild(cu)); apply()
+
         // 가운데 정렬, 넓은 화면에서도 너무 퍼지지 않게
         col.layoutParams = FrameLayout.LayoutParams(minOf(resources.displayMetrics.widthPixels, dp(640)), FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL)
         val center = FrameLayout(this).apply { addView(col) }

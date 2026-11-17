@@ -96,7 +96,7 @@
   // 틀린 문제(마지막 풀이가 오답) 번호 → 듣기의 '틀린 문제'·'오늘 복습'
   let lastWrong = '';
   function pushWrong() {
-    try { if (typeof P === 'undefined') return; const w = Object.keys(P).filter(k => P[k] && P[k][1] === 0).sort();
+    try { if (typeof P === 'undefined') return; const w = [...new Set([...Object.keys(P).filter(k => P[k] && P[k][1] === 0), ...(window.__unsureIds ? window.__unsureIds() : [])])].sort();   // 틀린 문제 + 헷갈렸던 문제
       const j = JSON.stringify(w); if (j !== lastWrong) { lastWrong = j; N.setWrong(j); } } catch (e) {}
   }
   // 듣기 화면에서 들은 시간·지문 수 → 학습 일지 (이미 더한 만큼은 빼고 차이만 더함)

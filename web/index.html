@@ -422,7 +422,7 @@ function wrong(){
 }
 
 function exam(){
-  const ns=[...new Set(Q.map(q=>q.n))].sort((a,b)=>b-a);
+  const full=(n,ct)=>Q.filter(q=>q.n===n&&q.ct===ct).length>=(ct===22?40:80);const ns=[...new Set(Q.map(q=>q.n))].filter(n=>full(n,11)||full(n,21)||full(n,22)).sort((a,b)=>b-a);
   V.innerHTML=`<div class="card"><h2>실전 모의고사</h2><div class="muted">실제 시험처럼 시간 안에 풀고 제출하면 과목별 점수·합격 여부를 계산해요. (과목별 40점 이상 + 평균 60점)</div>
   <label class="f">회차</label><select id="en">${ns.map(n=>`<option value="${n}">제${n}회 (${Q.find(q=>q.n===n).y})${n===37?' – 정답 미공개':''}</option>`).join('')}</select>
   <label class="f">시험</label><div class="seg" id="ec"><button data-v="11" class="on">1차 (100분)</button><button data-v="21">2차 1교시 (100분)</button><button data-v="22">2차 2교시 (50분)</button></div>
@@ -470,13 +470,13 @@ function quiz(){
   if($('qf'))$('qf').onclick=()=>go('result');
   V.querySelectorAll('.omr button').forEach(b=>b.onclick=()=>{S.i=+b.dataset.i;quiz()});
 }
-function submitExam(){if(!S||S.done)return;clearInterval(tick);S.done=true;S.list.forEach(q=>{if(S.ans[q.id])record(q,S.ans[q.id])});go('result')}
+function submitExam(){if(!S||S.done)return;clearInterval(tick);S.done=true;S.doneAt=Date.now();S.list.forEach(q=>{if(S.ans[q.id])record(q,S.ans[q.id])});go('result')}
 function result(){
   const L=S.list;const graded=L.filter(q=>/^[\d,]+$|전항/.test(q.a));
   let html='';
   if(S.exam){
     const groups=S.exam.ct===11?[['부동산학개론',q=>q.s===0],['민법 및 민사특별법',q=>q.s===1]]:S.exam.ct===21?[['중개사법령·실무',q=>q.s===2],['부동산공법',q=>q.s===3]]:[['공시법령·세법',q=>true]];
-    const sc=groups.map(([n,fn])=>{const g=L.filter(fn);const ok=g.filter(q=>S.ans[q.id]&&isRight(q,S.ans[q.id])).length;return[n,Math.round(ok*2.5*10)/10]});
+    const sc=groups.map(([n,fn])=>{const g=L.filter(fn);const ok=g.filter(q=>S.ans[q.id]&&isRight(q,S.ans[q.id])).length;return[n,g.length?Math.round(ok/g.length*1000)/10:0]});
     const can=graded.length===L.length;
     const avg=sc.reduce((a,b)=>a+b[1],0)/sc.length;const pass=can&&sc.every(x=>x[1]>=40)&&avg>=60;
     if(can){EX.push({ts:Date.now(),n:S.exam.n,ct:S.exam.ct,sc,pass});touch('meta')}
@@ -487,6 +487,9 @@ function result(){
     html=`<div class="card"><h2>${esc(S.title)} 결과</h2><div class="big">${ok} <span class="muted">/ ${done} 정답</span></div><div class="muted">정답률 ${done?Math.round(ok/done*100):0}%</div></div>`;
   }
   const wr=L.filter(q=>S.ans[q.id]&&isRight(q,S.ans[q.id])===false);
+  if(S.exam){const used=Math.max(0,Math.round(((S.exam.sec*1000)-(S.end-(S.doneAt||Date.now())))/60000));const un=L.filter(q=>!S.ans[q.id]).length;
+    const wu={};wr.forEach(q=>{const k=SUBS[q.s]+' › '+q.u;wu[k]=(wu[k]||0)+1});const top=Object.entries(wu).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    html+=`<div class="card"><h2>📋 성적 분석</h2><div class="muted">걸린 시간 약 ${used}분 / ${Math.round(S.exam.sec/60)}분 · 맞힘 ${L.length-wr.length-un} · 틀림 ${wr.length} · 안 푼 문제 ${un}</div>${top.length?`<div class="exh" style="margin-top:10px">많이 틀린 단원</div>${top.map(([k,v])=>`<div class="row"><span class="grow">${esc(k)}</span><b class="fail">${v}문제</b></div>`).join('')}`:''}</div>`}
   V.innerHTML=html+`<div class="row"><button class="btn grow" id="rr">문제 다시 보기</button>${wr.length?`<button class="btn pri grow" id="rw">틀린 ${wr.length}문제 다시</button>`:''}</div>
   <div class="row" style="margin-top:8px"><button class="btn grow" id="rh">홈으로</button></div>`;
   document.getElementById('rr').onclick=()=>{S.i=0;go('quiz')};
