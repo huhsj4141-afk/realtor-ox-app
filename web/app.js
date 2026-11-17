@@ -32,6 +32,18 @@
     .fc{border:1px solid var(--line,#ddd);border-radius:12px;padding:12px;margin:8px 0}
     .fc .a{display:none;margin-top:8px;font-size:14px;line-height:1.55} .fc.open .a{display:block}
     .fc .o{font-weight:700;margin-right:6px}
+    .chx{border:1.5px solid var(--line,#e5e7eb);border-radius:12px;padding:8px 10px;margin:6px 0;white-space:pre-wrap;word-break:keep-all}
+    .chx.ans{border-color:#16a34a;background:rgba(22,163,74,.08)} .chx.mine{border-color:#dc2626;background:rgba(220,38,38,.07)}
+    .chx .bd{display:inline-block;font-size:12px;font-weight:700;border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:1px}
+    .bd.o{background:#dcfce7;color:#15803d} .bd.x{background:#fee2e2;color:#b91c1c} .bd.a{background:#16a34a;color:#fff} .bd.m{background:#dc2626;color:#fff}
+    .chx .why{font-size:13.5px;line-height:1.6;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line,#e5e7eb)}
+    .bad{text-decoration:underline wavy #dc2626;text-underline-offset:3px;color:#dc2626;font-weight:700}
+    .good{color:#15803d;font-weight:700}
+    .em-x{color:#dc2626;font-weight:700} .em-o{color:#15803d;font-weight:700} .em-n{font-weight:700;text-decoration:underline;text-underline-offset:3px}
+    .em-q{font-weight:700;background:linear-gradient(transparent 60%,rgba(250,204,21,.45) 60%)}
+    #aibox .exs{font-size:16px;font-weight:600;line-height:1.6;padding:10px 12px;border-left:4px solid #f59e0b;background:rgba(245,158,11,.1);border-radius:8px}
+    #aibox .exh{font-size:15px;font-weight:800;margin-top:14px;padding-bottom:4px;border-bottom:2px solid var(--pri,#2f6fed);display:inline-block}
+    #aibox .st li{margin:8px 0} #aibox .st .muted{color:inherit!important;opacity:.85;font-size:14px!important;line-height:1.6}
     .sit{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     .sit button{text-align:left;padding:12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit}
     .sit b{display:block;font-size:15px} .sit span{font-size:12px;opacity:.7}
@@ -291,6 +303,61 @@
       <div class="muted" style="font-size:12px;margin-top:8px">어떤 상황이든 과목·단원을 번갈아 고르고, 최근에 푼 문제는 빼요.</div></div>`;
   }
 
+
+  /* ---------- 해설 보기 좋게: 보기별 O·X, 틀린 부분 밑줄, 해설 강조 ---------- */
+  const MK5 = '①②③④⑤';
+  const NEG = /(옳지\s*않은|틀린|아닌\s*것|않는\s*것|해당하지\s*않는|부적절한|잘못된)/;
+  function expOf(q) {
+    try { if (EXC[q.id]) return EXC[q.id]; } catch (e) {}
+    MCX = MCX || asset('mc_exp.json') || {}; return MCX[q.id] || null;
+  }
+  // "A가 아니라 B" → A 는 틀린 말, B 는 맞는 말
+  function wrongBits(why) {
+    const out = [];
+    String(why || '').replace(/['‘“"]?([가-힣A-Za-z0-9·]{2,15})['’”"]?\s*(?:이|가|은|는)?\s*아니(?:라|고)\s*['‘“"]?([가-힣A-Za-z0-9·]{2,15})/g, (m, a, b) => { out.push([a, b]); return m; });
+    return out;
+  }
+  function emph(t) {
+    return h(t)
+      .replace(/(틀립니다|틀린 설명|옳지 않습니다|아닙니다|틀렸|오답)/g, '<span class="em-x">$1</span>')
+      .replace(/(맞습니다|옳습니다|정답입니다|올바릅니다|정답)/g, '<span class="em-o">$1</span>')
+      .replace(/([‘“'"][^‘“'"’”]{1,20}[’”'"])/g, '<span class="em-q">$1</span>')
+      .replace(/(\d+(?:\.\d+)?\s*(?:년|개월|일|%|퍼센트|만원|억원|원|배|㎡|제곱미터|분의|명|회|세))/g, '<span class="em-n">$1</span>');
+  }
+  function decorateChoices() {
+    if (typeof S === 'undefined' || !S || !S.list) return;
+    const q = S.list[S.i], pick = q && S.ans[q.id], ex = S.exam && !S.done;
+    const qt = document.querySelector('#view .qtext'); if (!q || !qt || !pick || ex) return;
+    const e = expOf(q);
+    const sig = q.id + (e ? '+e' : '');
+    if (qt.dataset.dec === sig) return;
+    const lines = q.x.split('\n'); const idx = lines.findIndex(l => /^\s*①/.test(l));
+    if (idx < 0) return;
+    // 보기 묶기 (보기 하나가 여러 줄일 수 있음)
+    const stem = lines.slice(0, idx).join('\n'), ch = [];
+    lines.slice(idx).forEach(l => { const m = /^\s*([①②③④⑤])/.exec(l); if (m) ch.push({ n: MK5.indexOf(m[1]) + 1, t: l.trim() }); else if (ch.length) ch[ch.length - 1].t += '\n' + l; });
+    if (ch.length !== 5) return;
+    const ans = String(q.a).split(',').map(Number);
+    const info = {}; (e && Array.isArray(e.choices) ? e.choices : []).forEach(c => { info[+c.no] = { ox: String(c.ox).includes('O') ? 'o' : 'x', why: c.why || '' }; });
+    if (e && Array.isArray(e.steps)) e.steps.forEach(st => { const m = /([①②③④⑤])/.exec(st.title || ''); if (m) { const n = MK5.indexOf(m[1]) + 1; info[n] = info[n] || {}; if (!info[n].why) info[n].why = st.say || ''; } });
+    const stmt = /①\s*[가-힣]/.test(q.x) && !/ㄱ\s*[,·]/.test(lines.slice(idx).join(' '));   // 문장형 보기일 때만 O·X 추정
+    const neg = NEG.test(stem);
+    qt.innerHTML = h(stem) + ch.map(c => {
+      const isAns = ans.includes(c.n), mine = c.n === pick && !isAns;
+      let ox = info[c.n] && info[c.n].ox; if (!ox && stmt) ox = (isAns === neg) ? 'x' : 'o';
+      let text = h(c.t);
+      const why = info[c.n] && info[c.n].why;
+      if (ox === 'x' && why) wrongBits(why).forEach(([a]) => { text = text.split(h(a)).join(`<span class="bad">${h(a)}</span>`); });
+      return `<div class="chx ${isAns ? 'ans' : ''} ${mine ? 'mine' : ''}">${text}${isAns ? '<span class="bd a">정답</span>' : ''}${mine ? '<span class="bd m">내 선택</span>' : ''}${ox ? `<span class="bd ${ox}">${ox === 'o' ? 'O 맞는 말' : 'X 틀린 말'}</span>` : ''}${why ? `<div class="why">${emph(why).replace(/([가-힣A-Za-z0-9·]{2,15})\s*(?:이|가|은|는)?\s*아니(라|고)/g, '<span class="bad">$1</span> 아니$2')}</div>` : ''}</div>`;
+    }).join('');
+    qt.style.whiteSpace = 'normal'; qt.dataset.dec = sig;
+    // 해설 글도 강조
+    document.querySelectorAll('#aibox .exs, #aibox .ex > div:not([class]), #aibox .st .muted, #aibox .ch span:last-child, #aibox .exm div, #aibox .ext').forEach(el => {
+      if (el.dataset.em || el.querySelector('svg,.tx,table')) return; el.dataset.em = 1; el.innerHTML = emph(el.textContent);
+    });
+  }
+  setInterval(decorateChoices, 700);
+
   /* ---------- 감싸기 ---------- */
   const wrap = (name, after) => {
     const f = window[name]; if (typeof f !== 'function' || f.__app) return;
@@ -309,7 +376,7 @@
     w.textContent = `⏳ ${Math.round((Date.now() - aiT0) / 1000)}초째 · 인터넷으로 만드는 중이라 보통 10~40초 걸려요`;
   }, 1000);
   window.addEventListener('load', () => setTimeout(() => {
-    wrap('quiz', decorateQuiz); wrap('home', decorateHome); wrap('setup', decorateSetup); wrap('wrong', decorateWrong);
+    wrap('quiz', () => { decorateQuiz(); decorateChoices(); }); wrap('home', decorateHome); wrap('setup', decorateSetup); wrap('wrong', decorateWrong);
     const v = document.querySelector('#tabs button.on')?.dataset.v;
     if (v === 'home') decorateHome();
   }, 50));
