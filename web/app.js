@@ -49,9 +49,9 @@
     #ver{font-size:12px;font-weight:500;color:var(--mut,#94a3b8);margin-left:6px;vertical-align:middle}#updb{display:block;width:100%;margin:0 0 12px;padding:14px 16px;border:0;border-radius:14px;background:#2563eb;color:#fff;font:inherit;font-size:17px;font-weight:700;text-align:left;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,.35)}#updb small{display:block;font-size:12.5px;font-weight:500;opacity:.85;margin-top:2px}
     .glb{position:fixed;left:12px;right:12px;bottom:84px;z-index:150;background:#1e1b4b;color:#fff;border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.55;box-shadow:0 8px 24px rgba(0,0,0,.3)}
     .glb b{color:#c4b5fd;margin-right:6px}
-    .lg{font-size:14px} .lg .d{font-weight:700;margin:14px 0 4px;display:flex;justify-content:space-between}
-    .lg .it{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--line,#eee);align-items:center}
-    .lg .it span:first-child{opacity:.6;width:40px;flex:none} .lg .it .g{flex:1} .lg .it .sm{font-size:12px;opacity:.65}
+    .slog{font-size:14px;display:block} .slog .d{font-weight:700;margin:14px 0 4px;display:flex;justify-content:space-between}
+    .slog .it{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--line,#eee);align-items:center}
+    .slog .it span:first-child{opacity:.6;width:40px;flex:none} .slog .it .g{flex:1} .slog .it .sm{font-size:12px;opacity:.65}
     /* 문제 화면 정리: 큰 주요 버튼 + 작은 도구 줄 */
     .tb{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
     .tb>*{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 2px!important;font-size:12px!important;min-height:52px;border-radius:12px!important;text-decoration:none;text-align:center;line-height:1.2}
@@ -502,7 +502,7 @@
     const days = Object.keys(by).slice(0, 14);
     return `<div class="card" id="logc"><h2>🗂 공부 기록</h2>
       <div class="chips" id="logf" style="margin:6px 0"><span class="chip ${sub == null ? '' : 'g'}" data-s="">전체</span>${SUBS.map((n, i) => `<span class="chip ${sub === i ? '' : 'g'}" data-s="${i}">${n}</span>`).join('')}</div>
-      <div class="lg">${days.length ? days.map(k => { const xs = by[k], ok = xs.filter(x => x.ok).length;
+      <div class="slog">${days.length ? days.map(k => { const xs = by[k], ok = xs.filter(x => x.ok).length;
         const d0 = new Date(xs[0].t); const dk = `${d0.getFullYear()}-${String(d0.getMonth() + 1).padStart(2, '0')}-${String(d0.getDate()).padStart(2, '0')}`; const L = lj[dk];
         return `<div class="d"><span>${k}</span><span class="muted">${xs.length}문제 · 정답 ${ok}${L && L.lsec ? ` · 🎧 ${Math.round(L.lsec / 60)}분` : ''}</span></div>` +
           xs.slice(0, 40).map(x => { const q = BYID[x.id], d = new Date(x.t);
@@ -513,7 +513,7 @@
     const old = $('#logc'); const html = logCard(sub);
     if (old) old.outerHTML = html; else { const first = document.querySelector('#view .card'); if (first) first.insertAdjacentHTML('beforebegin', html); else return; }
     $('#logf').onclick = e => { const c = e.target.closest('[data-s]'); if (c) drawLog(c.dataset.s === '' ? null : +c.dataset.s); };
-    $('#logc .lg').onclick = e => { const it = e.target.closest('[data-id]'); if (it && !e.target.closest('.gl')) startQuiz([BYID[it.dataset.id]], { from: 'wrong', title: '기록에서 다시 보기' }); };
+    $("#logc .slog").onclick = e => { const it = e.target.closest('[data-id]'); if (it && !e.target.closest('.gl')) startQuiz([BYID[it.dataset.id]], { from: 'wrong', title: '기록에서 다시 보기' }); };
   }
 
 
