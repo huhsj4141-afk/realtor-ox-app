@@ -87,6 +87,7 @@ class PlayerService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
+        if (prefs.getInt("mapv", 0) < 3) { resetMap(); prefs.edit().putInt("mapv", 3).apply() }   // 새 기본 매핑 적용
         super.onCreate()
         inst = this
         Store.load(this)

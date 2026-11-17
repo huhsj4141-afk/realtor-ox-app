@@ -47,14 +47,14 @@ object Remote {
         "none" to "없음", "toggle" to "재생 / 정지",
         "stepBack" to "한 단계 뒤로 (지문·해설)",
         "stepFwd" to "한 단계 앞으로 (지문·해설)",
-        "itemPrev" to "이전 문항", "itemNext" to "다음 문항",
+        "itemPrev" to "이전 지문 (문항 처음)", "itemNext" to "다음 문항",
         "bookmark" to "★ 북마크", "detail" to "🤖 더 자세히 (인터넷)"
     )
     /** 칸, 화면 이름, 기본 동작 */
     val SLOTS = listOf(
-        Triple("l", "뒤로(왼쪽) 길게", "stepBack"),
+        Triple("l", "왼쪽 길게", "itemPrev"),
         Triple("c", "가운데 길게", "toggle"),
-        Triple("r", "앞으로(오른쪽) 길게", "stepFwd")
+        Triple("r", "오른쪽 길게", "bookmark")
     )
     /** 신호 맞추기 순서: 칸, 버튼 이름 */
     val BUTTONS = listOf("l" to "뒤로(왼쪽) 버튼", "c" to "가운데 버튼", "r" to "앞으로(오른쪽) 버튼")
