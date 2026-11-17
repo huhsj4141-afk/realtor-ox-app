@@ -32,6 +32,6 @@ jobs:
         if: always()
         run: |
           git config user.name bot; git config user.email bot@users.noreply.github.com
-          git add -A private gen/ocrfix.json 2>/dev/null || true
+          git add -A private 2>/dev/null || true; git add gen/ocrfix.json 2>/dev/null || true
           git commit -m "OCR 다시 옮겨 적기 [skip ci]" || true
           git pull --rebase -q && git push || true
