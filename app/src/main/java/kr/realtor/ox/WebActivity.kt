@@ -25,6 +25,7 @@ class WebActivity : Activity() {
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
         if (java.io.File(filesDir, "crash.txt").exists()) startActivity(Intent(this, MainActivity::class.java))
+        Updater.check(this)
         voice = ExoPlayer.Builder(this).build()
         voice.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(s: Int) { if (s == Player.STATE_ENDED) done("done") }

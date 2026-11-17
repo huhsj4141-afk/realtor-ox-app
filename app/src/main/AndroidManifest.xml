@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application android:name=".App" android:label="중개사 공부" android:icon="@android:drawable/ic_lock_silent_mode_off"
         android:theme="@android:style/Theme.Material.NoActionBar" android:allowBackup="true">
@@ -19,6 +20,10 @@
             android:label="OX 듣기"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation" />
         <service android:name=".PlayerService" android:exported="false" android:foregroundServiceType="mediaPlayback" />
+        <provider android:name="androidx.core.content.FileProvider" android:authorities="kr.realtor.ox.files"
+            android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
+        </provider>
         <receiver android:name=".ButtonReceiver" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MEDIA_BUTTON" /></intent-filter>
         </receiver>

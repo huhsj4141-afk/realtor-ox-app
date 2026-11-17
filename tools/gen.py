@@ -371,14 +371,14 @@ def pick_flash():
     # 무료 등급 한도가 넉넉한 Flash-Lite를 씀 (정식판 우선, 최신 버전)
     fl = [n for n in names if 'flash-lite' in n and not re.search(r'tts|image|live|audio|embed|vision|thinking|robotics|computer', n)]
     fl.sort(key=lambda n: ('preview' not in n and 'exp' not in n, ver(n)), reverse=True)
-    log('객관식 해설 모델:', fl[0]); return fl[0]
+    log('객관식 해설 모델 순서:', fl[:3]); return fl[:3]
 
 
 def mc_explanations():
     data = json.load(open(os.path.join(ROOT, 'data', 'mc.json'), encoding='utf8'))
     path = os.path.join(GEN, 'mc_exp.json')
     exp = json.load(open(path, encoding='utf8')) if os.path.exists(path) else {}
-    model = pick_flash()
+    models = pick_flash(); model = models.pop(0)
     n0 = len(exp)
     for q in data:
         if q['id'] in exp: continue
@@ -392,7 +392,9 @@ def mc_explanations():
             txt = ''.join(p.get('text', '') for p in r['candidates'][0]['content']['parts'])
             exp[q['id']] = json.loads(re.search(r'\{.*\}', txt, re.S).group(0))
         except DailyLimit:
-            raise
+            json.dump(exp, open(path, 'w', encoding='utf8'), ensure_ascii=False)
+            if not models: raise
+            model = models.pop(0); log('한도 → 다음 모델', model); continue
         except Exception as e:
             log('  건너뜀', q['id'], str(e)[:100]); continue
         if (len(exp) - n0) % 10 == 0:
