@@ -36,6 +36,10 @@ jobs:
         if: github.event_name != 'push'
         env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', MINUTES: '120', MC_MAX: '400' }
         run: python tools/gen.py mc
+      - name: 객관식 해설 (두 번째 키 — 있으면 무료 한도 한 번 더)
+        if: github.event_name != 'push'
+        env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY_2 }}', MINUTES: '100', MC_MAX: '600' }
+        run: '[ -n "$GEMINI_API_KEY" ] && python tools/gen.py mc || echo "두 번째 키 없음"'
       - name: 진행 저장
         if: always()
         run: |

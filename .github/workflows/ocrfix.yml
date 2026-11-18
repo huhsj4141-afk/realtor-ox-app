@@ -24,13 +24,15 @@ jobs:
           openssl enc -aes-256-cbc -pbkdf2 -salt -pass env:K -in /tmp/priv.pem -out private/priv.enc
       - name: 옮겨 적기
         if: github.event.inputs.step != 'keygen'
-        env: { K: '${{ secrets.GEMINI_API_KEY }}', GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}' }
+        env: { K: '${{ secrets.GEMINI_API_KEY }}', GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', K2: '${{ secrets.GEMINI_API_KEY_2 }}' }
         run: |
           openssl enc -d -aes-256-cbc -pbkdf2 -pass env:K -in private/priv.enc -out /tmp/priv.pem
           openssl pkeyutl -decrypt -inkey /tmp/priv.pem -in private/key.enc -out /tmp/aes.key
           openssl enc -d -aes-256-cbc -pbkdf2 -pass file:/tmp/aes.key -in private/pages.enc | tar xf - -C /tmp
           python3 tools/oxmark.py || true          # OX 틀린 지문의 틀린 부분 표시 (먼저, 금방 끝남)
-          python3 tools/ocrfix.py /tmp/pg2
+          python3 tools/ocrfix.py /tmp/pg2 || true
+          # 두 번째 키(다른 구글 프로젝트 = 무료 한도 따로)가 있으면 이어서 한 번 더
+          if [ -n "$K2" ]; then GEMINI_API_KEY="$K2" python3 tools/oxmark.py || true; GEMINI_API_KEY="$K2" python3 tools/ocrfix.py /tmp/pg2 || true; fi
       - name: 앱 문항에 반영
         if: github.event.inputs.step != 'keygen'
         run: |
