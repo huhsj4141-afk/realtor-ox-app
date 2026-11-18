@@ -388,12 +388,9 @@
   function managerCard() {
     const d = diagnose();
     return `<div class="card" id="mgr"><div class="row"><h2 class="grow">🧭 학습 매니저</h2><b style="color:${d.grade[1]}">${d.grade[0]}</b></div>
-      <div class="muted" style="font-size:13px">최근 7일 ${d.days}일 · ${d.tot}문제</div>
-      ${d.notes.length ? `<div style="margin:10px 0 4px;font-weight:600">채울 곳</div><ul style="margin:0;padding-left:18px;font-size:14px;line-height:1.6">${d.notes.slice(0, 4).map(n => `<li>${n}</li>`).join('')}</ul>` : '<div style="margin-top:8px">빠진 곳 없이 골고루 하고 있어요 👍</div>'}
-      <details style="margin-top:8px"><summary class="muted" style="font-size:13px">과목 균형 보기 (막대=이번 주 비중, 선=시험 비중)</summary><div class="rd" style="margin-top:8px">${d.bars}</div></details>
-      <div style="margin:14px 0 6px;font-weight:600">지금 어디서 공부해요?</div>
-      <div class="sit">${SITU.map(([k, i, t, sub]) => `<button data-s="${k}"><b>${i} ${t}</b><span>${sub}</span></button>`).join('')}</div>
-      <div class="muted" style="font-size:12px;margin-top:8px">어떤 상황이든 과목·단원을 번갈아 고르고, 최근에 푼 문제는 빼요.</div></div>`;
+      ${d.notes.length ? `<ul style="margin:6px 0 0;padding-left:18px;font-size:14px;line-height:1.6">${d.notes.slice(0, 2).map(n => `<li>${n}</li>`).join('')}</ul>` : '<div style="margin-top:6px">빠진 곳 없이 골고루 하고 있어요 👍</div>'}
+      <details style="margin-top:10px"><summary style="font-weight:600">📍 상황별로 고르기 (잠·버스·도서관…)</summary>
+      <div class="sit" style="margin-top:8px">${SITU.map(([k, i, t, sub]) => `<button data-s="${k}"><b>${i} ${t}</b><span>${sub}</span></button>`).join('')}</div></details></div></div>`;
   }
 
 
@@ -526,6 +523,7 @@
     let el = document.getElementById('themecss'); if (!el) { el = document.createElement('style'); el.id = 'themecss'; document.head.appendChild(el); }
     el.textContent = themeCss(k);
     try { localStorage.setItem('reb_theme', k); } catch (e) {}
+    try { const t = THEMES[k], nb = window.NativeBridge; if (nb && nb.setTheme) nb.setTheme(t && t.bg ? JSON.stringify(t) : ''); } catch (e) {}   // 듣기 화면도 같은 색
   }
   try { applyTheme(localStorage.getItem('reb_theme') || 'auto'); } catch (e) {}
   function themeCard() {
@@ -785,7 +783,7 @@
   const nzLevel = () => NZ.vol * NZ.vol * ((window.__tts && __tts.busy && __tts.busy()) ? .35 : 1);
   setInterval(() => { if (NZ.src && NZ.gain) NZ.gain.gain.setTargetAtTime(nzLevel(), NZ.ctx.currentTime, .3); }, 500);
   function nzUi() {
-    const b = document.getElementById('nzb'); if (b) { b.classList.toggle('on', !!NZ.type); b.textContent = NZ.type ? '🌧' : '🌙'; }
+    const b = document.getElementById('nzb'); if (b) { b.classList.toggle('on', !!NZ.type); b.textContent = '🌊'; }
     document.querySelectorAll('#nzp [data-n]').forEach(x => x.classList.toggle('on', x.dataset.n === NZ.type));
   }
   function nzPanel() {
@@ -803,7 +801,7 @@
     nzUi();
   }
   (function nzBtn() {
-    const b = document.createElement('button'); b.id = 'nzb'; b.textContent = '🌙'; b.setAttribute('aria-label', '집중 소음');
+    const b = document.createElement('button'); b.id = 'nzb'; b.textContent = '🌊'; b.setAttribute('aria-label', '집중 소음');
     b.onclick = nzPanel; hdrPut(b);
     const g = document.getElementById('hdrb'); if (g && g.firstChild !== b) g.insertBefore(b, g.firstChild);
   })();
@@ -946,7 +944,7 @@ ${q.x}
       [...document.querySelectorAll('#view .card')].forEach(c => { if (/내용 업데이트/.test(c.textContent.slice(0, 40))) c.style.display = 'none'; });
       document.querySelectorAll('#view > .muted, #view > p.muted, #view .foot').forEach(e => { if (/사용량|요금/.test(e.textContent)) e.style.display = 'none'; });
       const a = cardBy(/회독 진도/), b = cardBy(/과목별 수준/);
-      if (a && b && !a.dataset.fold) { fold(a, '📚 회독 진도'); fold(b, '📊 과목별 수준'); }
+      if (a && b && !a.dataset.fold) { fold(a, '📈 진도·과목별 수준'); a.dataset.fold = 1; b.classList.remove('card'); b.classList.add('foldin'); a.after(b); }
     }
     if (cur === 'wrong') {
       const empty = c => c && !c.querySelector('li, table, button') && c.textContent.trim().length < 150;   // 안내 문장만 있고 항목이 없는 카드

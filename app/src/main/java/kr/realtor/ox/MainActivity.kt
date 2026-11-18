@@ -40,19 +40,20 @@ class MainActivity : Activity() {
     private lateinit var playBtn: Button
     private var keyV: TextView? = null
     private lateinit var mapBox: LinearLayout
-    private val speedBtns = ArrayList<Pair<Float, Button>>()
     private val gapBtns = ArrayList<Pair<Int, Button>>()
     private var synced = false
     // 화면 테마: auto(낮 7~19시 밝게, 밤 어둡게) / light / dark
     private val prefs by lazy { getSharedPreferences("ox", android.content.Context.MODE_PRIVATE) }
-    private fun wantDark(): Boolean = when (prefs.getString("theme", "auto")) {
-        "dark" -> true; "light" -> false
-        else -> (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES   // 폰 다크 모드를 따라감(학습 화면과 같게)
-    }
+    // 학습 화면에서 고른 색 테마(🎨)를 그대로 따라감. '자동'이면 폰 다크 모드를 따라감
+    private val wt: org.json.JSONObject? by lazy { try { prefs.getString("wtheme", "")!!.let { if (it.isBlank()) null else org.json.JSONObject(it) } } catch (e: Exception) { null } }
+    private fun wantDark(): Boolean = wt?.let { it.optInt("dark", 0) == 1 } ?: ( (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES)
     private var dk = false
-    private fun c(light: String, dark: String) = Color.parseColor(if (dk) dark else light)
-    private val TXT get() = if (dk) "#E8EBF1" else "#1D2433"
-    private val SUB get() = if (dk) "#9AA3B5" else "#6B7385"
+    private val WK = mapOf("#12151B" to "bg", "#1B1F27" to "card", "#262B35" to "line", "#2C3240" to "line", "#1F2A44" to "pri2")
+    private fun w(k: String): String? = wt?.optString(k, "")?.ifBlank { null }
+    private fun c(light: String, dark: String) = Color.parseColor(WK[dark]?.let { w(it) } ?: if (dk) dark else light)
+    private val TXT get() = w("ink") ?: if (dk) "#E8EBF1" else "#1D2433"
+    private val SUB get() = w("sub2") ?: if (dk) "#9AA3B5" else "#6B7385"
+    private val PRI get() = w("pri") ?: if (dk) "#6F9BFF" else "#2457C5"
     private var spinBusy = false
 
     // 화면이 켜져 있을 때 들어오는 리모컨 키도 같은 매핑으로
@@ -102,7 +103,7 @@ class MainActivity : Activity() {
     private fun btn(t: String, primary: Boolean = false, f: () -> Unit) = Button(this).apply {
         text = t; isAllCaps = false; textSize = 16f
         setTextColor(if (primary) Color.WHITE else Color.parseColor(TXT))
-        background = round(if (primary) Color.parseColor("#2563EB") else c("#EEF1F5", "#262B35"), 12)
+        background = round(if (primary) Color.parseColor(w("pri") ?: "#2563EB") else c("#EEF1F5", "#262B35"), 12)
         layoutParams = LinearLayout.LayoutParams(0, dp(56), 1f).apply { setMargins(dp(4), dp(4), dp(4), dp(4)) }
         setOnClickListener { f() }
     }
@@ -131,91 +132,70 @@ class MainActivity : Activity() {
         Gloss.load(this)
         stmt.movementMethod = android.text.method.LinkMovementMethod.getInstance()
         expV.movementMethod = android.text.method.LinkMovementMethod.getInstance()
-        todayV = tv("", 13f, color = SUB).apply { setPadding(0, dp(2), 0, 0) }
         stmt.textSize = 21f; stmt.setLineSpacing(0f, 1.35f)
         listOf(spinner, pos, stmt, expV).forEach { c1.addView(it) }
         col.addView(c1)
 
-        // 조작 버튼 (리모컨 동작과 같은 것만)
+        // 조작: 큰 줄(이전·재생·다음) + 작은 줄(다시·★·자세히·속도·타이머)
         val c2 = card()
-        playBtn = btn("▶ 재생", true) { svc?.act("toggle") }
-        c2.addView(row(btn("◀ 뒤로") { svc?.act("stepBack") }, playBtn, btn("앞으로 ▶") { svc?.act("stepFwd") }))
-        fun small(b: Button) = b.apply { textSize = 14f; layoutParams = LinearLayout.LayoutParams(0, dp(46), 1f).apply { setMargins(dp(3), dp(4), dp(3), dp(2)) } }
-        c2.addView(row(small(btn("⏮ 이전 문항") { svc?.act("itemPrev") }), small(btn("다음 문항 ⏭") { svc?.act("itemNext") })))
-        c2.addView(row(small(btn("★ 북마크") { svc?.act("bookmark") }), small(btn("🤖 더 자세히") { svc?.act("detail") ?: android.widget.Toast.makeText(this, "먼저 ▶ 재생을 눌러 주세요", android.widget.Toast.LENGTH_SHORT).show() })))
+        playBtn = btn("▶ 재생", true) { svc?.act("toggle") }.apply { layoutParams = LinearLayout.LayoutParams(0, dp(60), 2f).apply { setMargins(dp(4), dp(4), dp(4), dp(4)) } }
+        c2.addView(row(btn("⏮") { svc?.act("itemPrev") }.apply { textSize = 20f }, playBtn, btn("⏭") { svc?.act("itemNext") }.apply { textSize = 20f }))
+        fun small(b: Button) = b.apply { textSize = 13f; setPadding(0, 0, 0, 0); minWidth = 0; minimumWidth = 0; layoutParams = LinearLayout.LayoutParams(0, dp(44), 1f).apply { setMargins(dp(3), dp(3), dp(3), dp(3)) } }
+        speedBtn = small(btn("1배") {
+            val l = listOf(0.8f, 1f, 1.2f, 1.5f); val s = svc ?: return@btn
+            s.speed = l[(l.indexOfFirst { abs(it - s.speed) < .01f } + 1) % l.size] })
+        timerBtn = small(btn("⏱") { timerDialog() })
+        c2.addView(row(small(btn("↩ 다시") { svc?.act("stepBack") }), small(btn("★") { svc?.act("bookmark") }),
+            small(btn("🤖 자세히") { svc?.act("detail") ?: android.widget.Toast.makeText(this, "먼저 ▶ 재생을 눌러 주세요", android.widget.Toast.LENGTH_SHORT).show() }), speedBtn, timerBtn))
         alertBtn = wide(btn("🚌 하차 알림 끄기", true) { svc?.stopAlert() }).apply { visibility = View.GONE }
         c2.addView(alertBtn)
         col.addView(c2)
 
-        // 타이머
-        val ct = card()
-        fun tb(t: String, f: () -> Unit) = btn(t, false, f).apply { textSize = 14f; layoutParams = LinearLayout.LayoutParams(0, dp(42), 1f).apply { setMargins(dp(3), dp(3), dp(3), dp(3)) } }
-        ct.addView(tv("😴 잠자기 타이머", 15f, true))
-        ct.addView(row(*listOf(0, 15, 30, 60).map { m -> tb(if (m == 0) "끄기" else "${m}분") { svc?.setSleep(m) } }.toTypedArray()))
-        ct.addView(tv("🚌 하차 알림", 15f, true).apply { setPadding(0, dp(10), 0, 0) })
-        ct.addView(row(*listOf(0, 10, 20, 30, 40).map { m -> tb(if (m == 0) "끄기" else "${m}분") { svc?.setBus(m) } }.toTypedArray()))
-        timerV = tv("", 14f).apply { setPadding(0, dp(6), 0, 0) }
-        ct.addView(timerV)
-        col.addView(ct)
-
-        // 듣는 방식
+        // ---- 아래는 모두 ⚙ 설정 안에 접어 둠 ----
         val c3 = card()
         c3.addView(CheckBox(this).apply { text = "계속 듣기 (끄면 한 문항씩 멈춰요)"; textSize = 15f; setTextColor(Color.parseColor(TXT))
-            isChecked = getSharedPreferences("ox", android.content.Context.MODE_PRIVATE).getBoolean("cont", false)
-            setOnCheckedChangeListener { _, v -> svc?.continuous = v } })
+            isChecked = prefs.getBoolean("cont", false); setOnCheckedChangeListener { _, v -> svc?.continuous = v } })
         c3.addView(CheckBox(this).apply { text = "동작 안내 말하기 (\"다음 지문\" 등)"; textSize = 15f; setTextColor(Color.parseColor(TXT))
-            isChecked = getSharedPreferences("ox", android.content.Context.MODE_PRIVATE).getBoolean("vcue", true)
-            setOnCheckedChangeListener { _, v -> svc?.voiceCue = v } })
-        c3.addView(tv("속도", 14f, true).apply { setPadding(0, dp(8), 0, 0) })
-        c3.addView(row(*listOf(0.8f, 1f, 1.2f, 1.5f).map { v -> btn("${v}배") { svc?.speed = v }.also { speedBtns.add(v to it) } }.toTypedArray()))
+            isChecked = prefs.getBoolean("vcue", true); setOnCheckedChangeListener { _, v -> svc?.voiceCue = v } })
         c3.addView(tv("지문 뒤 생각 시간", 14f, true).apply { setPadding(0, dp(8), 0, 0) })
-        c3.addView(row(*listOf(1, 3, 5, 8).map { v -> btn("${v}초") { svc?.gapSec = v }.also { gapBtns.add(v to it) } }.toTypedArray()))
-        c3.addView(tv("화면", 14f, true).apply { setPadding(0, dp(8), 0, 0) })
-        val th = prefs.getString("theme", "auto")
-        c3.addView(row(*listOf("auto" to "자동 (낮·밤)", "light" to "밝게", "dark" to "어둡게").map { (k, n) ->
-            btn(n) { prefs.edit().putString("theme", k).apply(); recreate() }.apply { alpha = if (k == th) 1f else .45f } }.toTypedArray()))
-        col.addView(c3)
+        c3.addView(row(*listOf(1, 3, 5, 8).map { v -> small(btn("${v}초") { svc?.gapSec = v }).also { gapBtns.add(v to it) } }.toTypedArray()))
+        usageV = tv("", 13f, color = SUB).apply { setPadding(0, dp(10), 0, 0) }
+        c3.addView(usageV)
 
-        val cu = card()
-        cu.addView(tv("💰 이번 달 사용량·요금", 16f, true))
-        usageV = tv("", 14f, color = SUB).apply { setPadding(0, dp(6), 0, 0) }
-        cu.addView(usageV)
-        cu.addView(wide(btn("🔄 업데이트 확인 (지금 v${Updater.version(this)})") { Updater.check(this, true) }))
-        col.addView(cu)
-
-        // 인터넷 기능 키 (더 자세히·문제 해설 AI): 직접 붙여넣어 폰에만 저장
+        // 인터넷 기능 키: 직접 붙여넣어 폰에만 저장
         val c5 = card()
-        c5.addView(tv("🔑 키 설정 (더 자세히·AI 해설용)", 16f, true))
+        c5.addView(tv("🔑 키 (더 자세히·AI 해설용)", 15f, true))
         listOf("gemini" to "Gemini API 키", "tts" to "구글 클라우드 음성 키").forEach { (k, n) ->
             val f = android.widget.EditText(this).apply {
                 hint = n; textSize = 14f; setTextColor(Color.parseColor(TXT)); setHintTextColor(Color.parseColor(SUB))
                 inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
                 setText(prefs.getString("key_$k", ""))
+                setOnFocusChangeListener { _, has -> if (!has) prefs.edit().putString("key_$k", text.toString().trim()).apply() }
             }
             c5.addView(f)
-            c5.addView(wide(btn("$n 저장") { prefs.edit().putString("key_$k", f.text.toString().trim()).apply(); android.widget.Toast.makeText(this, "저장했어요", android.widget.Toast.LENGTH_SHORT).show() }))
         }
+        c5.addView(wide(btn("키 저장") { currentFocus?.clearFocus(); android.widget.Toast.makeText(this, "저장했어요", android.widget.Toast.LENGTH_SHORT).show() }))
         col.addView(c5)
 
         // 리모컨 매핑
         val c4 = card()
-        c4.addView(tv("🎮 링 리모컨", 16f, true))
-        c4.addView(tv("화면이 꺼져도 되는 건 왼쪽·가운데·오른쪽 길게 누르기 3개뿐이에요. 오른쪽 칸을 눌러 동작을 바꿀 수 있어요.", 13f, color = SUB).apply { setPadding(0, dp(4), 0, dp(4)) })
+        c4.addView(tv("🎮 링 리모컨", 15f, true))
+        c4.addView(tv("화면이 꺼져도 되는 건 왼쪽·가운데·오른쪽 길게 누르기 3개예요. 오른쪽 칸을 눌러 바꿔요.", 13f, color = SUB).apply { setPadding(0, dp(4), 0, dp(4)) })
         mapBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         c4.addView(mapBox)
         keyV = tv("", 13f, color = SUB).apply { setPadding(0, dp(6), 0, 0) }
         c4.addView(keyV)
         c4.addView(wide(btn("기본값으로") { svc?.resetMap(); drawMap() }))
         col.addView(c4)
+        col.addView(c3, col.indexOfChild(c5))
 
-        // 자주 안 쓰는 설정(사용량·키·리모컨)은 접어 두기. 키가 비어 있으면 펼쳐서 보여 줌
-        val more = listOf(cu, c5, c4)
+        val more = listOf(c3, c5, c4)
         val needKey = prefs.getString("key_gemini", "").isNullOrBlank() || prefs.getString("key_tts", "").isNullOrBlank()
         var open = needKey || prefs.getBoolean("moreOpen", false)
-        val tg = btn("") { }
-        fun apply() { more.forEach { it.visibility = if (open) View.VISIBLE else View.GONE }; tg.text = if (open) "⚙ 설정 접기" else "⚙ 사용량·키·리모컨 설정" }
+        val tg = btn("") { }.apply { textSize = 14f; setTextColor(Color.parseColor(SUB)); background = null }
+        fun apply() { more.forEach { it.visibility = if (open) View.VISIBLE else View.GONE }; tg.text = if (open) "⚙ 설정 접기 ▲" else "⚙ 설정 ▼" }
         tg.setOnClickListener { open = !open; prefs.edit().putBoolean("moreOpen", open).apply(); apply() }
-        col.addView(wide(tg), col.indexOfChild(cu)); apply()
+        col.addView(wide(tg), col.indexOfChild(c3)); apply()
 
         // 가운데 정렬, 넓은 화면에서도 너무 퍼지지 않게
         col.layoutParams = FrameLayout.LayoutParams(minOf(resources.displayMetrics.widthPixels, dp(640)), FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL)
@@ -232,7 +212,7 @@ class MainActivity : Activity() {
         val px = if (m.size == 7) m else listOf(dp(63), dp(9), dp(25), dp(56), dp(21), dp(12), dp(19))
         val (navH, iconTop, iconH, iconW) = px; val iconFs = px[4]; val labFs = px[5]; val labLh = px[6]
         val line = maxOf(1, dp(1) / 2)
-        val pri = Color.parseColor(if (dk) "#6F9BFF" else "#2457C5")
+        val pri = Color.parseColor(PRI)
         val wrap = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(c("#FFFFFF", "#1B1F27")) }
         wrap.addView(View(this).apply { setBackgroundColor(c("#E3E6EC", "#2C3240")); layoutParams = LinearLayout.LayoutParams(-1, line) })
         val bar = LinearLayout(this).apply { gravity = Gravity.CENTER_HORIZONTAL; layoutParams = LinearLayout.LayoutParams(-1, navH - line) }
@@ -317,11 +297,17 @@ class MainActivity : Activity() {
     }
     private var textSig = ""
     private var usageV: TextView? = null
-    private var todayV: TextView? = null
-    private var timerV: TextView? = null
     private lateinit var alertBtn: Button
+    private lateinit var speedBtn: Button
+    private lateinit var timerBtn: Button
+    private fun timerDialog() {
+        val o = listOf("😴 잠자기 15분" to { svc?.setSleep(15) }, "😴 잠자기 30분" to { svc?.setSleep(30) }, "😴 잠자기 60분" to { svc?.setSleep(60) },
+            "🚌 하차 알림 10분" to { svc?.setBus(10) }, "🚌 하차 알림 20분" to { svc?.setBus(20) }, "🚌 하차 알림 30분" to { svc?.setBus(30) }, "🚌 하차 알림 40분" to { svc?.setBus(40) },
+            "⏹ 타이머 모두 끄기" to { svc?.setSleep(0); svc?.setBus(0) })
+        AlertDialog.Builder(this).setTitle("⏱ 타이머").setItems(o.map { it.first }.toTypedArray()) { _, i -> o[i].second() }.setNegativeButton("닫기", null).show()
+    }
     private var slowAt = 0L
-    private val LISTS = listOf("mix" to "🔀 골고루 섞기 (과목·단원 번갈아, 덜 들은 것부터)", "bm" to "★ 북마크만 듣기", "wrong" to "❌ 틀린 문제 지문만", "review" to "🔁 오늘 복습 (북마크·틀린 문제)")
+    private val LISTS = listOf("mix" to "🔀 골고루 섞기", "bm" to "★ 북마크", "wrong" to "❌ 틀린 문제", "review" to "🔁 복습하기")
     private fun mmss(sec: Int) = "%d:%02d".format(sec / 60, sec % 60)
     private fun refresh() {
         usageV?.text = Usage.summary(this)
@@ -331,14 +317,9 @@ class MainActivity : Activity() {
         keyV?.text = if (s.lastKey.isEmpty()) "마지막으로 받은 신호: 아직 없음" else "마지막으로 받은 신호: ${s.lastKey}"
         val want = if (s.isList) Store.tracks.size + LISTS.indexOfFirst { it.first == s.mode } else s.trackIdx
         alertBtn.visibility = if (s.alerting) View.VISIBLE else View.GONE
-        timerV?.text = listOfNotNull(
-            if (s.sleepEnd > 0) "⏲ 잠자기 ${mmss(s.left(s.sleepEnd))} 남음" else null,
-            if (s.busEnd > 0) "🚌 하차 알림 ${mmss(s.left(s.busEnd))} 남음" else null,
-            if (s.alerting) "🚌 지금 하차 알림 중!" else null).joinToString("\n").ifEmpty { "켜진 타이머 없음" }
-        if (SystemClock.elapsedRealtime() - slowAt > 5000) {      // 무거운 계산은 5초마다
-            slowAt = SystemClock.elapsedRealtime()
-            todayV?.text = "${Study.todayLine(this)} · 오늘 복습할 지문 ${s.itemsOf("review").size}개"
-        }
+        timerBtn.text = listOfNotNull(
+            if (s.sleepEnd > 0) "😴${s.left(s.sleepEnd) / 60 + 1}분" else null,
+            if (s.busEnd > 0) "🚌${s.left(s.busEnd) / 60 + 1}분" else null).joinToString(" ").ifEmpty { "⏱" }
         if (spinner.selectedItemPosition != want) { spinBusy = true; spinner.setSelection(want, false); h.post { spinBusy = false } }
         val (q, ph) = s.phase()
         val it = s.queue.getOrNull(q)
@@ -353,7 +334,7 @@ class MainActivity : Activity() {
             expV.text = expText(it, ph == 'E', if (it != null && s.detailKey == it.key) s.detailText else "")
         }
         playBtn.text = if (s.player.isPlaying) "⏸ 정지" else "▶ 재생"
-        speedBtns.forEach { (v, b) -> b.alpha = if (abs(v - s.speed) < .01f) 1f else .45f }
+        speedBtn.text = "${if (s.speed % 1f == 0f) s.speed.toInt().toString() else s.speed.toString()}배"
         gapBtns.forEach { (v, b) -> b.alpha = if (v == s.gapSec) 1f else .45f }
     }
 }
