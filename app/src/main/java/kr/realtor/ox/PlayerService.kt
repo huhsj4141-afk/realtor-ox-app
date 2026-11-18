@@ -294,7 +294,7 @@ class PlayerService : Service() {
                         val files = Net.speech(this, t)
                         h.post { note("")
                             cue.setMediaItems(files.map { f -> MediaItem.fromUri(Uri.fromFile(f)) }); cue.setPlaybackSpeed(speed); cue.prepare(); cue.play() }
-                    } catch (e: Exception) { h.post { note("더 자세히 실패: ${e.message?.take(160)}", 15000) } }
+                    } catch (e: Exception) { h.post { note("더 자세히 실패: " + Net.friendly(e), 15000) } }
                 }.start()
             }
             "bookmark" -> {

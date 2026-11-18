@@ -140,13 +140,13 @@ class MainActivity : Activity() {
         val c2 = card()
         playBtn = btn("▶ 재생", true) { svc?.act("toggle") }.apply { layoutParams = LinearLayout.LayoutParams(0, dp(60), 2f).apply { setMargins(dp(4), dp(4), dp(4), dp(4)) } }
         c2.addView(row(btn("⏮") { svc?.act("itemPrev") }.apply { textSize = 20f }, playBtn, btn("⏭") { svc?.act("itemNext") }.apply { textSize = 20f }))
-        fun small(b: Button) = b.apply { textSize = 13f; setPadding(0, 0, 0, 0); minWidth = 0; minimumWidth = 0; layoutParams = LinearLayout.LayoutParams(0, dp(44), 1f).apply { setMargins(dp(3), dp(3), dp(3), dp(3)) } }
+        fun small(b: Button) = b.apply { textSize = 13f; setPadding(0, 0, 0, 0); minWidth = 0; minimumWidth = 0; maxLines = 1; isSingleLine = true; layoutParams = LinearLayout.LayoutParams(0, dp(44), 1f).apply { setMargins(dp(3), dp(3), dp(3), dp(3)) } }
         speedBtn = small(btn("1배") {
             val l = listOf(0.8f, 1f, 1.2f, 1.5f); val s = svc ?: return@btn
             s.speed = l[(l.indexOfFirst { abs(it - s.speed) < .01f } + 1) % l.size] })
         timerBtn = small(btn("⏱") { timerDialog() })
         c2.addView(row(small(btn("↩ 다시") { svc?.act("stepBack") }), small(btn("★") { svc?.act("bookmark") }),
-            small(btn("🤖 자세히") { svc?.act("detail") ?: android.widget.Toast.makeText(this, "먼저 ▶ 재생을 눌러 주세요", android.widget.Toast.LENGTH_SHORT).show() }), speedBtn, timerBtn))
+            small(btn("🤖더보기") { svc?.act("detail") ?: android.widget.Toast.makeText(this, "먼저 ▶ 재생을 눌러 주세요", android.widget.Toast.LENGTH_SHORT).show() }), speedBtn, timerBtn))
         alertBtn = wide(btn("🚌 하차 알림 끄기", true) { svc?.stopAlert() }).apply { visibility = View.GONE }
         c2.addView(alertBtn)
         col.addView(c2)
@@ -292,7 +292,7 @@ class MainActivity : Activity() {
             b.setSpan(android.text.style.RelativeSizeSpan(1.1f), 0, head.length, 0)
             b.append("\n").append(it.exp)
         }
-        if (detail.isNotEmpty()) b.append("\n\n🤖 ").append(detail)
+        if (detail.isNotEmpty()) b.append(if (b.isEmpty()) "🤖 " else "\n\n🤖 ").append(detail.trim())
         return glossed(b)
     }
     private var textSig = ""

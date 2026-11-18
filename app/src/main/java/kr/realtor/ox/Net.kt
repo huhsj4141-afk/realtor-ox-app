@@ -14,6 +14,19 @@ object Net {
     val CHAIN = listOf("gemini-3.8-flash", "gemini-3.5-flash", "gemini-2.5-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash-lite")
     fun key(ctx: Context, name: String) = ctx.getSharedPreferences("ox", Context.MODE_PRIVATE).getString("key_$name", "") ?: ""
 
+    /** 오류를 짧은 우리말로 */
+    fun friendly(e: Exception): String {
+        val m = e.message ?: ""
+        return when {
+            "429" in m || "RESOURCE_EXHAUSTED" in m -> "오늘 AI 사용량을 다 썼어요 (오후 5시에 다시 차요)"
+            "키가 없어요" in m -> m
+            "403" in m || "API key" in m -> "키가 맞지 않아요. ⚙ 설정에서 키를 확인해 주세요"
+            "too long" in m -> "문장이 너무 길어 음성을 못 만들었어요. 다시 눌러 주세요"
+            e is java.net.UnknownHostException || e is java.net.SocketTimeoutException -> "인터넷 연결을 확인해 주세요"
+            else -> "잠시 뒤 다시 눌러 주세요"
+        }
+    }
+
     fun post(url: String, body: String): String {
         val c = URL(url).openConnection() as HttpURLConnection
         c.requestMethod = "POST"; c.doOutput = true; c.connectTimeout = 15000; c.readTimeout = 120000
@@ -78,11 +91,25 @@ object Net {
         }
     }
 
+    /** 음성 서버는 한 문장이 너무 길면 거절해요 → 긴 문장은 쉼표·띄어쓰기에서 잘라 짧은 문장으로 */
+    private fun sentences(text: String): List<String> {
+        val out = ArrayList<String>()
+        Regex("[^.!?。\\n]+[.!?。]?").findAll(text).map { it.value.trim() }.filter { it.isNotEmpty() }.forEach { s0 ->
+            var s = s0
+            while (s.length > 110) {
+                val cut = listOf(s.lastIndexOf(", ", 100), s.lastIndexOf(" ", 100)).firstOrNull { it > 30 } ?: 100
+                out.add(s.substring(0, cut).trim().trimEnd(',') + "."); s = s.substring(cut).trim()
+            }
+            if (s.isNotEmpty()) out.add(if (s.last() in ".!?。") s else "$s.")
+        }
+        return out
+    }
+
     private fun chunks(text: String): List<String> {
         val out = ArrayList<String>(); val sb = StringBuilder()
-        Regex("[^.!?。\\n]+[.!?。]?\\s*").findAll(text).map { it.value }.forEach { s ->
-            if (sb.length + s.length > 400 && sb.isNotEmpty()) { out.add(sb.toString().trim()); sb.clear() }
-            sb.append(s)
+        sentences(text).forEach { s ->
+            if (sb.length + s.length > 300 && sb.isNotEmpty()) { out.add(sb.toString().trim()); sb.clear() }
+            sb.append(s).append(' ')
         }
         if (sb.isNotBlank()) out.add(sb.toString().trim())
         return out.filter { it.isNotBlank() }
