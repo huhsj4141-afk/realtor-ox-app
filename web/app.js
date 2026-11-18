@@ -46,7 +46,7 @@
     #aibox .st li{margin:8px 0} #aibox .st .muted{color:inherit!important;opacity:.85;font-size:14px!important;line-height:1.6}
     .gl{text-decoration:underline dotted #8b5cf699;text-underline-offset:4px;text-decoration-thickness:1.5px;cursor:help}
     .elh{font-size:12.5px;color:var(--mut,#94a3b8);margin:8px 0 2px}.elc{padding:3px 4px;margin:0 -4px;border-radius:8px;cursor:pointer;white-space:pre-wrap;transition:opacity .15s}.elc:active{background:rgba(148,163,184,.12)}.elc.x{text-decoration:line-through;text-decoration-color:#ef4444;text-decoration-thickness:3px;opacity:.4}.choices button.elx{opacity:.35;text-decoration:line-through;text-decoration-color:#ef4444}
-    #ver{flex:none;font:inherit;font-size:13px;font-weight:600;color:var(--pri);background:var(--pri2);border:0;border-radius:999px;padding:6px 12px;cursor:pointer}#updb{display:block;width:100%;margin:0 0 12px;padding:14px 16px;border:0;border-radius:14px;background:#2563eb;color:#fff;font:inherit;font-size:17px;font-weight:700;text-align:left;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,.35)}#updb small{display:block;font-size:12.5px;font-weight:500;opacity:.85;margin-top:2px}
+    #ver{flex:none;font:inherit;font-size:13px;font-weight:600;color:var(--pri);background:var(--pri2);border:0;border-radius:999px;padding:6px 12px;cursor:pointer}#updb{display:block;width:100%;margin:0 0 12px;padding:14px 16px;border:0;border-radius:14px;background:var(--pri);color:#fff;font:inherit;font-size:17px;font-weight:700;text-align:left;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,.35)}#updb small{display:block;font-size:12.5px;font-weight:500;opacity:.85;margin-top:2px}
     .qno{font-size:12.5px;opacity:.55;align-self:center;margin-left:auto}
     .fb.top small,.fb.top span{font-size:13px;font-weight:600} .fb.top{font-size:18px;font-weight:800;padding:12px 14px;margin:12px 0 10px;border-radius:12px}
     .chx:not(.ans):not(.mine){opacity:.82} .chx.ans{border-width:2px} .chx .bd{font-size:11px}
@@ -65,6 +65,7 @@
     #padc{flex:1;min-height:0;margin:0 10px 10px;border-radius:12px;touch-action:none;background-color:var(--bg);background-image:linear-gradient(rgba(148,163,184,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.12) 1px,transparent 1px);background-size:24px 24px}
     #padt{flex:1;margin:4px 10px 10px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:16px;line-height:1.6;padding:12px;resize:none}
     .rdg{background:rgba(250,204,21,.32)!important;box-shadow:0 0 0 3px #facc15,0 0 18px rgba(250,204,21,.45)!important;border-radius:8px;font-weight:700!important;color:var(--ink)!important;transition:background .2s,box-shadow .2s} .rdg *{color:inherit}
+    .thg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px} .thm{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border:1.5px solid var(--line);border-radius:14px;background:transparent;color:var(--ink);font:inherit;cursor:pointer} .thm.on{border-color:var(--pri);box-shadow:0 0 0 2px var(--pri2)} .thm .sw{position:relative;width:46px;height:30px;border-radius:9px;overflow:hidden;border:1px solid rgba(128,128,128,.3)} .thm .sw i{position:absolute;left:6px;top:6px;width:22px;height:18px;border-radius:5px} .thm .sw b{position:absolute;right:6px;bottom:6px;width:12px;height:12px;border-radius:50%} .thm .nm{font-size:13.5px;font-weight:700} .thm small{font-size:11px;color:var(--sub)}
     .glb{position:fixed;left:12px;right:12px;bottom:84px;z-index:150;background:#1e1b4b;color:#fff;border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.55;box-shadow:0 8px 24px rgba(0,0,0,.3)}
     .glb b{color:#c4b5fd;margin-right:6px}
     .slog{font-size:14px;display:block} .slog .d{font-weight:700;margin:14px 0 4px;display:flex;justify-content:space-between}
@@ -253,6 +254,7 @@
     cleanCards([]);
     document.querySelectorAll('#view .card').forEach(c => { if (/claude\.ai에서 열면/.test(c.textContent) && c.textContent.length < 160) c.remove(); });
     if (!$('#logc')) drawLog(null);
+    themeCard();
     const first = document.querySelector('#view .card:not(#logc)');
     const un = unsureIds().length;
     if (first && un && !$('#wun')) {
@@ -476,6 +478,41 @@
   }
   setInterval(trimEx, 500);
 
+
+  /* ---------- 🎨 화면 색 테마 (기록 탭 맨 아래에서 고르기) ---------- */
+  const DK = { ok: '#4cc17d', okb: '#163324', no: '#ff7676', nob: '#3a1d1f', warn: '#f0b638', warnb: '#3a2f14' };
+  const LT = { ok: '#1f9d55', okb: '#e6f6ec', no: '#d64545', nob: '#fdeaea', warn: '#c98a00', warnb: '#fff6e0' };
+  const THEMES = {
+    auto:     { name: '자동', sub: '폰 설정 따라' },
+    night:    { name: '밤하늘', sub: '기본 어두운', dark: 1, bg: '#12151b', card: '#1b1f27', ink: '#e8ebf1', sub2: '#9aa3b5', line: '#2c3240', pri: '#6f9bff', pri2: '#1f2a44', pri3: '#4a7be0' },
+    sea:      { name: '깊은 바다', sub: '남색·청록', dark: 1, bg: '#0b1220', card: '#121b2e', ink: '#e5ecf7', sub2: '#8fa0bd', line: '#22304a', pri: '#14a39a', pri2: '#0f2f33', pri3: '#2dd4bf' },
+    forest:   { name: '숲', sub: '눈이 편한 초록', dark: 1, bg: '#0f1714', card: '#17211d', ink: '#e6efe9', sub2: '#93a59b', line: '#263630', pri: '#34a46f', pri2: '#163126', pri3: '#5fcf98' },
+    paper:    { name: '종이', sub: '따뜻한 미색', bg: '#f4efe6', card: '#fbf8f2', ink: '#3b3127', sub2: '#85776a', line: '#e3d9ca', pri: '#b5651d', pri2: '#f3e3d0', pri3: '#d08a3c' },
+    lavender: { name: '라벤더', sub: '부드러운 보라', bg: '#f5f4fb', card: '#ffffff', ink: '#2a2540', sub2: '#726b8c', line: '#e4e1f1', pri: '#6d4fd8', pri2: '#ece7fd', pri3: '#9b7bf0' },
+    day:      { name: '맑은 낮', sub: '기본 밝은', bg: '#f6f7f9', card: '#ffffff', ink: '#1d2433', sub2: '#6b7385', line: '#e3e6ec', pri: '#2457c5', pri2: '#e8eefb', pri3: '#4a7be0' }
+  };
+  function themeCss(k) {
+    const t = THEMES[k]; if (!t || !t.bg) return '';
+    const st = t.dark ? DK : LT;
+    return `:root:root{--bg:${t.bg};--card:${t.card};--ink:${t.ink};--sub:${t.sub2};--line:${t.line};--pri:${t.pri};--pri2:${t.pri2};--pri3:${t.pri3};--ok:${st.ok};--okb:${st.okb};--no:${st.no};--nob:${st.nob};--warn:${st.warn};--warnb:${st.warnb};color-scheme:${t.dark ? 'dark' : 'light'}} body{background:var(--bg);color:var(--ink)}`;
+  }
+  function applyTheme(k) {
+    let el = document.getElementById('themecss'); if (!el) { el = document.createElement('style'); el.id = 'themecss'; document.head.appendChild(el); }
+    el.textContent = themeCss(k);
+    try { localStorage.setItem('reb_theme', k); } catch (e) {}
+  }
+  try { applyTheme(localStorage.getItem('reb_theme') || 'auto'); } catch (e) {}
+  function themeCard() {
+    if (document.getElementById('themec')) return;
+    const view = document.getElementById('view'); if (!view) return;
+    let curT = 'auto'; try { curT = localStorage.getItem('reb_theme') || 'auto'; } catch (e) {}
+    const sw = Object.entries(THEMES).map(([k, t]) => {
+      const bg = t.bg || 'linear-gradient(135deg,#f6f7f9 50%,#12151b 50%)', pri = t.pri || '#6f9bff', card = t.card || 'transparent';
+      return `<button class="thm ${k === curT ? 'on' : ''}" data-t="${k}"><span class="sw" style="background:${bg}"><i style="background:${card}"></i><b style="background:${pri}"></b></span><span class="nm">${t.name}</span><small>${t.sub}</small></button>`;
+    }).join('');
+    view.insertAdjacentHTML('beforeend', `<div class="card" id="themec"><h3 style="margin:0 0 10px">🎨 화면 색</h3><div class="thg">${sw}</div></div>`);
+    view.querySelectorAll('#themec .thm').forEach(b => b.onclick = () => { applyTheme(b.dataset.t); view.querySelectorAll('#themec .thm').forEach(x => x.classList.toggle('on', x === b)); });
+  }
   /* ---------- 🔊 말해주기: 모든 화면 오른쪽 아래, 눈 감고 듣기 ---------- */
   function sayClean(t) {
     return String(t || '')

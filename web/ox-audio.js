@@ -479,7 +479,7 @@ const _home=home,_setup=setup,_themes=themes,_exam=exam,_wrong=wrong,_ox=ox,_pla
 let PT='easy',RT='wrong';
 const st=document.createElement('style');st.textContent=`
 nav.tabs button b{font-size:21px}
-.hero{background:linear-gradient(135deg,var(--pri),#4a7be0);color:#fff;border:0}
+.hero{background:linear-gradient(135deg,var(--pri),var(--pri3,#4a7be0));color:#fff;border:0}
 .hero .muted{color:rgba(255,255,255,.85)}
 .hero .dd{font-size:34px;font-weight:700;line-height:1.1}
 .go{display:block;width:100%;border:0;border-radius:16px;background:#fff;color:var(--pri);font:inherit;font-weight:700;font-size:19px;padding:16px;margin-top:14px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12)}
