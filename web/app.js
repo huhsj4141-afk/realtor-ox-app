@@ -864,6 +864,19 @@ ${q.x}
     };
   }
   setInterval(decorateBeg, 600);
+
+  /* ---------- 이전/다음으로 넘어갈 때: 안 푼 문제는 맨 위부터, 푼 문제는 보던 자리 그대로 ---------- */
+  const QSC = {}; let QSL = '';
+  window.addEventListener('scroll', () => { try { const q = cur === 'quiz' && S && S.list && S.list[S.i]; if (q && q.id === QSL) QSC[q.id] = scrollY; } catch (e) {} }, { passive: true });
+  function quizScroll() {
+    try {
+      const q = S && S.list && S.list[S.i]; if (!q || q.id === QSL) return;     // 같은 문제 안에서 다시 그린 건 그대로
+      QSL = q.id;
+      const done = !!S.ans[q.id];
+      const y = done && QSC[q.id] != null ? QSC[q.id] : 0;
+      requestAnimationFrame(() => window.scrollTo({ top: y, behavior: 'instant' }));
+    } catch (e) {}
+  }
   /* ---------- 보기 지우기: 답 고르기 전, 아닌 보기를 눌러(또는 옆으로 밀어) 줄 긋기 ---------- */
   const ELIM = {};
   const elHint = () => { try { const n = +localStorage.getItem('reb_elh') || 0; localStorage.setItem('reb_elh', n + 1); return n < 6; } catch (e) { return false; } };
@@ -1001,7 +1014,7 @@ ${q.x}
     w.textContent = `⏳ ${Math.round((Date.now() - aiT0) / 1000)}초째 · 인터넷으로 만드는 중이라 보통 10~40초 걸려요`;
   }, 1000);
   window.addEventListener('load', () => setTimeout(() => {
-    wrap('quiz', () => { decorateQuiz(); decorateChoices(); decorateElim(); });
+    wrap('quiz', () => { decorateQuiz(); decorateChoices(); decorateElim(); quizScroll(); });
     const _rec = window.record; window.record = function (q, c) { const r = _rec.apply(this, arguments); logAnswer(q, c); return r; }; wrap('home', decorateHome); wrap('setup', decorateSetup); wrap('wrong', decorateWrong);
     const v = document.querySelector('#tabs button.on')?.dataset.v;
     if (v === 'home') decorateHome();
