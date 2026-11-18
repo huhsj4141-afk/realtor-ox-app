@@ -407,9 +407,9 @@ def mc_explanations():
             model = models.pop(0); log('한도 → 다음 모델', model); continue
         except Exception as e:
             log('  건너뜀', q['id'], str(e)[:100]); continue
-        if (len(exp) - n0) % 10 == 0:
+        if made and made % 10 == 0:
             jline.dump(exp, path)
-            log(f'객관식 해설 {len(exp)}/{len(data)}')
+            log(f'객관식 해설 {len(exp)}개 · 오늘 만든 것 {made}')
     jline.dump(exp, path)
     return len(exp) >= len(data)
 
