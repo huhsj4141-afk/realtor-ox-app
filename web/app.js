@@ -73,6 +73,8 @@
     .xtabs button.on{background:var(--pri);color:#fff} .xtabs button.warn:not(.on){color:var(--warn)} .xtabs .xs{font-style:normal;font-size:11px;opacity:.85}
     .xpanel{margin-top:6px} .xpanel #moreBox:empty,.xpanel #begBox:empty{display:none}
     .qtb.q5{grid-template-columns:repeat(5,1fr)} .qtb{margin-top:14px!important}
+    details.fold{padding:0!important;overflow:hidden} details.fold>summary{list-style:none;cursor:pointer;padding:15px 16px;font-weight:800;font-size:16px;display:flex;align-items:center} details.fold>summary::-webkit-details-marker{display:none} details.fold>summary::after{content:'⌄';margin-left:auto;color:var(--sub);transition:transform .2s} details.fold[open]>summary::after{transform:rotate(180deg)} details.fold>.foldin{padding:0 16px 14px}
+    #view .card h2,#view .card h3{font-size:16.5px;font-weight:800;letter-spacing:-.2px}
     .glb{position:fixed;left:12px;right:12px;bottom:84px;z-index:150;background:#1e1b4b;color:#fff;border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.55;box-shadow:0 8px 24px rgba(0,0,0,.3)}
     .glb b{color:#c4b5fd;margin-right:6px}
     .slog{font-size:14px;display:block} .slog .d{font-weight:700;margin:14px 0 4px;display:flex;justify-content:space-between}
@@ -925,6 +927,31 @@ ${q.x}
     if (load && el && el.textContent.trim().length < 20) { const b = document.getElementById(btn); if (b && !b.disabled) b.click(); }
   }
   setInterval(decorateTabs, 400);
+
+  /* ---------- 화면 정리: 중복·빈 카드 숨기기, 자세한 것은 접어 두기(모든 탭 같은 느낌) ---------- */
+  function cardBy(re) { return [...document.querySelectorAll('#view .card')].find(c => { const h = c.querySelector('h2,h3,.ttl,b'); return h && re.test(h.textContent); }); }
+  function fold(c, title, open) {
+    if (!c || c.dataset.fold) return; c.dataset.fold = 1;
+    const d = document.createElement('details'); d.className = 'card fold'; if (open) d.open = true;
+    d.innerHTML = `<summary>${title}</summary>`;
+    c.before(d); c.classList.remove('card'); c.classList.add('foldin'); d.appendChild(c);
+    const h = c.querySelector('h2,h3'); if (h && c.firstElementChild === h) h.style.display = 'none';
+  }
+  function tidy() {
+    if (cur === 'home') {
+      [...document.querySelectorAll('#view .card')].forEach(c => { if (/내용 업데이트/.test(c.textContent.slice(0, 40))) c.style.display = 'none'; });
+      document.querySelectorAll('#view > .muted, #view > p.muted, #view .foot').forEach(e => { if (/사용량|요금/.test(e.textContent)) e.style.display = 'none'; });
+      const a = cardBy(/회독 진도/), b = cardBy(/과목별 수준/);
+      if (a && b && !a.dataset.fold) { fold(a, '📚 회독 진도'); fold(b, '📊 과목별 수준'); }
+    }
+    if (cur === 'wrong') {
+      const empty = c => c && !c.querySelector('li, table, button') && c.textContent.trim().length < 150;   // 안내 문장만 있고 항목이 없는 카드
+      [cardBy(/법령 개정 주의/), cardBy(/내 공식 노트/), cardBy(/자주 틀린 문제/)].forEach(c => { if (empty(c)) c.style.display = 'none'; });
+      const lg = document.getElementById('logc'); if (lg) fold(lg, '🗂 공부 기록(언제 무엇을 풀었나)');
+      const th = document.getElementById('themec'); if (th) fold(th, '🎨 화면 색 바꾸기');
+    }
+  }
+  setInterval(tidy, 500);
   /* ---------- 보기 지우기: 답 고르기 전, 아닌 보기를 눌러(또는 옆으로 밀어) 줄 긋기 ---------- */
   const ELIM = {};
   const elHint = () => { try { const n = +localStorage.getItem('reb_elh') || 0; localStorage.setItem('reb_elh', n + 1); return n < 6; } catch (e) { return false; } };
