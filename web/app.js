@@ -57,9 +57,9 @@
     .slog .it{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--line,#eee);align-items:center}
     .slog .it span:first-child{opacity:.6;width:40px;flex:none} .slog .it .g{flex:1} .slog .it .sm{font-size:12px;opacity:.65}
     /* 문제 화면 정리: 큰 주요 버튼 + 작은 도구 줄 */
-    .tb{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
-    .tb>*{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 2px!important;font-size:12px!important;min-height:52px;border-radius:12px!important;text-decoration:none;text-align:center;line-height:1.2}
-    .tb .ic{font-size:19px}
+    .qtb{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+    .qtb>*{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 2px!important;font-size:12px!important;min-height:52px;border-radius:12px!important;text-decoration:none;text-align:center;line-height:1.2}
+    .qtb .ic{font-size:19px}
     .bigai{display:block;width:100%;margin-top:12px;padding:15px!important;font-size:17px!important;font-weight:700;border-radius:14px!important}
     .qmeta{font-size:12.5px;opacity:.65;margin:-2px 0 8px}
     .conf{margin-top:12px} .conf .lb{font-size:12.5px}
@@ -130,7 +130,7 @@
       chips.insertAdjacentHTML('beforeend', `<span class="qno">${q.n}회 ${q.no}번</span>`);
 
     }
-    if (row && !row.classList.contains('tb')) {
+    if (row && !row.classList.contains("qtb")) {
       const pickd = S.ans[q.id] && !(S.exam && !S.done);
       const ai = document.getElementById('qa'), calc = document.getElementById('qv');
       const pdfA = row.querySelector('a');
@@ -143,7 +143,7 @@
       document.getElementById('qr').onclick = () => report(q);
       if (ai) { ai.className = 'btn pri bigai'; row.parentElement.insertBefore(ai, row); if (!pickd) ai.style.display = 'none'; }
       if (calc) { calc.className = 'btn full'; calc.style.marginTop = '8px'; row.parentElement.insertBefore(calc, row); if (!pickd) calc.style.display = 'none'; }
-      row.className = 'tb'; row.removeAttribute('style');
+      row.className = "qtb"; row.removeAttribute('style');
     }
     const mo = document.getElementById('more'), ab = document.getElementById('aibox');
     if (mo) mo.style.display = S.ans[q.id] && ab && ab.textContent.trim().length > 20 ? '' : 'none';

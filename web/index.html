@@ -591,7 +591,7 @@ function dgFlow(d){const n=(d.nodes||[]).slice(0,6);if(!n.length)return'';const 
 function dgBar(d){const it=(d.items||[]).slice(0,8).filter(x=>isFinite(+x.value));if(!it.length)return'';const mx=Math.max(...it.map(x=>+x.value))||1;
   let b='';it.forEach((x,k)=>{const y=10+k*30,w=Math.max(2,(+x.value)/mx*190);b+=T(96,y+15,x.label,'class="bl"')+`<rect x="102" y="${y}" width="${w}" height="20" rx="4" class="${x.hl?'bh':'bb'}"/>`+T(108+w,y+15,(+x.value).toLocaleString('ko-KR')+(d.unit||''),'class="bv"')});
   return svgWrap(it.length*30+14,b,d.title)}
-function dgTable(d){if(!d.rows)return'';return `<div class="dg">${d.title?`<div class="dgt">${esc(d.title)}</div>`:''}<div style="overflow-x:auto"><table class="tb">${d.head?`<tr>${d.head.map(h=>`<th>${esc(h)}</th>`).join('')}</tr>`:''}${d.rows.map(r=>`<tr>${r.map(c=>`<td>${tex(c)}</td>`).join('')}</tr>`).join('')}</table></div></div>`}
+function dgTable(d){if(!d.rows)return'';return `<div class="dg">${d.title?`<div class="dgt">${esc(d.title)}</div>`:''}<div style="overflow-x:auto"><table class="tb dtb">${d.head?`<tr>${d.head.map(h=>`<th>${esc(h)}</th>`).join('')}</tr>`:''}${d.rows.map(r=>`<tr>${r.map(c=>`<td>${tex(c)}</td>`).join('')}</tr>`).join('')}</table></div></div>`}
 function renderDiagram(d){if(!d||typeof d!=='object')return'';try{return({timeline:dgTimeline,curve:dgCurve,flow:dgFlow,bar:dgBar,table:dgTable}[d.type]||(()=>''))(d)}catch(e){return''}}
 function renderEx(e){if(!e)return'';const A=x=>Array.isArray(x)?x:[];
   return `<div class="ex">
