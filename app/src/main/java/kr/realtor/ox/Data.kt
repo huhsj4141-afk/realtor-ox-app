@@ -16,6 +16,9 @@ object Store {
 
     /** X 지문의 틀린 부분과 바른 말 (gen/ox_mark.json) — 없으면 해설의 "A가 아니라 B"에서 찾음 */
     val marks = HashMap<String, Pair<String, String>>()
+    /** 사례 문제의 앞 상황 (gen/ox_ctx.json) — 甲·乙 지문이 무슨 얘긴지 알 수 있게 */
+    val ctx = HashMap<String, String>()
+    var hasCtxAudio: Set<String> = emptySet()
     fun markOf(it: Item): Pair<String, String>? {
         if (it.o) return null
         marks[it.key]?.let { return it }
@@ -28,6 +31,11 @@ object Store {
         try {
             val mk = JSONObject(ctx.assets.open("ox_mark.json").bufferedReader().readText())
             mk.keys().forEach { k -> mk.optJSONObject(k)?.let { marks[k] = it.optString("bad") to it.optString("fix") } }
+        } catch (e: Exception) { }
+        try {
+            val cj = JSONObject(ctx.assets.open("ox_ctx.json").bufferedReader().readText())
+            cj.keys().forEach { k -> this.ctx[k] = cj.optString(k) }
+            hasCtxAudio = (ctx.assets.list("a") ?: emptyArray()).filter { it.endsWith("_c.ogg") }.toSet()
         } catch (e: Exception) { }
         val raw = JSONArray(ctx.assets.open("ox.json").bufferedReader().readText())
         val exp = try {

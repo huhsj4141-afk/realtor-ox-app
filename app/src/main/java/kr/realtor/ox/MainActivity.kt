@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
+import android.net.Uri
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
@@ -139,7 +140,13 @@ class MainActivity : Activity() {
             indeterminateTintList = android.content.res.ColorStateList.valueOf(Color.parseColor(PRI))
             layoutParams = LinearLayout.LayoutParams(-1, dp(10)).apply { topMargin = dp(6) }
         }
-        listOf(spinner, pos, busyBar, stmt, expV).forEach { c1.addView(it) }
+        val flag = Button(this).apply {
+            text = "🚩"; textSize = 15f; background = null; minWidth = 0; minimumWidth = 0; setPadding(dp(8), 0, dp(4), 0)
+            layoutParams = LinearLayout.LayoutParams(-2, dp(44)); setOnClickListener { reportItem() }
+        }
+        spinner.layoutParams = LinearLayout.LayoutParams(0, -2, 1f)
+        val top = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; addView(spinner); addView(flag) }
+        listOf(top, pos, busyBar, stmt, expV).forEach { c1.addView(it) }
         col.addView(c1)
 
         // 조작: 큰 줄(이전·재생·다음) + 작은 줄(다시·★·자세히·속도·타이머)
@@ -272,9 +279,14 @@ class MainActivity : Activity() {
     private fun stmtText(it: Item?, showAns: Boolean): CharSequence {
         if (it == null) return ""
         val mk = if (showAns) Store.markOf(it) else null
-        val b = android.text.SpannableStringBuilder(it.s)
+        val cx = Store.ctx[it.key]?.let { c -> "📋 상황 · " + (if (c.length > 320) c.take(320) + "…" else c) + "\n\n" } ?: ""
+        val b = android.text.SpannableStringBuilder(cx + it.s)
+        if (cx.isNotEmpty()) {
+            b.setSpan(android.text.style.RelativeSizeSpan(.72f), 0, cx.length, 0)
+            b.setSpan(android.text.style.ForegroundColorSpan(Color.parseColor(SUB)), 0, cx.length, 0)
+        }
         if (mk != null) {
-            val i = it.s.indexOf(mk.first)
+            val i = it.s.indexOf(mk.first).let { k -> if (k >= 0) k + cx.length else k }
             if (i >= 0) listOf(android.text.style.ForegroundColorSpan(Color.parseColor("#DC2626")), android.text.style.StyleSpan(android.graphics.Typeface.BOLD),
                 android.text.style.UnderlineSpan()).forEach { sp -> b.setSpan(sp, i, i + mk.first.length, 0) }
             if (mk.second.isNotBlank()) {
@@ -307,6 +319,23 @@ class MainActivity : Activity() {
     private lateinit var speedBtn: Button
     private lateinit var busyBar: android.widget.ProgressBar
     private lateinit var timerBtn: Button
+    /** 🚩 지금 지문 신고 → GitHub 이슈(제출 한 번). 자동으로 원본 다시 읽고, 듣기 지문은 확인 후 고침 */
+    private fun reportItem() {
+        val it = svc?.currentItem() ?: return android.widget.Toast.makeText(this, "먼저 ▶ 재생을 눌러 주세요", android.widget.Toast.LENGTH_SHORT).show()
+        val rs = arrayOf("지문 앞 내용(상황)이 빠졌어요", "지문 글이 깨지거나 잘렸어요", "O·X 정답이 틀린 것 같아요", "해설이 이상하거나 부족해요", "기타")
+        val on = BooleanArray(rs.size).also { a -> a[0] = Store.ctx[it.key] == null && Regex("[甲乙丙丁]").containsMatchIn(it.s) }
+        AlertDialog.Builder(this).setTitle("🚩 이 지문 신고")
+            .setMultiChoiceItems(rs, on) { _, i, v -> on[i] = v }
+            .setNegativeButton("닫기", null)
+            .setPositiveButton("보내기") { _, _ ->
+                val body = "문항: ${it.ref}\nOX 지문: ${it.key} (${Store.tracks[it.ti].name})\n\n" +
+                    rs.indices.joinToString("\n") { i -> "- [${if (on[i]) "x" else " "}] ${rs[i]}" } +
+                    "\n\n--- 지금 앱에 보이는 지문 ---\n${it.s}\n정답: ${if (it.o) "O" else "X"}\n\n해설: ${it.exp.take(600)}"
+                val url = "https://github.com/huhsj4141-afk/realtor-ox-app/issues/new?title=" + Uri.encode("[신고] ${it.ref} 듣기 ${it.key}") + "&body=" + Uri.encode(body)
+                try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (e: Exception) { }
+                android.widget.Toast.makeText(this, "GitHub 화면에서 초록색 Submit(제출)을 눌러 주세요", android.widget.Toast.LENGTH_LONG).show()
+            }.show()
+    }
     private fun timerDialog() {
         val o = listOf("😴 잠자기 15분" to { svc?.setSleep(15) }, "😴 잠자기 30분" to { svc?.setSleep(30) }, "😴 잠자기 60분" to { svc?.setSleep(60) },
             "🚌 하차 알림 10분" to { svc?.setBus(10) }, "🚌 하차 알림 20분" to { svc?.setBus(20) }, "🚌 하차 알림 30분" to { svc?.setBus(30) }, "🚌 하차 알림 40분" to { svc?.setBus(40) },

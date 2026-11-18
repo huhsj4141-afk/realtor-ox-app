@@ -174,8 +174,14 @@ class PlayerService : Service() {
     private fun asset(p: String): MediaSource =
         ProgressiveMediaSource.Factory(dsf).createMediaSource(MediaItem.fromUri(Uri.parse("asset:///$p")))
 
+    private fun stmtSrc(it: Item): MediaSource {
+        val s = asset("a/t${it.ti}_${it.i}_s.ogg")
+        if ("t${it.ti}_${it.i}_c.ogg" !in Store.hasCtxAudio) return s
+        return androidx.media3.exoplayer.source.ConcatenatingMediaSource2.Builder()
+            .add(asset("a/t${it.ti}_${it.i}_c.ogg"), C.TIME_UNSET).add(s, C.TIME_UNSET).build()
+    }
     private fun slots(it: Item): List<MediaSource> = listOf(
-        asset("a/t${it.ti}_${it.i}_s.ogg"), SilenceMediaSource(gapSec * 1_000_000L),
+        stmtSrc(it), SilenceMediaSource(gapSec * 1_000_000L),
         asset("a/t${it.ti}_${it.i}_e.ogg"), SilenceMediaSource(150_000L))
 
     fun bookmarks(): MutableSet<String> = HashSet(prefs.getStringSet("bm", emptySet()) ?: emptySet())

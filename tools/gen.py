@@ -141,6 +141,21 @@ def sounds():
     return p
 
 
+def ctx_audio(tmp):
+    """사례 문제 지문 앞에 읽어 줄 '상황' 음성 (gen/ox_ctx.json → gen/a/t*_c.ogg)"""
+    p = os.path.join(GEN, 'ox_ctx.json')
+    if not os.path.exists(p) or not GKEY: return
+    a = os.path.join(GEN, 'a'); os.makedirs(a, exist_ok=True); n = 0
+    for k, t in json.load(open(p, encoding='utf8')).items():
+        out = os.path.join(a, f't{k}_c.ogg')
+        if os.path.exists(out): continue
+        try:
+            w = os.path.join(tmp, 'x.wav'); say_wav('', '', '상황입니다. ' + clean(t), w); encode([w], out); n += 1
+        except Exception as e:
+            log('상황 음성 실패', k, str(e)[:100])
+    if n: log('상황 음성', n)
+
+
 def encode(parts, out):
     """wav 여러 개를 이어 붙여 ogg(opus)로"""
     tmp = out + '.txt'
@@ -262,6 +277,7 @@ def main():
             out = os.path.join(c, k + '.ogg')
             if not os.path.exists(out):
                 w = os.path.join(tmp, 'c.wav'); say_wav('', '', t, w); encode([w], out); log('안내', k)
+        ctx_audio(tmp)
         return
     if mode == 'sounds':
         os.makedirs(GEN, exist_ok=True); print(sounds()); return

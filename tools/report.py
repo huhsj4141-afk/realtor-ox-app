@@ -62,7 +62,9 @@ def main(body_path, pdf_dir):
                 print('해설 실패', model, str(er)[:80])
     jline.dump(exp, ep)
     out.append('- 해설: 새로 만들었어요' if made else '- 해설: 이번엔 못 만들었어요(무료 한도) → 다음 자동 생성 때 다시')
-    need_human = (not fixed) or any('정답' in x for x in reasons)
+    ox = re.search(r'OX 지문:\s*(\d+_\d+)', body)
+    if ox: out.append(f'- 듣기 지문 {ox.group(1)}: 확인해서 고칠게요 (사례 앞 상황은 자동으로 붙어요)')
+    need_human = (not fixed) or any('정답' in x for x in reasons) or bool(ox)
     if any('정답' in x for x in reasons):
         out.append('- 정답이 틀렸다는 신고는 공식 정답과 다시 대조해 확인할게요')
     out.append('\n새 버전이 만들어지면 앱이 업데이트를 물어봐요.')
