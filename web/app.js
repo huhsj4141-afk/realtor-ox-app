@@ -518,7 +518,9 @@
       b.onclick = () => {
         const T = window.__tts;
         if (!T) { if (window.__toast) __toast('읽기를 쓸 수 없어요'); return; }
-        if (SAY.on || T.busy()) { try { T.stop(); } catch (e) {} SAY.on = false; b.classList.remove('on'); b.textContent = '🔊'; return; }
+        if (SAY.on || T.busy()) { SAY.on = false; try { T.stop(); } catch (e) {} b.classList.remove('on'); b.textContent = '🔊'; if (window.__toast) __toast('읽기를 멈췄어요'); return; }
+        // 해설까지 읽을 때는 해설을 화면에 펼쳐 두고 읽기(보이는 것과 듣는 것이 같게)
+        try { const q = S.list[S.i]; if (cur === 'quiz' && q && S.ans[q.id] && !(S.exam && !S.done) && expOf(q)) { const ab = document.getElementById('aibox'); if (ab && ab.textContent.trim().length < 20) { const qa = document.getElementById('qa'); if (qa) qa.click(); } } } catch (e) {}
         const t = screenScript() || '이 화면은 고르는 버튼만 있어요. 문제를 시작하면 문제와 보기, 해설을 읽어 드릴게요.';
         SAY.on = true; b.classList.add('on'); b.textContent = '⏹';
         const chunks = []; t.split(/(?<=[.?!요다])\s+/).forEach(x => { if (chunks.length && (chunks[chunks.length - 1] + ' ' + x).length < 500) chunks[chunks.length - 1] += ' ' + x; else chunks.push(x); });

@@ -20,6 +20,7 @@ class WebActivity : Activity() {
     private lateinit var voice: ExoPlayer
     private val io = Executors.newFixedThreadPool(2)
     private var speakId: String? = null
+    private val ttsGen = java.util.concurrent.atomic.AtomicInteger(0)
     private var loaded = false
 
     /** 듣기 화면의 아래 탭에서 넘어올 때 그 탭 열기 */
@@ -123,10 +124,13 @@ class WebActivity : Activity() {
         }
 
         @JavascriptInterface fun speak(id: String, text: String, rate: Double) {
+            val g = ttsGen.get()
             io.execute {
                 try {
+                    if (g != ttsGen.get()) return@execute               // 그사이 멈춤을 눌렀으면 만들지도 않기
                     val files = Net.speech(this@WebActivity, text)
                     runOnUiThread {
+                        if (g != ttsGen.get()) return@runOnUiThread      // 소리를 받는 동안 멈춤을 눌렀으면 틀지 않기
                         speakId = id
                         voice.setMediaItems(files.map { MediaItem.fromUri(Uri.fromFile(it)) })
                         voice.setPlaybackSpeed(rate.toFloat().coerceIn(0.5f, 2f)); voice.prepare(); voice.play()
@@ -136,6 +140,6 @@ class WebActivity : Activity() {
         }
         @JavascriptInterface fun ttsPause() = runOnUiThread { voice.pause() }
         @JavascriptInterface fun ttsResume() = runOnUiThread { voice.play() }
-        @JavascriptInterface fun ttsStop() = runOnUiThread { speakId = null; voice.stop() }
+        @JavascriptInterface fun ttsStop() { ttsGen.incrementAndGet(); runOnUiThread { speakId = null; voice.stop(); voice.clearMediaItems() } }
     }
 }
