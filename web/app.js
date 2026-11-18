@@ -831,11 +831,14 @@ ${q.x}
   }
   function decorateBeg() {
     const q = (typeof S !== 'undefined' && S && S.list) ? S.list[S.i] : null;
-    if (cur !== 'quiz' || !q || !S.ans[q.id] || (S.exam && !S.done) || document.getElementById('beg')) return;
+    // 자리: '더 자세히' 바로 아래(없으면 도구 버튼 줄 아래). 해설을 펼치면 '더 자세히'가 생기니 그때 옮김
+    const ex0 = document.getElementById('beg'), mb = document.getElementById('moreBox');
+    if (ex0 && mb && mb.nextElementSibling !== ex0) { const bx = document.getElementById('begBox'); mb.after(ex0); if (bx) ex0.after(bx); }
+    if (cur !== 'quiz' || !q || !S.ans[q.id] || (S.exam && !S.done) || ex0) return;
     const tb = document.querySelector('#view .qtb'); if (!tb) return;
     const K = 'reb_beg_' + q.id, saved = (() => { try { return localStorage.getItem(K); } catch (e) { return null; } })();
     const ok = String(q.a).split(',').map(Number).includes(+S.ans[q.id]), unsure = (() => { const v = conf()[q.id]; return !!v && v !== 'sure'; })();
-    tb.insertAdjacentHTML('afterend', `<button class="btn full ${ok && !unsure ? '' : 'begon'}" id="beg">🐣 처음부터 알려줘 ${saved ? '<span class="svd">✓ 저장됨</span>' : '<span class="svd no">인터넷</span>'}</button><div id="begBox"></div>`);
+    (document.getElementById('moreBox') || tb).insertAdjacentHTML('afterend', `<button class="btn full ${ok && !unsure ? '' : 'begon'}" id="beg">🐣 처음부터 알려줘 ${saved ? '<span class="svd">✓ 저장됨</span>' : '<span class="svd no">인터넷</span>'}</button><div id="begBox"></div>`);
     const btn = document.getElementById('beg'), box = document.getElementById('begBox');
     const show = t => {
       box.innerHTML = `<div class="begc">${begRender(t)}<button class="btn full" id="begSay">🔊 이 설명 읽기</button></div>`;
