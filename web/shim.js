@@ -56,20 +56,25 @@
     const body = { contents: [{ parts: [{ text: String(prompt) }] }], generationConfig: { temperature: 0.4 } };
     if (asJson) body.generationConfig.responseMimeType = 'application/json';
     const tier = (opts && opts.modelTier) === 'quick' ? 'quick' : 'default';
-    let last = null;
+    let last = null; const t0 = Date.now();
     for (const m of CHAIN[tier]) {
       if (localStorage.getItem(skipKey(m)) === today()) continue;
+      if (Date.now() - t0 > 100000) break;             // 전체로 너무 오래 걸리면 그만(무한 대기 방지)
       try {
-        const r = JSON.parse(await call('gemini', m, JSON.stringify(body)));
+        // 한 모델이 45초 넘게 답이 없으면 다음 모델로
+        const raw = await Promise.race([call('gemini', m, JSON.stringify(body)), new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT')), 45000))]);
+        const r = JSON.parse(raw);
         return (((r.candidates || [])[0] || {}).content || { parts: [] }).parts.map(p => p.text || '').join('');
       } catch (e) {
         last = e; const msg = String(e.message || '');
         if (/HTTP 429/.test(msg)) { localStorage.setItem(skipKey(m), today()); continue; }
-        if (/HTTP (404|500|503)/.test(msg)) continue;
+        if (/HTTP (404|500|503)|TIMEOUT/.test(msg)) continue;
         throw e;   // 키 오류 등은 바로 알려 주기
       }
     }
-    throw Object.assign(new Error('오늘 무료 AI 사용량을 다 썼어요. 내일 다시 쓸 수 있어요.'), { code: 'quota', cause: last });
+    if (last && /TIMEOUT/.test(String(last.message)) || Date.now() - t0 > 100000)
+      throw Object.assign(new Error('지금 AI가 붐벼서 답이 늦어요. 조금 뒤 다시 눌러 주세요. (해설이 없는 문제는 매일 저녁 자동으로 채워져요)'), { code: 'quota', cause: last });
+    throw Object.assign(new Error('오늘 무료 AI 사용량을 다 썼어요. 오후 5시 이후에 다시 쓸 수 있어요. (해설이 없는 문제는 매일 저녁 자동으로 채워져요)'), { code: 'quota', cause: last });
   }
   const sample = async (prompt, opts) => ({ text: await gemini(prompt, opts, false) });
   sample.json = async (prompt, opts) => { const t = await gemini(prompt, opts, true); const m = t.match(/[\[{][\s\S]*[\]}]/); return JSON.parse(m ? m[0] : t); };
