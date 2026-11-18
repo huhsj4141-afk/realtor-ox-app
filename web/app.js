@@ -44,9 +44,13 @@
     #aibox .exs{font-size:16px;font-weight:600;line-height:1.6;padding:10px 12px;border-left:4px solid #f59e0b;background:rgba(245,158,11,.1);border-radius:8px}
     #aibox .exh{font-size:15px;font-weight:800;margin-top:14px;padding-bottom:4px;border-bottom:2px solid var(--pri,#2f6fed);display:inline-block}
     #aibox .st li{margin:8px 0} #aibox .st .muted{color:inherit!important;opacity:.85;font-size:14px!important;line-height:1.6}
-    .gl{text-decoration:underline dotted #8b5cf6;text-underline-offset:3px;text-decoration-thickness:2px;cursor:help}
+    .gl{text-decoration:underline dotted #8b5cf699;text-underline-offset:4px;text-decoration-thickness:1.5px;cursor:help}
     .elh{font-size:12.5px;color:var(--mut,#94a3b8);margin:8px 0 2px}.elc{padding:3px 4px;margin:0 -4px;border-radius:8px;cursor:pointer;white-space:pre-wrap;transition:opacity .15s}.elc:active{background:rgba(148,163,184,.12)}.elc.x{text-decoration:line-through;text-decoration-color:#ef4444;text-decoration-thickness:3px;opacity:.4}.choices button.elx{opacity:.35;text-decoration:line-through;text-decoration-color:#ef4444}
     #ver{font-size:12px;font-weight:500;color:var(--mut,#94a3b8);margin-left:6px;vertical-align:middle}#updb{display:block;width:100%;margin:0 0 12px;padding:14px 16px;border:0;border-radius:14px;background:#2563eb;color:#fff;font:inherit;font-size:17px;font-weight:700;text-align:left;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,.35)}#updb small{display:block;font-size:12.5px;font-weight:500;opacity:.85;margin-top:2px}
+    .qno{font-size:12.5px;opacity:.55;align-self:center;margin-left:auto}
+    .fb.top small,.fb.top span{font-size:13px;font-weight:600} .fb.top{font-size:18px;font-weight:800;padding:12px 14px;margin:0 0 12px;border-radius:12px}
+    .chx:not(.ans):not(.mine){opacity:.82} .chx.ans{border-width:2px} .chx .bd{font-size:11px}
+    .conf{display:flex;gap:6px;align-items:center;flex-wrap:nowrap} .conf .lb{flex:none!important;margin-right:4px}
     .glb{position:fixed;left:12px;right:12px;bottom:84px;z-index:150;background:#1e1b4b;color:#fff;border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.55;box-shadow:0 8px 24px rgba(0,0,0,.3)}
     .glb b{color:#c4b5fd;margin-right:6px}
     .slog{font-size:14px;display:block} .slog .d{font-weight:700;margin:14px 0 4px;display:flex;justify-content:space-between}
@@ -122,7 +126,9 @@
       // 과목·빈출만 칩으로, 나머지(회차·단원·난이도)는 작은 글씨 한 줄로
       const keep = [...chips.querySelectorAll('.chip')], meta = [];
       keep.forEach((c, i) => { if (i > 0 && !c.classList.contains('hot')) { meta.push(c.textContent); c.remove(); } });
-      chips.insertAdjacentHTML('afterend', `<div class="qmeta">${h(meta.join(' · '))}</div>`);
+      const pk = S.ans[q.id] && !(S.exam && !S.done);
+      chips.insertAdjacentHTML('beforeend', `<span class="qno">${q.n}회 ${q.no}번</span>`);
+
     }
     if (row && !row.classList.contains('tb')) {
       const pickd = S.ans[q.id] && !(S.exam && !S.done);
@@ -139,12 +145,16 @@
       if (calc) { calc.className = 'btn full'; calc.style.marginTop = '8px'; row.parentElement.insertBefore(calc, row); if (!pickd) calc.style.display = 'none'; }
       row.className = 'tb'; row.removeAttribute('style');
     }
-    const mo = document.getElementById('more'); if (mo) mo.style.display = S.ans[q.id] ? '' : 'none';
+    const mo = document.getElementById('more'), ab = document.getElementById('aibox');
+    if (mo) mo.style.display = S.ans[q.id] && ab && ab.textContent.trim().length > 20 ? '' : 'none';
     const ex = S.exam && !S.done, pick = S.ans[q.id];
     const fb = document.querySelector('#view .fb');
+    if (pick && !ex && fb && !fb.classList.contains('top')) {
+      const cardEl = fb.closest('.card'); if (cardEl) { fb.classList.add('top'); cardEl.insertBefore(fb, cardEl.firstChild); }
+    }
     if (pick && !ex && fb && !document.querySelector('.conf')) {
       const cur = conf()[q.id];
-      fb.insertAdjacentHTML('afterend', `<div class="conf"><span class="lb">이 문제, 얼마나 확신했나요? (헷갈림·찍음은 복습에 다시 나와요)</span>
+      (document.querySelector('#view .choices') || fb).insertAdjacentHTML('afterend', `<div class="conf"><span class="lb">확신도</span>
         ${[['sure', '😎 확실'], ['unsure', '🤔 헷갈림'], ['guess', '🎲 찍음']].map(([v, t]) => `<button data-v="${v}" class="${cur === v ? 'on' : ''}">${t}</button>`).join('')}</div>`);
       document.querySelector('.conf').onclick = e => {
         const b = e.target.closest('button'); if (!b) return;
@@ -359,9 +369,9 @@
   }
   function emph(t) {
     return h(t)
+      .replace(/([‘“'"][^‘“'"’”<>]{1,20}[’”'"])/g, '<span class="em-q">$1</span>')
       .replace(/(틀립니다|틀린 설명|옳지 않습니다|아닙니다|틀렸|오답)/g, '<span class="em-x">$1</span>')
       .replace(/(맞습니다|옳습니다|정답입니다|올바릅니다|정답)/g, '<span class="em-o">$1</span>')
-      .replace(/([‘“'"][^‘“'"’”]{1,20}[’”'"])/g, '<span class="em-q">$1</span>')
       .replace(/(\d+(?:\.\d+)?\s*(?:년|개월|일|%|퍼센트|만원|억원|원|배|㎡|제곱미터|분의|명|회|세))/g, '<span class="em-n">$1</span>');
   }
   function decorateChoices() {
@@ -426,6 +436,7 @@
   window.__upd = v => { LATEST = +v || 0; updBanner(); };
   /* ---------- 보기 지우기: 답 고르기 전, 아닌 보기를 눌러(또는 옆으로 밀어) 줄 긋기 ---------- */
   const ELIM = {};
+  const elHint = () => { try { const n = +localStorage.getItem('reb_elh') || 0; localStorage.setItem('reb_elh', n + 1); return n < 6; } catch (e) { return false; } };
   function decorateElim() {
     if (typeof S === 'undefined' || !S || !S.list) return;
     const q = S.list[S.i], pick = q && S.ans[q.id], ex = S.exam && !S.done;
@@ -436,7 +447,7 @@
     lines.slice(idx).forEach(l => { const m = /^\s*([①②③④⑤])/.exec(l); if (m) ch.push({ n: MK5.indexOf(m[1]) + 1, t: l.trim() }); else if (ch.length) ch[ch.length - 1].t += '\n' + l; });
     if (ch.length !== 5) return;
     const set = ELIM[q.id] = ELIM[q.id] || new Set();
-    qt.innerHTML = h(lines.slice(0, idx).join('\n')) + '<div class="elh">💡 아닌 보기는 눌러서 줄 긋기</div>' +
+    qt.innerHTML = h(lines.slice(0, idx).join('\n')) + (elHint() ? '<div class="elh">💡 아닌 보기는 눌러서 줄 긋기</div>' : '') +
       ch.map(c => `<div class="elc ${set.has(c.n) ? 'x' : ''}" data-n="${c.n}">${h(c.t)}</div>`).join('');
     qt.dataset.el = q.id;
     const sync = () => document.querySelectorAll('#view .choices button').forEach(b => b.classList.toggle('elx', set.has(+b.dataset.c)));
@@ -463,9 +474,12 @@
       for (let e = n.parentElement; e && e !== root.parentElement; e = e.parentElement) { if (SKIP.has(e.tagName) || e.classList.contains('gl') || e.classList.contains('glb') || e.closest('#tabs')) return NodeFilter.FILTER_REJECT; }
       GRE.lastIndex = 0; return GRE.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP; } });
     const list = []; while (w.nextNode()) list.push(w.currentNode);
+    const seen = new Set([...root.querySelectorAll('.gl')].map(e => e.dataset.k));
     list.forEach(n => {
       const f = document.createDocumentFragment(); let last = 0, t = n.nodeValue; GRE.lastIndex = 0; let m;
       while ((m = GRE.exec(t))) {
+        if (seen.has(m[1])) continue;
+        seen.add(m[1]);
         if (m.index > last) f.appendChild(document.createTextNode(t.slice(last, m.index)));
         const sp = document.createElement('span'); sp.className = 'gl'; sp.dataset.k = m[1]; sp.textContent = m[1]; f.appendChild(sp); last = m.index + m[1].length;
       }
