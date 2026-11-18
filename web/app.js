@@ -227,7 +227,7 @@
     return `<div class="card" id="rdcard"><h2>📚 회독 진도</h2>
       <div class="muted" style="font-size:12px;margin-bottom:8px">막대: <span style="color:#16a34a">■</span>3회독 <span style="color:#60a5fa">■</span>2회독 <span style="color:#94a3b8">■</span>1회독 · 숫자는 1회독 비율</div>
       <div class="rd">${rows}</div>
-      ${un ? `<button class="btn full" id="rdun" style="margin-top:12px">🤔 헷갈렸던 문제 ${un}개 다시 풀기</button>` : ''}</div>`;
+</div>`;
   }
   function cleanCards(texts) {
     document.querySelectorAll('#view .card, #view details').forEach(c => {
@@ -279,9 +279,13 @@
     themeCard();
     const first = document.querySelector('#view .card:not(#logc)');
     const un = unsureIds().length;
-    if (first && un && !$('#wun')) {
-      first.insertAdjacentHTML('beforeend', `<button class="btn full" id="wun" style="margin-top:10px">🤔 헷갈렸던 문제 ${un}개 다시 풀기</button>`);
-      $('#wun').onclick = () => startQuiz(shuffle(unsureIds().map(k => BYID[k])), { from: 'wrong', title: '헷갈렸던 문제' });
+    // 오답노트: '틀린 문제 다시'와 '헷갈린 문제 다시'를 '🔁 복습하기' 하나로
+    const rw = document.getElementById('wa');
+    if (rw && !$('#wrev') && typeof window.revList === 'function') {
+      const n = window.revList().length;
+      rw.insertAdjacentHTML("beforebegin", `<button class="btn pri grow" id="wrev">🔁 복습하기 ${n}문제</button>`);
+      rw.style.display = 'none';
+      $('#wrev').onclick = () => { const l = window.revList(); if (l.length) startQuiz(l, { from: 'wrong', title: '🔁 복습하기' }); };
     }
   }
 

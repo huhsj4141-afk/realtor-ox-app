@@ -515,7 +515,7 @@ home=function(){
   V.innerHTML=`<div class="card hero"><div class="row"><div class="grow"><div class="dd">D-${tp.dday}</div><div class="muted" style="font-size:13px">${examDate().replace(/-/g,'.')} 시험${PL.auto!==false&&!EXAM_CONFIRMED?' (예상)':''}</div></div>
     <div style="text-align:right"><div style="font-size:22px;font-weight:700">🔥 ${sk.n}일</div><div class="muted" style="font-size:12px">연속 공부</div></div></div>
     <button class="go" id="hgo">${left?`▶ 오늘 공부 시작<small>${left}문제 남았어요${tgt?` · 오늘 ${dn}/${tgt}`:''}</small>`:`🎉 오늘 목표 완료!<small>더 하고 싶으면 눌러서 맞춤 20문제</small>`}</button>
-    ${lines?`<details class="todo"><summary style="cursor:pointer;color:#fff;opacity:.9">오늘 할 일 보기</summary>${lines}</details>`:''}</div>
+</div>
   ${ex.length?`<div class="card"><b>🎯 오늘은 실전 리허설 날</b><div class="bigl" style="margin-top:8px">${ex.map((it,i)=>`<button data-x="${i}"><b>⏱️</b><div>${esc(it.label.replace('🎯 실전 리허설 · ',''))}<span>${esc(it.sub)}</span></div></button>`).join('')}</div></div>`:''}
   <div class="big2"><button id="hdq"><b>☀️</b>오늘의 한 문제<span>${dqd?'✅ 풀었어요':esc(SUBS[dq.s]+' · '+dq.t)}</span></button><button id="hox"><b>🎧</b>귀로 듣기<span>화면 꺼져도 OX 듣기</span></button></div>`;
   const $=id=>document.getElementById(id);
@@ -525,17 +525,20 @@ home=function(){
 
 /* ---- 문제 ---- */
 const PSEG=[['easy','추천'],['pick','골라 풀기'],['themes','빈출 테마'],['exam','모의고사']];
+/* 복습 하나로: 오늘 다시 볼 문제(간격 복습) → 마지막에 틀린 문제 → 헷갈림·찍음 표시한 문제, 겹치면 한 번만 */
+function revList(){const seen=new Set(),out=[],add=q=>{if(q&&!q.ocr&&!seen.has(q.id)){seen.add(q.id);out.push(q)}};
+  dueList().forEach(add);shuffle(Q.filter(q=>P[q.id]&&P[q.id][1]===0)).forEach(add);
+  try{(window.__unsureIds?window.__unsureIds():[]).forEach(k=>add(BYID[k]))}catch(e){}return out}
+window.revList=revList;
 function easyView(){const W=Q.filter(q=>P[q.id]&&P[q.id][1]===0).length,due=dueList().length;
   V.innerHTML=seg(PSEG,'easy','pseg')+`<div class="bigl">
   <button data-a="ad"><b>🎯</b><div>맞춤 20문제<span>내 실력에 맞춰 난이도 자동 조절</span></div></button>
-  <button data-a="due"><b>🔁</b><div>오늘 복습 ${due}문제<span>틀렸던 문제가 1·3·7·21일 뒤 다시 나와요</span></div></button>
-  <button data-a="wrong"><b>📕</b><div>틀린 문제 다시 ${W}개<span>오답만 모아 풀기</span></div></button>
+  <button data-a="rev"><b>🔁</b><div>복습하기 ${revList().length}문제<span>오늘 다시 볼 문제 + 틀린 문제 + 헷갈린 문제를 한 번에</span></div></button>
   <button data-a="calc"><b>🧮</b><div>계산 문제<span>풀이 도식 · 숫자 바꿔 반복</span></div></button>
   <button data-a="photo"><b>📷</b><div>사진으로 물어보기<span>다른 문제집 문제를 찍으면 풀어줘요</span></div></button></div>`;
   bindSeg('pseg');V.querySelectorAll('.bigl button').forEach(b=>b.onclick=()=>{const a=b.dataset.a;
     if(a==='ad')startAdaptive(Q,20,{from:'setup',title:'🎯 맞춤 학습'});
-    else if(a==='due'){const d=dueList();if(d.length)startQuiz(shuffle(d.slice()),{from:'setup',title:'🔁 오늘 복습'})}
-    else if(a==='wrong'){const l=Q.filter(q=>P[q.id]&&P[q.id][1]===0);if(l.length)startQuiz(shuffle(l),{from:'setup',title:'📕 오답 다시'})}
+    else if(a==='rev'){const l=revList();if(l.length)startQuiz(l,{from:'setup',title:'🔁 복습하기'});else if(window.__toast)__toast('복습할 문제가 없어요 👍')}
     else if(a==='calc')startAdaptive(Q.filter(isCalc),20,{from:'setup',title:'🧮 계산 문제'});
     else go('photo')})}
 function bindSeg(id){const el=document.getElementById(id);if(!el)return;el.onclick=e=>{const b=e.target.closest('button');if(!b)return;const v=b.dataset.v;
