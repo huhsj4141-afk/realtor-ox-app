@@ -248,10 +248,8 @@ def main():
     if mode == 'mc':
         os.makedirs(GEN, exist_ok=True)
         try:
-            if os.path.exists(os.path.join(GEN, 'MC_DONE')):
-                log('객관식 완료'); return
-            if mc_explanations():
-                open(os.path.join(GEN, 'MC_DONE'), 'w').write('ok'); log('객관식 해설·녹음 완료')
+            # 빠진 해설 → 계산 문제 그림판(v3) → 예전 해설 자세한 판(v2) 순서로 매일 이어서 (다 되면 할 일 없이 끝남)
+            if mc_explanations(): log('객관식 해설 모두 최신')
         except DailyLimit as e:
             log('오늘 무료 한도 — 다음 실행에서 이어서:', str(e)[:150])
         finally:
@@ -387,9 +385,12 @@ def mc_explanations():
     n0 = len(exp)
     # 해설 없는 문항 먼저, 그다음 예전(간단한) 해설을 자세한 판(v2)으로 다시
     made = 0
-    data = [q for q in data if q['id'] not in exp] + [q for q in data if q['id'] in exp and exp[q['id']].get('v') != 2]
+    # 계산 문제는 그림·계산표(v3)가 없으면 먼저 다시 — 관계도·식을 그림으로 보여 주기 위해
+    calc3 = [q for q in data if '계산' in (q.get('k') or '') and exp.get(q['id'], {}).get('v') != 3]
+    data = calc3 + [q for q in data if q['id'] not in exp and q not in calc3] + [q for q in data if q['id'] in exp and exp[q['id']].get('v') not in (2, 3) and q not in calc3]
     for q in data:
-        if exp.get(q['id'], {}).get('v') == 2: continue
+        want = 3 if '계산' in (q.get('k') or '') else 2
+        if exp.get(q['id'], {}).get('v', 0) >= want: continue
         if time.time() > DEADLINE: return False
         if made >= int(os.environ.get('MC_MAX', '400')):   # 하루에 이만큼만 (폰에서 쓸 무료 한도 남겨 두기)
             log('오늘 몫 완료'); break
@@ -398,7 +399,7 @@ def mc_explanations():
         try:
             r = call(f'models/{model}:generateContent', body)
             txt = ''.join(p.get('text', '') for p in r['candidates'][0]['content']['parts'])
-            exp[q['id']] = json.loads(fixjson(re.search(r'\{.*\}', txt, re.S).group(0))); exp[q['id']]['v'] = 2; made += 1
+            exp[q['id']] = json.loads(fixjson(re.search(r'\{.*\}', txt, re.S).group(0))); exp[q['id']]['v'] = 3 if '계산' in (q.get('k') or '') else 2; made += 1
         except DailyLimit:
             json.dump(exp, open(path, 'w', encoding='utf8'), ensure_ascii=False)
             if not models: raise
