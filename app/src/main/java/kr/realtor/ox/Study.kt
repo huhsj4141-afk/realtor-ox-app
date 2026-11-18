@@ -43,7 +43,8 @@ object Study {
     fun mix(ctx: Context, tracks: List<Track>, n: Int = 60): List<Item> {
         val h = hc(ctx); val rnd = java.util.Random()
         fun score(it: Item): Double { val a = h.optJSONArray(it.key); return (a?.optInt(0) ?: 0) * 1e13 + (a?.optLong(1) ?: 0L) + rnd.nextInt(3_600_000) }
-        val bySub = tracks.flatMap { it.items }.groupBy { tracks[it.ti].sub }.mapValues { (_, v) -> v.sortedBy { score(it) }.toMutableList() }
+        // 점수는 한 번만 매겨 두고 정렬(정렬 중에 무작위 값이 바뀌면 '비교 규칙 위반'으로 앱이 꺼짐)
+        val bySub = tracks.flatMap { it.items }.groupBy { tracks[it.ti].sub }.mapValues { (_, v) -> v.map { it to score(it) }.sortedBy { it.second }.map { it.first }.toMutableList() }
         val out = ArrayList<Item>(); val subs = bySub.keys.shuffled()
         while (out.size < n && bySub.values.any { it.isNotEmpty() })
             for (s in subs) { val l = bySub[s]!!; if (l.isNotEmpty() && out.size < n) out.add(l.removeAt(0)) }

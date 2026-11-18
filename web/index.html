@@ -561,7 +561,7 @@ function tex(s){s=String(s||'');let i=0;
   return seq(null)}
 
 /* 도식 */
-function svgWrap(h,body,title){return `<div class="dg">${title?`<div class="dgt">${esc(title)}</div>`:''}<svg viewBox="0 0 340 ${h}" width="100%" role="img" aria-label="${esc(title||'도식')}">${body}</svg></div>`}
+function svgWrap(h,body,title){return `<div class="dg">${title?`<div class="dgt">${esc(title)}</div>`:''}<svg viewBox="-40 0 420 ${h}" width="100%" style="overflow:visible" role="img" aria-label="${esc(title||'도식')}">${body}</svg></div>`}
 const T=(x,y,t,o='')=>`<text x="${x}" y="${y}" ${o}>${esc(t)}</text>`;
 function dgTimeline(d){const p=(d.points||[]).slice(0,12);if(!p.length)return'';const W=300,x0=20,dx=p.length>1?W/(p.length-1):0;
   let b=`<line x1="${x0-6}" y1="90" x2="${x0+W+8}" y2="90" class="ax"/><path d="M${x0+W+8} 90 l-6 -4 v8z" class="axf"/>`;
