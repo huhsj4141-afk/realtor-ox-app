@@ -53,7 +53,7 @@
     .conf{display:flex;gap:6px;align-items:center;flex-wrap:nowrap} .conf .lb{flex:none!important;margin-right:4px}
     .svd{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:2px;background:rgba(22,163,74,.18);color:#16a34a} .svd.no{background:rgba(148,163,184,.2);color:#94a3b8} .bigai .svd{background:rgba(255,255,255,.25);color:#fff}
     nav.tabs button{position:relative} nav.tabs button b{width:56px;margin:0 auto;border-radius:14px} nav.tabs button.on b{background:var(--pri2)} nav.tabs button.on::before{content:'';position:absolute;top:0;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--pri)}
-    #hdrb{display:flex;gap:6px;margin-left:auto;margin-right:6px} #say,#padb{position:relative;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:17px;cursor:pointer;padding:0} header.top{position:sticky;top:0;z-index:50;background:var(--bg)} #say.on{background:#ef4444;color:#fff;border-color:#ef4444} @keyframes sayp{50%{box-shadow:0 0 0 10px rgba(239,68,68,.15)}} #moreSay{display:none}
+    #hdrb{display:flex;gap:6px;margin-left:auto;margin-right:6px} #say,#padb,#nzb{position:relative;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:17px;cursor:pointer;padding:0} header.top{position:sticky;top:0;z-index:50;background:var(--bg)} #say.on{background:#ef4444;color:#fff;border-color:#ef4444} @keyframes sayp{50%{box-shadow:0 0 0 10px rgba(239,68,68,.15)}} #moreSay{display:none}
         #padb.has::after{content:'';position:absolute;top:4px;right:4px;width:9px;height:9px;border-radius:50%;background:#facc15}
     #pad{position:fixed;left:0;right:0;bottom:0;height:56vh;z-index:80;background:var(--card);border-top:1px solid var(--line);border-radius:18px 18px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.4);display:flex;flex-direction:column;transform:translateY(105%);transition:transform .18s}
     #pad.show{transform:none} 
@@ -66,6 +66,7 @@
     #padt{flex:1;margin:4px 10px 10px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:16px;line-height:1.6;padding:12px;resize:none}
     .rdg{background:rgba(250,204,21,.32)!important;box-shadow:0 0 0 3px #facc15,0 0 18px rgba(250,204,21,.45)!important;border-radius:8px;font-weight:700!important;color:var(--ink)!important;transition:background .2s,box-shadow .2s} .rdg *{color:inherit}
     .thg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px} .thm{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border:1.5px solid var(--line);border-radius:14px;background:transparent;color:var(--ink);font:inherit;cursor:pointer} .thm.on{border-color:var(--pri);box-shadow:0 0 0 2px var(--pri2)} .thm .sw{position:relative;width:46px;height:30px;border-radius:9px;overflow:hidden;border:1px solid rgba(128,128,128,.3)} .thm .sw i{position:absolute;left:6px;top:6px;width:22px;height:18px;border-radius:5px} .thm .sw b{position:absolute;right:6px;bottom:6px;width:12px;height:12px;border-radius:50%} .thm .nm{font-size:13.5px;font-weight:700} .thm small{font-size:11px;color:var(--sub)}
+    #nzb.on{background:var(--pri2);border-color:var(--pri)} #nzp{position:fixed;top:64px;right:10px;left:10px;max-width:420px;margin-left:auto;z-index:90;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 30px rgba(0,0,0,.35);padding:12px} #nzp .nzh{display:flex;align-items:center;margin-bottom:8px} #nzp .nzh b{flex:1;font-size:15px} #nzp button{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:12px;padding:10px 6px;cursor:pointer} #nzp .nzg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px} #nzp .nzg button{font-size:13px;white-space:nowrap;padding:11px 2px} header.top h1{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(15px,4.6vw,22px)} #nzp .nzg button.on{background:var(--pri2);border-color:var(--pri);color:var(--pri);font-weight:700} #nzp .nzv{display:flex;align-items:center;gap:10px;margin:12px 2px 10px;font-size:13px;color:var(--sub)} #nzp .nzv input{flex:1;accent-color:var(--pri)} #nzp .nzoff{width:100%;font-weight:700} #nzx{padding:4px 10px!important}
     .glb{position:fixed;left:12px;right:12px;bottom:84px;z-index:150;background:#1e1b4b;color:#fff;border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.55;box-shadow:0 8px 24px rgba(0,0,0,.3)}
     .glb b{color:#c4b5fd;margin-right:6px}
     .slog{font-size:14px;display:block} .slog .d{font-weight:700;margin:14px 0 4px;display:flex;justify-content:space-between}
@@ -693,6 +694,89 @@
   }
   padBtn();
   setInterval(() => { if (PAD.open) padSwitch(); else padDot(); }, 600);
+
+  /* ---------- 🌧 집중 소음(백색소음): 위쪽 버튼으로 켜고 끄기. 소리 파일 없이 폰에서 직접 만들어요 ---------- */
+  const NZ = { ctx: null, src: null, gain: null, type: '', vol: .5, buf: {} };
+  const NZT = { white: '화이트 노이즈', pink: '부드러운 노이즈', brown: '깊은 노이즈', rain: '빗소리', cafe: '카페', library: '도서관' };
+  try { NZ.vol = +(localStorage.getItem('reb_nzv') || .5); } catch (e) {}
+  function nzBuild(type) {
+    const ctx = NZ.ctx, sr = ctx.sampleRate, sec = type === 'cafe' || type === 'library' ? 30 : 12, n = sr * sec;
+    const b = ctx.createBuffer(2, n, sr);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = b.getChannelData(ch);
+      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0, br = 0, lp = 0, mv = 0;
+      const pink = () => { const w = Math.random() * 2 - 1; b0 = .99886 * b0 + w * .0555179; b1 = .99332 * b1 + w * .0750759; b2 = .969 * b2 + w * .153852; b3 = .8665 * b3 + w * .3104856; b4 = .55 * b4 + w * .5329522; b5 = -.7616 * b5 - w * .016898; const o = b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * .5362; b6 = w * .115926; return o * .11; };
+      const brown = () => { br = (br + .02 * (Math.random() * 2 - 1)) / 1.02; return br * 3.5; };
+      for (let i = 0; i < n; i++) {
+        let v;
+        if (type === 'white') v = (Math.random() * 2 - 1) * .35;
+        else if (type === 'pink') v = pink();
+        else if (type === 'brown') v = brown();
+        else if (type === 'rain') { const p = pink(); lp += (p - lp) * .55; v = (p - lp * .6) * 1.1 + brown() * .25; }
+        else if (type === 'cafe') { const p = pink(); lp += (p - lp) * .08; v = brown() * .55 + lp * .9; }      // 웅성임 바탕
+        else { v = brown() * .35; }                                                                            // 도서관: 아주 낮은 공조 소리
+        d[i] = v;
+      }
+      // 사건 소리 얹기(빗방울·잔 부딪힘·말소리 덩어리·책장 넘김)
+      const add = (at, len, f) => { for (let i = 0; i < len && at + i < n; i++) d[at + i] += f(i / sr, i / len); };
+      const R = (a, z) => a + Math.random() * (z - a);
+      if (type === 'rain') for (let k = 0; k < sec * 35; k++) { const at = (Math.random() * n) | 0, a = R(.05, .25); add(at, sr * .03 | 0, (t, x) => (Math.random() * 2 - 1) * a * Math.exp(-x * 6)); }
+      if (type === 'cafe') {
+        for (let k = 0; k < sec * 2.2; k++) {      // 멀리서 들리는 말소리 덩어리(음절 리듬으로 오르내림)
+          const at = (Math.random() * n) | 0, len = sr * R(.8, 2.4) | 0, f0 = R(160, 320), syl = R(3.5, 6), a = R(.04, .1); let ph = 0, ly = 0;
+          add(at, len, (t, x) => { ph += 2 * Math.PI * f0 * (1 + .08 * Math.sin(t * 7)) / sr; const env = Math.max(0, Math.sin(Math.PI * t * syl)) * Math.sin(Math.PI * x); ly += ((Math.random() * 2 - 1) - ly) * .2; return (Math.sin(ph) * .5 + ly * .7) * env * a; });
+        }
+        for (let k = 0; k < sec * .5; k++) { const at = (Math.random() * n) | 0, f = R(2400, 4200), a = R(.04, .09); add(at, sr * .35 | 0, (t, x) => Math.sin(2 * Math.PI * f * t) * a * Math.exp(-x * 9) + Math.sin(2 * Math.PI * f * 1.51 * t) * a * .5 * Math.exp(-x * 12)); }
+      }
+      if (type === 'library') {
+        for (let k = 0; k < sec * .12; k++) { const at = (Math.random() * n) | 0, a = R(.05, .1); let l2 = 0; add(at, sr * .35 | 0, (t, x) => { l2 += ((Math.random() * 2 - 1) - l2) * .35; return l2 * a * Math.sin(Math.PI * x) * (1 + Math.sin(x * 30) * .3); }); }     // 책장 넘김
+        for (let k = 0; k < sec * .25; k++) { const at = (Math.random() * n) | 0, a = R(.03, .06); add(at, sr * .12 | 0, (t, x) => Math.sin(2 * Math.PI * R(70, 90) * t) * a * Math.exp(-x * 5)); }       // 먼 발소리
+      }
+      // 이어 붙는 자리 부드럽게
+      const fade = sr * .5 | 0; for (let i = 0; i < fade; i++) { const w = i / fade; d[i] = d[i] * w + d[n - fade + i] * (1 - w); }
+    }
+    return b;
+  }
+  function nzPlay(type) {
+    try {
+      if (!NZ.ctx) { NZ.ctx = new (window.AudioContext || window.webkitAudioContext)(); NZ.gain = NZ.ctx.createGain(); NZ.gain.connect(NZ.ctx.destination); }
+      if (NZ.ctx.state === 'suspended') NZ.ctx.resume();
+      if (NZ.src) { try { NZ.src.stop(); } catch (e) {} NZ.src = null; }
+      if (!type) { NZ.type = ''; nzUi(); return; }
+      const b = NZ.buf[type] || (NZ.buf[type] = nzBuild(type));
+      const s = NZ.ctx.createBufferSource(); s.buffer = b; s.loop = true; s.connect(NZ.gain);
+      NZ.gain.gain.setValueAtTime(0, NZ.ctx.currentTime); NZ.gain.gain.linearRampToValueAtTime(nzLevel(), NZ.ctx.currentTime + 1.2);
+      s.start(); NZ.src = s; NZ.type = type;
+      try { localStorage.setItem('reb_nzt', type); } catch (e) {}
+    } catch (e) { if (window.__toast) __toast('이 폰에서는 소음을 만들 수 없어요'); }
+    nzUi();
+  }
+  // 🔊 읽기 중에는 소음을 살짝 줄여 말소리가 잘 들리게
+  const nzLevel = () => NZ.vol * NZ.vol * ((window.__tts && __tts.busy && __tts.busy()) ? .35 : 1);
+  setInterval(() => { if (NZ.src && NZ.gain) NZ.gain.gain.setTargetAtTime(nzLevel(), NZ.ctx.currentTime, .3); }, 500);
+  function nzUi() {
+    const b = document.getElementById('nzb'); if (b) { b.classList.toggle('on', !!NZ.type); b.textContent = NZ.type ? '🌧' : '🌙'; }
+    document.querySelectorAll('#nzp [data-n]').forEach(x => x.classList.toggle('on', x.dataset.n === NZ.type));
+  }
+  function nzPanel() {
+    let p = document.getElementById('nzp'); if (p) { p.remove(); return; }
+    let last = 'pink'; try { last = localStorage.getItem('reb_nzt') || 'pink'; } catch (e) {}
+    document.body.insertAdjacentHTML('beforeend', `<div id="nzp"><div class="nzh"><b>집중 소음</b><button id="nzx" aria-label="닫기">✕</button></div>
+      <div class="nzg">${Object.entries(NZT).map(([k, v]) => `<button data-n="${k}">${v}</button>`).join('')}</div>
+      <div class="nzv"><span>소리 크기</span><input id="nzvol" type="range" min="0.05" max="1" step="0.05" value="${NZ.vol}"></div>
+      <button id="nzoff" class="nzoff">${NZ.type ? '끄기' : '켜기 (' + NZT[last] + ')'}</button></div>`);
+    p = document.getElementById('nzp');
+    p.querySelector('#nzx').onclick = () => p.remove();
+    p.querySelectorAll('[data-n]').forEach(x => x.onclick = () => { const k = x.dataset.n === NZ.type ? '' : x.dataset.n; if (k && !NZ.buf[k] && (k === 'cafe' || k === 'library')) { x.textContent = '만드는 중…'; setTimeout(() => { nzPlay(k); x.textContent = NZT[k]; p.querySelector('#nzoff').textContent = NZ.type ? '끄기' : '켜기'; }, 30); return; } nzPlay(k); p.querySelector('#nzoff').textContent = NZ.type ? '끄기' : '켜기'; });
+    p.querySelector('#nzvol').oninput = e => { NZ.vol = +e.target.value; try { localStorage.setItem('reb_nzv', NZ.vol); } catch (er) {} if (NZ.gain) NZ.gain.gain.setTargetAtTime(nzLevel(), NZ.ctx.currentTime, .05); };
+    p.querySelector('#nzoff').onclick = () => { nzPlay(NZ.type ? '' : last); p.querySelector('#nzoff').textContent = NZ.type ? '끄기' : '켜기 (' + NZT[last] + ')'; };
+    nzUi();
+  }
+  (function nzBtn() {
+    const b = document.createElement('button'); b.id = 'nzb'; b.textContent = '🌙'; b.setAttribute('aria-label', '집중 소음');
+    b.onclick = nzPanel; hdrPut(b);
+    const g = document.getElementById('hdrb'); if (g && g.firstChild !== b) g.insertBefore(b, g.firstChild);
+  })();
   /* ---------- 보기 지우기: 답 고르기 전, 아닌 보기를 눌러(또는 옆으로 밀어) 줄 긋기 ---------- */
   const ELIM = {};
   const elHint = () => { try { const n = +localStorage.getItem('reb_elh') || 0; localStorage.setItem('reb_elh', n + 1); return n < 6; } catch (e) { return false; } };
