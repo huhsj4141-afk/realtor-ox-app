@@ -53,7 +53,7 @@
     .conf{display:flex;gap:6px;align-items:center;flex-wrap:nowrap} .conf .lb{flex:none!important;margin-right:4px}
     .svd{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:2px;background:rgba(22,163,74,.18);color:#16a34a} .svd.no{background:rgba(148,163,184,.2);color:#94a3b8} .bigai .svd{background:rgba(255,255,255,.25);color:#fff}
     nav.tabs button{position:relative} nav.tabs button b{width:56px;margin:0 auto;border-radius:14px} nav.tabs button.on b{background:var(--pri2)} nav.tabs button.on::before{content:'';position:absolute;top:0;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--pri)}
-    #hdrb{display:flex;gap:6px;margin-left:auto;margin-right:6px} #say,#padb{position:relative;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:17px;cursor:pointer;padding:0} header.top{position:sticky;top:0;z-index:50;background:var(--bg)} #say.on{background:#ef4444;color:#fff;border-color:#ef4444;animation:sayp 1.4s infinite} @keyframes sayp{50%{box-shadow:0 0 0 10px rgba(239,68,68,.15)}} #moreSay{display:none}
+    #hdrb{display:flex;gap:6px;margin-left:auto;margin-right:6px} #say,#padb{position:relative;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:17px;cursor:pointer;padding:0} header.top{position:sticky;top:0;z-index:50;background:var(--bg)} #say.on{background:#ef4444;color:#fff;border-color:#ef4444} @keyframes sayp{50%{box-shadow:0 0 0 10px rgba(239,68,68,.15)}} #moreSay{display:none}
         #padb.has::after{content:'';position:absolute;top:4px;right:4px;width:9px;height:9px;border-radius:50%;background:#facc15}
     #pad{position:fixed;left:0;right:0;bottom:0;height:56vh;z-index:80;background:var(--card);border-top:1px solid var(--line);border-radius:18px 18px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.4);display:flex;flex-direction:column;transform:translateY(105%);transition:transform .18s}
     #pad.show{transform:none} 
@@ -64,16 +64,16 @@
     #pad .pc{width:28px;height:28px;padding:0!important;border-radius:50%!important;background:var(--c)!important;border:2px solid transparent!important} #pad .pc.on{border-color:var(--pri)!important;box-shadow:0 0 0 2px var(--card) inset}
     #padc{flex:1;min-height:0;margin:0 10px 10px;border-radius:12px;touch-action:none;background-color:var(--bg);background-image:linear-gradient(rgba(148,163,184,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.12) 1px,transparent 1px);background-size:24px 24px}
     #padt{flex:1;margin:4px 10px 10px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:16px;line-height:1.6;padding:12px;resize:none}
-    .rdg{background:rgba(250,204,21,.32)!important;box-shadow:0 0 0 3px #facc15,0 0 18px rgba(250,204,21,.45)!important;border-radius:8px;font-weight:700!important;color:var(--ink)!important;transition:background .2s,box-shadow .2s;animation:rdgp 1.6s ease-in-out infinite} .rdg *{color:inherit} @keyframes rdgp{50%{box-shadow:0 0 0 3px #facc15,0 0 6px rgba(250,204,21,.2)}}
+    .rdg{background:rgba(250,204,21,.32)!important;box-shadow:0 0 0 3px #facc15,0 0 18px rgba(250,204,21,.45)!important;border-radius:8px;font-weight:700!important;color:var(--ink)!important;transition:background .2s,box-shadow .2s} .rdg *{color:inherit}
     .glb{position:fixed;left:12px;right:12px;bottom:84px;z-index:150;background:#1e1b4b;color:#fff;border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.55;box-shadow:0 8px 24px rgba(0,0,0,.3)}
     .glb b{color:#c4b5fd;margin-right:6px}
     .slog{font-size:14px;display:block} .slog .d{font-weight:700;margin:14px 0 4px;display:flex;justify-content:space-between}
     .slog .it{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--line,#eee);align-items:center}
     .slog .it span:first-child{opacity:.6;width:40px;flex:none} .slog .it .g{flex:1} .slog .it .sm{font-size:12px;opacity:.65}
     /* 문제 화면 정리: 큰 주요 버튼 + 작은 도구 줄 */
-    .qtb{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
-    .qtb>*{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 2px!important;font-size:12px!important;min-height:52px;border-radius:12px!important;text-decoration:none;text-align:center;line-height:1.2}
-    .qtb .ic{font-size:19px}
+    .qtb{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px;opacity:.85}
+    .qtb>*{display:flex!important;flex-direction:row;align-items:center;justify-content:center;gap:4px;padding:6px 2px!important;font-size:12.5px!important;min-height:36px;border-radius:12px!important;text-decoration:none;text-align:center;line-height:1.2}
+    .qtb .ic{font-size:14px}
     .bigai{display:block;width:100%;margin-top:12px;padding:15px!important;font-size:17px!important;font-weight:700;border-radius:14px!important}
     .qmeta{font-size:12.5px;opacity:.65;margin:-2px 0 8px}
     .conf{margin-top:12px} .conf .lb{font-size:12.5px}
@@ -407,7 +407,7 @@
     if (e && Array.isArray(e.steps)) e.steps.forEach(st => { const m = /([①②③④⑤])/.exec(st.title || ''); if (m) { const n = MK5.indexOf(m[1]) + 1; info[n] = info[n] || {}; if (!info[n].why) info[n].why = st.say || ''; } });
     const stmt = /①\s*[가-힣]/.test(q.x) && !/ㄱ\s*[,·]/.test(lines.slice(idx).join(' '));   // 문장형 보기일 때만 O·X 추정
     const neg = NEG.test(stem);
-    qt.innerHTML = h(stem) + ch.map(c => {
+    qt.innerHTML = '<div class="qstem">' + h(stem) + '</div>' + ch.map(c => {
       const isAns = ans.includes(c.n), mine = c.n === pick && !isAns;
       let ox = info[c.n] && info[c.n].ox; if (!ox && stmt) ox = (isAns === neg) ? 'x' : 'o';
       let text = h(c.t);
@@ -461,6 +461,21 @@
     let g = document.getElementById('hdrb'); if (!g) { g = document.createElement('div'); g.id = 'hdrb'; top.appendChild(g); }
     const v = document.getElementById('ver'); g.appendChild(b); if (v) top.appendChild(v);
   }
+  /* ---------- 해설 군더더기 숨기기: 계산 문제가 아니면 '풀이 순서·공식'(보기마다 같은 말 반복)과 '보기 정리'(이미 보기 밑에 나옴), 맨 아래 안내문 ---------- */
+  function trimEx() {
+    const q = (typeof S !== 'undefined' && S && S.list) ? S.list[S.i] : null; if (cur !== 'quiz' || !q) return;
+    const ex = document.querySelector('#aibox .ex'); if (!ex || ex.dataset.trim) return; ex.dataset.trim = 1;
+    const calc = typeof isCalc === 'function' && isCalc(q), annotated = !!document.querySelector('#view .chx .why, #view .chx');
+    let hide = false;
+    [...ex.children].forEach(el => {
+      if (el.classList.contains('exh')) { const t = el.textContent; hide = (!calc && /풀이 순서|공식/.test(t)) || (annotated && /보기 정리/.test(t)); }
+      else if (/^(exm|ext|exw|exs|exa|dg)$/.test(el.className.split(' ')[0])) hide = false;
+      if (el.classList.contains('muted') && /참고용/.test(el.textContent)) { el.style.display = 'none'; return; }
+      if (hide) el.style.display = 'none';
+    });
+  }
+  setInterval(trimEx, 500);
+
   /* ---------- 🔊 말해주기: 모든 화면 오른쪽 아래, 눈 감고 듣기 ---------- */
   function sayClean(t) {
     return String(t || '')
@@ -473,11 +488,13 @@
       .replace(/\s*\n+\s*/g, '. ').replace(/\s{2,}/g, ' ').replace(/(\.\s*){2,}/g, '. ').trim();
   }
   // 화면 글자 → 읽을 조각들 [{t: 읽을 말, el: 화면에서 그 부분}]
-  function findEl(root, raw) {
+  function findEl(root, raw, label) {
     if (!root) return null;
-    const key = String(raw || '').replace(/\s+/g, ' ').trim().slice(0, 14); if (key.length < 4) return root;
+    const nz = t => String(t || '').replace(/[^가-힣0-9a-zA-Z]/g, '');
+    const key = nz(raw).slice(0, 10);
     let best = null;
-    root.querySelectorAll('*').forEach(e => { const tx = (e.textContent || '').replace(/\s+/g, ' '); if (tx.includes(key) && (!best || tx.length <= best.textContent.replace(/\s+/g, ' ').length)) best = e; });
+    if (key.length >= 4) root.querySelectorAll('*').forEach(e => { const tx = nz(e.textContent); if (tx.includes(key) && (!best || tx.length <= nz(best.textContent).length)) best = e; });
+    if (!best && label) root.querySelectorAll('b, h3, h4, .t, strong').forEach(e => { if (!best && (e.textContent || '').includes(label)) best = e.parentElement; });
     return best || root;
   }
   function screenScript() {
@@ -487,7 +504,7 @@
     if (cur === 'quiz' && q) {
       const qt = view.querySelector('.qtext');
       const lines = q.x.split('\n'), idx = lines.findIndex(l => /^\s*①/.test(l));
-      add(idx > 0 ? lines.slice(0, idx).join(' ') : q.x, qt);
+      add(idx > 0 ? lines.slice(0, idx).join(' ') : q.x, view.querySelector('.qstem') || qt);
       if (idx > 0) {
         const ch = []; lines.slice(idx).forEach(l => { if (/^\s*[①②③④⑤]/.test(l)) ch.push(l); else if (ch.length) ch[ch.length - 1] += ' ' + l; });
         const els = view.querySelectorAll('.qtext .elc, .chx');
@@ -499,12 +516,12 @@
         add((ok ? '맞았어요. ' : '틀렸어요. ') + '정답은 ' + ans.join('번, ') + '번이에요.', view.querySelector('.fb.top') || view.querySelector('.fb'));
         const ab = document.getElementById('aibox'), e = expOf(q);
         if (e) {
-          if (e.summary) add(e.summary, () => findEl(document.getElementById('aibox'), e.summary));
+          if (e.summary) add(e.summary, () => findEl(document.getElementById('aibox'), e.summary, '💡'));
           const ch = e.choices && e.choices[ans[0] - 1];
           if (ch && ch.why) add('정답 풀이. ' + ch.why, () => findEl(document.getElementById('aibox'), ch.why));
           if (!ok && e.choices && e.choices[pk - 1] && e.choices[pk - 1].why) add('내가 고른 ' + pk + '번. ' + e.choices[pk - 1].why, () => findEl(document.getElementById('aibox'), e.choices[pk - 1].why));
-          if (e.concept) add('핵심 개념. ' + e.concept, () => findEl(document.getElementById('aibox'), e.concept));
-          if (e.memo) { const m = Array.isArray(e.memo) ? e.memo.join('. ') : e.memo; add('암기. ' + m, () => findEl(document.getElementById('aibox'), Array.isArray(e.memo) ? e.memo[0] : e.memo)); }
+          if (e.concept) add('핵심 개념. ' + e.concept, () => findEl(document.getElementById('aibox'), e.concept, '핵심 개념'));
+          if (e.memo) { const m = Array.isArray(e.memo) ? e.memo.join('. ') : e.memo; add('암기. ' + m, () => findEl(document.getElementById('aibox'), Array.isArray(e.memo) ? e.memo[0] : e.memo, '암기')); }
         } else if (ab && ab.textContent.trim().length > 20) add(ab.innerText, ab);
         const mt = document.querySelector('#moreBox .fb'); if (mt && mt.textContent.trim()) add('더 자세히. ' + mt.textContent, mt);
       }
@@ -524,7 +541,7 @@
   function sayMark(el) {
     document.querySelectorAll('.rdg').forEach(x => x.classList.remove('rdg'));
     if (!el) return; el.classList.add('rdg');
-    try { const r = el.getBoundingClientRect(); if (r.top < 70 || r.bottom > innerHeight - 90) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+    try { const r = el.getBoundingClientRect(); if (r.top < 70 || r.bottom > innerHeight - 90) { if (r.height > innerHeight * .55) window.scrollBy({ top: r.top - 80, behavior: 'smooth' }); else el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } } catch (e) {}
   }
   const SAY = { on: false };
   function sayBtn() {
@@ -651,7 +668,7 @@
     lines.slice(idx).forEach(l => { const m = /^\s*([①②③④⑤])/.exec(l); if (m) ch.push({ n: MK5.indexOf(m[1]) + 1, t: l.trim() }); else if (ch.length) ch[ch.length - 1].t += '\n' + l; });
     if (ch.length !== 5) return;
     const set = ELIM[q.id] = ELIM[q.id] || new Set();
-    qt.innerHTML = h(lines.slice(0, idx).join('\n')) + (elHint() ? '<div class="elh">💡 아닌 보기는 눌러서 줄 긋기</div>' : '') +
+    qt.innerHTML = '<div class="qstem">' + h(lines.slice(0, idx).join('\n')) + '</div>' + (elHint() ? '<div class="elh">💡 아닌 보기는 눌러서 줄 긋기</div>' : '') +
       ch.map(c => `<div class="elc ${set.has(c.n) ? 'x' : ''}" data-n="${c.n}">${h(c.t)}</div>`).join('');
     qt.dataset.el = q.id;
     const sync = () => document.querySelectorAll('#view .choices button').forEach(b => b.classList.toggle('elx', set.has(+b.dataset.c)));
