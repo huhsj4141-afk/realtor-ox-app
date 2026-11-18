@@ -232,12 +232,16 @@ class MainActivity : Activity() {
         val bar = LinearLayout(this).apply { gravity = Gravity.CENTER_HORIZONTAL }
         listOf(Triple("🏠", "오늘", "home"), Triple("✏️", "문제", "setup"), Triple("🎧", "듣기", ""), Triple("📊", "기록", "wrong")).forEach { (ic, n, v) ->
             val on = v.isEmpty()
-            val sp = android.text.SpannableString("$ic\n$n").apply { setSpan(android.text.style.RelativeSizeSpan(1.75f), 0, ic.length, 0) }
-            bar.addView(TextView(this).apply {
-                text = sp; gravity = Gravity.CENTER; textSize = 12f; setLineSpacing(0f, 1.05f); setPadding(0, dp(6), 0, dp(8))
-                setTextColor(Color.parseColor(if (on) (if (dk) "#6F9BFF" else "#2457C5") else SUB)); if (on) setTypeface(typeface, Typeface.BOLD)
-                layoutParams = LinearLayout.LayoutParams(0, -2, 1f).apply { width = 0 }
-                setOnClickListener { if (!on) { startActivity(Intent(this@MainActivity, WebActivity::class.java).putExtra("tab", v).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)); finish(); overridePendingTransition(0, 0) } }
+            val col = if (on) Color.parseColor(if (dk) "#6F9BFF" else "#2457C5") else Color.parseColor(SUB)
+            // 학습 화면 탭과 같은 치수: 위 8 · 아이콘 줄 25 · 글자 줄 19 · 아래 10
+            bar.addView(LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; setPadding(0, dp(8), 0, dp(10))
+                layoutParams = LinearLayout.LayoutParams(0, -2, 1f)
+                addView(TextView(this@MainActivity).apply { text = ic; textSize = 21f; includeFontPadding = false; gravity = Gravity.CENTER
+                    layoutParams = LinearLayout.LayoutParams(-1, dp(25)) })
+                addView(TextView(this@MainActivity).apply { text = n; textSize = 12f; includeFontPadding = false; gravity = Gravity.CENTER; setTextColor(col)
+                    if (on) setTypeface(typeface, Typeface.BOLD); layoutParams = LinearLayout.LayoutParams(-1, dp(19)) })
+                setOnClickListener { if (!on) { startActivity(Intent(this@MainActivity, WebActivity::class.java).putExtra("tab", v).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)); finish() } }
             })
         }
         wrap.addView(bar)
