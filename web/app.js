@@ -64,6 +64,7 @@
     #pad .pc{width:28px;height:28px;padding:0!important;border-radius:50%!important;background:var(--c)!important;border:2px solid transparent!important} #pad .pc.on{border-color:var(--pri)!important;box-shadow:0 0 0 2px var(--card) inset}
     #padc{flex:1;min-height:0;margin:0 10px 10px;border-radius:12px;touch-action:none;background-color:var(--bg);background-image:linear-gradient(rgba(148,163,184,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.12) 1px,transparent 1px);background-size:24px 24px}
     #padt{flex:1;margin:4px 10px 10px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:16px;line-height:1.6;padding:12px;resize:none}
+    .rdg{background:rgba(250,204,21,.18)!important;outline:2px solid rgba(250,204,21,.75);outline-offset:2px;border-radius:8px;transition:background .2s}
     .glb{position:fixed;left:12px;right:12px;bottom:84px;z-index:150;background:#1e1b4b;color:#fff;border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.55;box-shadow:0 8px 24px rgba(0,0,0,.3)}
     .glb b{color:#c4b5fd;margin-right:6px}
     .slog{font-size:14px;display:block} .slog .d{font-weight:700;margin:14px 0 4px;display:flex;justify-content:space-between}
@@ -473,41 +474,59 @@
       .replace(/\p{Extended_Pictographic}|️|‍/gu, '')
       .replace(/\s*\n+\s*/g, '. ').replace(/\s{2,}/g, ' ').replace(/(\.\s*){2,}/g, '. ').trim();
   }
+  // 화면 글자 → 읽을 조각들 [{t: 읽을 말, el: 화면에서 그 부분}]
+  function findEl(root, raw) {
+    if (!root) return null;
+    const key = String(raw || '').replace(/\s+/g, ' ').trim().slice(0, 14); if (key.length < 4) return root;
+    let best = null;
+    root.querySelectorAll('*').forEach(e => { const tx = (e.textContent || '').replace(/\s+/g, ' '); if (tx.includes(key) && (!best || tx.length <= best.textContent.replace(/\s+/g, ' ').length)) best = e; });
+    return best || root;
+  }
   function screenScript() {
-    const view = document.getElementById('view'); if (!view) return '';
+    const view = document.getElementById('view'); if (!view) return [];
     const q = (typeof S !== 'undefined' && S && S.list) ? S.list[S.i] : null;
+    const seg = [], add = (raw, el) => { const t = sayClean(raw); if (t) seg.push({ t, el }); };
     if (cur === 'quiz' && q) {
-      const parts = [];
+      const qt = view.querySelector('.qtext');
       const lines = q.x.split('\n'), idx = lines.findIndex(l => /^\s*①/.test(l));
-      parts.push(idx > 0 ? lines.slice(0, idx).join(' ') : q.x);
-      if (idx > 0) parts.push(lines.slice(idx).join('\n'));
+      add(idx > 0 ? lines.slice(0, idx).join(' ') : q.x, qt);
+      if (idx > 0) {
+        const ch = []; lines.slice(idx).forEach(l => { if (/^\s*[①②③④⑤]/.test(l)) ch.push(l); else if (ch.length) ch[ch.length - 1] += ' ' + l; });
+        const els = view.querySelectorAll('.qtext .elc, .chx');
+        ch.forEach((c, k) => add(c, els[k] || findEl(qt, c.replace(/^\s*[①②③④⑤]\s*/, ''))));
+      }
       const pick = S.ans[q.id], ex = S.exam && !S.done;
       if (pick && !ex) {
         const ans = String(q.a).split(',').map(Number), pk = +pick, ok = ans.includes(pk);
-        parts.push((ok ? '맞았어요. ' : '틀렸어요. ') + '정답은 ' + ans.join('번, ') + '번이에요.');
-        const e = expOf(q);
+        add((ok ? '맞았어요. ' : '틀렸어요. ') + '정답은 ' + ans.join('번, ') + '번이에요.', view.querySelector('.fb.top') || view.querySelector('.fb'));
+        const ab = document.getElementById('aibox'), e = expOf(q);
         if (e) {
-          if (e.summary) parts.push(e.summary);
+          if (e.summary) add(e.summary, () => findEl(document.getElementById('aibox'), e.summary));
           const ch = e.choices && e.choices[ans[0] - 1];
-          if (ch && ch.why) parts.push('정답 풀이. ' + ch.why);
-          if (!ok && e.choices && e.choices[pk - 1] && e.choices[pk - 1].why) parts.push('내가 고른 ' + pk + '번. ' + e.choices[pk - 1].why);
-          if (e.concept) parts.push('핵심 개념. ' + e.concept);
-          if (e.memo) parts.push('암기. ' + (Array.isArray(e.memo) ? e.memo.join('. ') : e.memo));
-        } else { const ab = document.getElementById('aibox'); if (ab && ab.textContent.trim().length > 20) parts.push(ab.innerText); }
-        const mb = document.getElementById('moreBox'); const mt = mb && mb.querySelector('.fb');
-        if (mt && mt.textContent.trim()) parts.push('더 자세히. ' + mt.textContent);
+          if (ch && ch.why) add('정답 풀이. ' + ch.why, () => findEl(document.getElementById('aibox'), ch.why));
+          if (!ok && e.choices && e.choices[pk - 1] && e.choices[pk - 1].why) add('내가 고른 ' + pk + '번. ' + e.choices[pk - 1].why, () => findEl(document.getElementById('aibox'), e.choices[pk - 1].why));
+          if (e.concept) add('핵심 개념. ' + e.concept, () => findEl(document.getElementById('aibox'), e.concept));
+          if (e.memo) { const m = Array.isArray(e.memo) ? e.memo.join('. ') : e.memo; add('암기. ' + m, () => findEl(document.getElementById('aibox'), Array.isArray(e.memo) ? e.memo[0] : e.memo)); }
+        } else if (ab && ab.textContent.trim().length > 20) add(ab.innerText, ab);
+        const mt = document.querySelector('#moreBox .fb'); if (mt && mt.textContent.trim()) add('더 자세히. ' + mt.textContent, mt);
       }
-      return parts.map(sayClean).join('. ');
+      return seg;
     }
-    // 다른 화면: 위에서부터 카드 3개의 제목과 본문(버튼 글자는 빼고)
+    // 다른 화면: 위에서부터 카드 3개, 줄마다 그 줄이 있는 곳 표시
     const cards = [...view.querySelectorAll('.card, .hero, #mgr')].filter(c => !c.closest('.card .card')).slice(0, 3);
-    const txt = (cards.length ? cards : [view]).map(c => {
-      let t = c.innerText;      // 화면에 보이는 그대로(줄바꿈 포함), 버튼 글자는 빼기
+    let n = 0;
+    (cards.length ? cards : [view]).forEach(c => {
+      let t = c.innerText;
       c.querySelectorAll('button, select, input').forEach(x => { const bt = (x.innerText || x.value || '').trim(); if (bt) t = t.replace(bt, ' '); });
-      return t;
-    }).join('\n');
-    const keep = txt.split('\n').map(l => l.trim()).filter(l => l.length > 2 && !/^[\d\s.%,·:/■-]+$/.test(l) && !/^막대|^(월|화|수|목|금|토|일)$|보기$|보기 \(/.test(l));
-    return sayClean(keep.join('\n')).slice(0, 700);
+      t.split('\n').map(l => l.trim()).filter(l => l.length > 2 && !/^[\d\s.%,·:/■-]+$/.test(l) && !/^막대|^(월|화|수|목|금|토|일)$|보기$|보기 \(/.test(l))
+        .forEach(l => { if ((n += l.length) < 700) add(l, findEl(c, l)); });
+    });
+    return seg;
+  }
+  function sayMark(el) {
+    document.querySelectorAll('.rdg').forEach(x => x.classList.remove('rdg'));
+    if (!el) return; el.classList.add('rdg');
+    try { const r = el.getBoundingClientRect(); if (r.top < 70 || r.bottom > innerHeight - 90) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
   }
   const SAY = { on: false };
   function sayBtn() {
@@ -518,14 +537,16 @@
       b.onclick = () => {
         const T = window.__tts;
         if (!T) { if (window.__toast) __toast('읽기를 쓸 수 없어요'); return; }
-        if (SAY.on || T.busy()) { SAY.on = false; try { T.stop(); } catch (e) {} b.classList.remove('on'); b.textContent = '🔊'; if (window.__toast) __toast('읽기를 멈췄어요'); return; }
+        if (SAY.on || T.busy()) { SAY.on = false; sayMark(null); try { T.stop(); } catch (e) {} b.classList.remove('on'); b.textContent = '🔊'; if (window.__toast) __toast('읽기를 멈췄어요'); return; }
         // 해설까지 읽을 때는 해설을 화면에 펼쳐 두고 읽기(보이는 것과 듣는 것이 같게)
         try { const q = S.list[S.i]; if (cur === 'quiz' && q && S.ans[q.id] && !(S.exam && !S.done) && expOf(q)) { const ab = document.getElementById('aibox'); if (ab && ab.textContent.trim().length < 20) { const qa = document.getElementById('qa'); if (qa) qa.click(); } } } catch (e) {}
-        const t = screenScript() || '이 화면은 고르는 버튼만 있어요. 문제를 시작하면 문제와 보기, 해설을 읽어 드릴게요.';
-        SAY.on = true; b.classList.add('on'); b.textContent = '⏹';
-        const chunks = []; t.split(/(?<=[.?!요다])\s+/).forEach(x => { if (chunks.length && (chunks[chunks.length - 1] + ' ' + x).length < 500) chunks[chunks.length - 1] += ' ' + x; else chunks.push(x); });
-        T.speak(chunks.map(x => ({ text: x })), {}).catch(e => { if (e && e.code !== 'viewer_stopped' && window.__toast) __toast(e.message); })
-          .finally(() => { SAY.on = false; b.classList.remove('on'); b.textContent = '🔊'; });
+        let seg = screenScript(); if (!seg.length) seg = [{ t: '이 화면은 고르는 버튼만 있어요. 문제를 시작하면 문제와 보기, 해설을 읽어 드릴게요.', el: null }];
+        // 긴 조각은 500자 안쪽으로 나누되, 표시할 곳은 같게
+        const lines = []; seg.forEach(sg => { let buf = ''; sg.t.split(/(?<=[.?!요다])\s+/).forEach(x => { if (buf && (buf + ' ' + x).length > 500) { lines.push({ text: buf, el: sg.el }); buf = x; } else buf = buf ? buf + ' ' + x : x; }); if (buf) lines.push({ text: buf, el: sg.el }); });
+        SAY.on = true; SAY.lines = lines; b.classList.add('on'); b.textContent = '⏹';
+        if (!SAY.hooked && T.onLine) { SAY.hooked = true; T.onLine(({ line }) => { if (SAY.on && SAY.lines && SAY.lines[line]) { const el = SAY.lines[line].el; sayMark(typeof el === 'function' ? el() : el); } }); }
+        T.speak(lines.map(x => ({ text: x.text })), {}).catch(e => { if (e && e.code !== 'viewer_stopped' && window.__toast) __toast(e.message); })
+          .finally(() => { SAY.on = false; SAY.lines = null; sayMark(null); b.classList.remove('on'); b.textContent = '🔊'; });
       };
     }
   }
