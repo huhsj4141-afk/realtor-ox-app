@@ -27,6 +27,7 @@ object Updater {
 
     /** 새 버전 번호를 알게 되면 불림(웹 첫 화면 배너용). 0 = 최신 */
     var onLatest: ((Long) -> Unit)? = null
+    private val busy = java.util.concurrent.atomic.AtomicBoolean(false)
     fun version(a: Activity): Long = current(a)
     fun latestKnown(a: Activity): Long = a.getSharedPreferences("ox", Activity.MODE_PRIVATE).getLong("upd_latest", 0)
     fun install(a: Activity) = download(a)
@@ -68,12 +69,25 @@ object Updater {
             a.getSharedPreferences("ox", Activity.MODE_PRIVATE).edit().putLong("upd_at", 0).apply()
             return
         }
+        if (!busy.compareAndSet(false, true)) { Toast.makeText(a, "이미 받는 중이에요. 잠시만 기다려 주세요", Toast.LENGTH_SHORT).show(); return }
         Toast.makeText(a, "새 버전 받는 중… (1~2분)", Toast.LENGTH_LONG).show()
         Thread {
             try {
                 val dir = File(a.cacheDir, "update").apply { mkdirs() }
                 val f = File(dir, "realtor-ox.apk")
-                get(BASE + "realtor-ox.apk").inputStream.use { i -> f.outputStream().use { o -> i.copyTo(o) } }
+                // 끝까지 다 받았는지(크기·파일 모양) 확인하고, 아니면 한 번 더 받기 — 덜 받은 파일은 '앱 파일에 문제' 오류가 남
+                var ok = false
+                for (t in 1..3) {
+                    val tmp = File(dir, "part.apk"); tmp.delete()
+                    val c = get(BASE + "realtor-ox.apk"); val want = c.contentLengthLong
+                    c.inputStream.use { i -> tmp.outputStream().use { o -> i.copyTo(o) } }
+                    val head = ByteArray(2); tmp.inputStream().use { it.read(head) }
+                    if ((want <= 0 || tmp.length() == want) && tmp.length() > 1_000_000 && head[0] == 'P'.code.toByte() && head[1] == 'K'.code.toByte()) {
+                        f.delete(); tmp.renameTo(f); ok = true; break
+                    }
+                    Thread.sleep(3000)
+                }
+                if (!ok) throw Exception("파일을 끝까지 받지 못했어요. 인터넷을 확인하고 다시 눌러 주세요")
                 val uri = FileProvider.getUriForFile(a, a.packageName + ".files", f)
                 a.runOnUiThread {
                     a.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, "application/vnd.android.package-archive")
@@ -81,7 +95,7 @@ object Updater {
                 }
             } catch (e: Exception) {
                 a.runOnUiThread { Toast.makeText(a, "받기 실패: ${e.message}", Toast.LENGTH_LONG).show() }
-            }
+            } finally { busy.set(false) }
         }.start()
     }
 }
