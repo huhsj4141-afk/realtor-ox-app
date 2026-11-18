@@ -21,6 +21,7 @@ jobs:
       mcnew: ${{ steps.st.outputs.mcnew }}
     steps:
       - uses: actions/checkout@v4
+        with: { ref: main }   # 기다렸다 시작해도 최신 상태에서
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
       - run: which ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
