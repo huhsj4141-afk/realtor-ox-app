@@ -521,7 +521,8 @@
           if (ch && ch.why) add('정답 풀이. ' + ch.why, () => findEl(document.getElementById('aibox'), ch.why));
           if (!ok && e.choices && e.choices[pk - 1] && e.choices[pk - 1].why) add('내가 고른 ' + pk + '번. ' + e.choices[pk - 1].why, () => findEl(document.getElementById('aibox'), e.choices[pk - 1].why));
           if (e.concept) add('핵심 개념. ' + e.concept, () => findEl(document.getElementById('aibox'), e.concept, '핵심 개념'));
-          if (e.memo) { const m = Array.isArray(e.memo) ? e.memo.join('. ') : e.memo; add('암기. ' + m, () => findEl(document.getElementById('aibox'), Array.isArray(e.memo) ? e.memo[0] : e.memo, '암기')); }
+          if (e.memo) (Array.isArray(e.memo) ? e.memo : [e.memo]).forEach((m, k) => add((k ? '' : '암기. ') + m, () => findEl(document.querySelector('#aibox .exm') || document.getElementById('aibox'), m, '암기')));
+          if (e.trap) add('함정. ' + e.trap, () => document.querySelector('#aibox .ext') || findEl(document.getElementById('aibox'), e.trap));
         } else if (ab && ab.textContent.trim().length > 20) add(ab.innerText, ab);
         const mt = document.querySelector('#moreBox .fb'); if (mt && mt.textContent.trim()) add('더 자세히. ' + mt.textContent, mt);
       }
