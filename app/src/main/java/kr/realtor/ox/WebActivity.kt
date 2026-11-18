@@ -28,6 +28,15 @@ class WebActivity : Activity() {
         if (!loaded || !t.matches(Regex("[a-z]+"))) return
         i.removeExtra("tab"); js("typeof go==='function'&&go('$t')")
     }
+    /** 학습 화면 아래 탭의 실제 크기(픽셀)를 재 두면 듣기 화면이 똑같이 그림 */
+    private fun measureTabs() {
+        web.postDelayed({
+            web.evaluateJavascript("(()=>{const n=document.getElementById('tabs');if(!n)return '';const b=n.querySelector('button'),i=b.querySelector('b'),r=n.getBoundingClientRect(),ri=i.getBoundingClientRect(),d=devicePixelRatio,bs=getComputedStyle(b);return [r.height,ri.top-r.top,ri.height,ri.width,parseFloat(getComputedStyle(i).fontSize),parseFloat(bs.fontSize),parseFloat(bs.lineHeight)||parseFloat(bs.fontSize)*1.5].map(x=>Math.round(x*d)).join(',')})()") { r ->
+                val v = r.trim('"')
+                if (v.matches(Regex("[0-9,]+")) && v.count { it == ',' } == 6) getSharedPreferences("ox", MODE_PRIVATE).edit().putString("tabpx", v).apply()
+            }
+        }, 1500)
+    }
     override fun onNewIntent(i: Intent) { super.onNewIntent(i); setIntent(i); goTab(i) }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -48,7 +57,7 @@ class WebActivity : Activity() {
             webChromeClient = WebChromeClient()
             // 인터넷 주소(원본 PDF·신고 등)는 앱 밖 브라우저로 열기
             webViewClient = object : android.webkit.WebViewClient() {
-                override fun onPageFinished(v: WebView, url: String) { loaded = true; goTab(intent) }
+                override fun onPageFinished(v: WebView, url: String) { loaded = true; goTab(intent); measureTabs() }
                 override fun shouldOverrideUrlLoading(v: WebView, r: android.webkit.WebResourceRequest): Boolean {
                     val u = r.url
                     if (u.scheme == "http" || u.scheme == "https") {

@@ -227,22 +227,31 @@ class MainActivity : Activity() {
 
     /** 학습 화면과 같은 맨 아래 탭 4개 (듣기 = 지금 화면) */
     private fun tabBar(): View {
+        // 학습 화면에서 잰 실제 픽셀 크기: 전체 높이, 아이콘 위치, 아이콘 줄 높이, 아이콘 칸 너비, 아이콘 글자, 탭 글자, 탭 글자 줄
+        val m = prefs.getString("tabpx", "")!!.split(",").mapNotNull { it.toIntOrNull() }
+        val px = if (m.size == 7) m else listOf(dp(63), dp(9), dp(25), dp(56), dp(21), dp(12), dp(19))
+        val (navH, iconTop, iconH, iconW) = px; val iconFs = px[4]; val labFs = px[5]; val labLh = px[6]
+        val line = maxOf(1, dp(1) / 2)
+        val pri = Color.parseColor(if (dk) "#6F9BFF" else "#2457C5")
         val wrap = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(c("#FFFFFF", "#1B1F27")) }
-        wrap.addView(View(this).apply { setBackgroundColor(c("#E3E6EC", "#2C3240")); layoutParams = LinearLayout.LayoutParams(-1, 1) })
-        val bar = LinearLayout(this).apply { gravity = Gravity.CENTER_HORIZONTAL }
+        wrap.addView(View(this).apply { setBackgroundColor(c("#E3E6EC", "#2C3240")); layoutParams = LinearLayout.LayoutParams(-1, line) })
+        val bar = LinearLayout(this).apply { gravity = Gravity.CENTER_HORIZONTAL; layoutParams = LinearLayout.LayoutParams(-1, navH - line) }
         listOf(Triple("🏠", "오늘", "home"), Triple("✏️", "문제", "setup"), Triple("🎧", "듣기", ""), Triple("📊", "기록", "wrong")).forEach { (ic, n, v) ->
             val on = v.isEmpty()
-            val col = if (on) Color.parseColor(if (dk) "#6F9BFF" else "#2457C5") else Color.parseColor(SUB)
-            // 학습 화면 탭과 같은 치수: 위 8 · 아이콘 줄 25 · 글자 줄 19 · 아래 10
-            bar.addView(LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; setPadding(0, dp(8), 0, dp(10))
-                layoutParams = LinearLayout.LayoutParams(0, -2, 1f)
-                addView(TextView(this@MainActivity).apply { text = ic; textSize = 21f; includeFontPadding = false; gravity = Gravity.CENTER
-                    layoutParams = LinearLayout.LayoutParams(-1, dp(25)) })
-                addView(TextView(this@MainActivity).apply { text = n; textSize = 12f; includeFontPadding = false; gravity = Gravity.CENTER; setTextColor(col)
-                    if (on) setTypeface(typeface, Typeface.BOLD); layoutParams = LinearLayout.LayoutParams(-1, dp(19)) })
-                setOnClickListener { if (!on) { startActivity(Intent(this@MainActivity, WebActivity::class.java).putExtra("tab", v).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)); finish() } }
-            })
+            val cell = FrameLayout(this).apply { layoutParams = LinearLayout.LayoutParams(0, -1, 1f).apply { width = 0 }
+                setOnClickListener { if (!on) { startActivity(Intent(this@MainActivity, WebActivity::class.java).putExtra("tab", v).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)); finish() } } }
+            val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; setPadding(0, iconTop - line, 0, 0)
+                layoutParams = FrameLayout.LayoutParams(-1, -1) }
+            col.addView(TextView(this).apply { text = ic; setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, iconFs.toFloat()); includeFontPadding = false; gravity = Gravity.CENTER
+                if (on) background = round(c("#E8EEFB", "#1F2A44"), 14)
+                layoutParams = LinearLayout.LayoutParams(iconW, iconH) })
+            col.addView(TextView(this).apply { text = n; setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, labFs.toFloat()); includeFontPadding = false; gravity = Gravity.CENTER
+                setTextColor(if (on) pri else Color.parseColor(SUB)); if (on) setTypeface(typeface, Typeface.BOLD)
+                layoutParams = LinearLayout.LayoutParams(-1, labLh) })
+            cell.addView(col)
+            if (on) cell.addView(View(this).apply { background = round(pri, 2)      // 선택된 탭 위쪽 막대
+                layoutParams = FrameLayout.LayoutParams(-1, dp(3), Gravity.TOP).apply { leftMargin = 0; rightMargin = 0 } }.also { bar.post { val w = cell.width; (it.layoutParams as FrameLayout.LayoutParams).apply { leftMargin = (w * .28).toInt(); rightMargin = (w * .28).toInt() }; it.requestLayout() } })
+            bar.addView(cell)
         }
         wrap.addView(bar)
         return wrap
