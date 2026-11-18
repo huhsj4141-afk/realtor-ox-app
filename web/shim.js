@@ -12,6 +12,7 @@
   /* ---- db: 폰 저장소 ---- */
   let MC = null;
   const mc = () => { if (MC === null) { try { MC = JSON.parse(N.asset('mc_exp.json') || '{}'); } catch (e) { MC = {}; } } return MC; };
+  window.__mcx = id => mc()[id] || null;      // 앱에 미리 넣어 둔 객관식 해설 바로 꺼내기(인터넷·한도 필요 없음)
   const key = (c, d) => 'db:' + c + '/' + d;
   const db = {
     collection: (c) => ({

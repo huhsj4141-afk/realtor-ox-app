@@ -499,7 +499,7 @@ function result(){
 let sampleFn,EXC={};// EXC[qid]=해설 객체 캐시
 const isCalc=q=>q.k.includes('계산');
 async function getSample(){if(sampleFn===undefined){try{sampleFn=(window.claude&&claude.use)?await claude.use('sample'):null}catch(e){sampleFn=null}}return sampleFn}
-async function loadEx(q){if(EXC[q.id])return EXC[q.id];if(!db)return null;try{const sn=await db.collection('data/users/'+uid).doc('x'+q.id).get();if(sn.exists){EXC[q.id]=sn.data().e;return EXC[q.id]}}catch(e){}return null}
+async function loadEx(q){if(EXC[q.id])return EXC[q.id];try{const m=window.__mcx&&window.__mcx(q.id);if(m){EXC[q.id]=m;return m}}catch(e){}if(!db)return null;try{const sn=await db.collection('data/users/'+uid).doc('x'+q.id).get();if(sn.exists){EXC[q.id]=sn.data().e;return EXC[q.id]}}catch(e){}return null}
 async function saveEx(q,e){EXC[q.id]=e;if(!db)return;try{await db.collection('data/users/'+uid).doc('x'+q.id).set({e,s:q.s,t:q.t,ts:Date.now()})}catch(err){}}
 function exPrompt(q){const calc=isCalc(q);return `너는 한국 공인중개사 시험 1타 강사다. 아래 기출문제를 "그림과 식으로" 해설하라. 수험생은 계산 문제에 특히 약하다.
 [출제] 제${q.n}회(${q.y}년) ${CT[q.ct]} ${q.no}번 / 과목: ${SUB[q.s]} / 단원·테마: ${q.u} · ${q.t} / 유형: ${q.k||'일반'}
