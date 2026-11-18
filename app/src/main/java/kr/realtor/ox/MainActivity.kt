@@ -133,7 +133,13 @@ class MainActivity : Activity() {
         stmt.movementMethod = android.text.method.LinkMovementMethod.getInstance()
         expV.movementMethod = android.text.method.LinkMovementMethod.getInstance()
         stmt.textSize = 21f; stmt.setLineSpacing(0f, 1.35f)
-        listOf(spinner, pos, stmt, expV).forEach { c1.addView(it) }
+        // 🤖 더보기 준비·음성 만드는 동안 움직이는 막대
+        busyBar = android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
+            isIndeterminate = true; visibility = View.GONE
+            indeterminateTintList = android.content.res.ColorStateList.valueOf(Color.parseColor(PRI))
+            layoutParams = LinearLayout.LayoutParams(-1, dp(10)).apply { topMargin = dp(6) }
+        }
+        listOf(spinner, pos, busyBar, stmt, expV).forEach { c1.addView(it) }
         col.addView(c1)
 
         // 조작: 큰 줄(이전·재생·다음) + 작은 줄(다시·★·자세히·속도·타이머)
@@ -299,6 +305,7 @@ class MainActivity : Activity() {
     private var usageV: TextView? = null
     private lateinit var alertBtn: Button
     private lateinit var speedBtn: Button
+    private lateinit var busyBar: android.widget.ProgressBar
     private lateinit var timerBtn: Button
     private fun timerDialog() {
         val o = listOf("😴 잠자기 15분" to { svc?.setSleep(15) }, "😴 잠자기 30분" to { svc?.setSleep(30) }, "😴 잠자기 60분" to { svc?.setSleep(60) },
@@ -321,6 +328,7 @@ class MainActivity : Activity() {
             if (s.sleepEnd > 0) "😴${s.left(s.sleepEnd) / 60 + 1}분" else null,
             if (s.busEnd > 0) "🚌${s.left(s.busEnd) / 60 + 1}분" else null).joinToString(" ").ifEmpty { "⏱" }
         if (spinner.selectedItemPosition != want) { spinBusy = true; spinner.setSelection(want, false); h.post { spinBusy = false } }
+        busyBar.visibility = if (s.flashText().contains("중…")) View.VISIBLE else View.GONE
         val (q, ph) = s.phase()
         val it = s.queue.getOrNull(q)
         val name = if (it != null) Store.tracks[it.ti].name else ""
