@@ -46,7 +46,7 @@
     #aibox .st li{margin:8px 0} #aibox .st .muted{color:inherit!important;opacity:.85;font-size:14px!important;line-height:1.6}
     .gl{text-decoration:underline dotted #8b5cf699;text-underline-offset:4px;text-decoration-thickness:1.5px;cursor:help}
     .elh{font-size:12.5px;color:var(--mut,#94a3b8);margin:8px 0 2px}.elc{padding:3px 4px;margin:0 -4px;border-radius:8px;cursor:pointer;white-space:pre-wrap;transition:opacity .15s}.elc:active{background:rgba(148,163,184,.12)}.elc.x{text-decoration:line-through;text-decoration-color:#ef4444;text-decoration-thickness:3px;opacity:.4}.choices button.elx{opacity:.35;text-decoration:line-through;text-decoration-color:#ef4444}
-    #ver{font-size:12px;font-weight:500;color:var(--mut,#94a3b8);margin-left:6px;vertical-align:middle}#updb{display:block;width:100%;margin:0 0 12px;padding:14px 16px;border:0;border-radius:14px;background:#2563eb;color:#fff;font:inherit;font-size:17px;font-weight:700;text-align:left;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,.35)}#updb small{display:block;font-size:12.5px;font-weight:500;opacity:.85;margin-top:2px}
+    #ver{font-size:12.5px;font-weight:600;color:var(--pri,#6f9bff);margin-left:8px;vertical-align:middle;border:1px solid currentColor;border-radius:999px;padding:2px 9px;cursor:pointer}#updb{display:block;width:100%;margin:0 0 12px;padding:14px 16px;border:0;border-radius:14px;background:#2563eb;color:#fff;font:inherit;font-size:17px;font-weight:700;text-align:left;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,.35)}#updb small{display:block;font-size:12.5px;font-weight:500;opacity:.85;margin-top:2px}
     .qno{font-size:12.5px;opacity:.55;align-self:center;margin-left:auto}
     .fb.top small,.fb.top span{font-size:13px;font-weight:600} .fb.top{font-size:18px;font-weight:800;padding:12px 14px;margin:0 0 12px;border-radius:12px}
     .chx:not(.ans):not(.mine){opacity:.82} .chx.ans{border-width:2px} .chx .bd{font-size:11px}
@@ -421,7 +421,8 @@
     const top = document.querySelector('header.top'); if (!top) return;
     let el = document.getElementById('ver');
     if (!el) { el = document.createElement('span'); el.id = 'ver'; top.querySelector('h1').appendChild(el); }
-    el.textContent = 'v' + v;
+    el.textContent = 'v' + v + ' 🔄'; el.title = '업데이트 확인';
+    el.onclick = () => { try { if (window.__toast) window.__toast('새 버전 확인 중…'); NB.checkUpdate(); } catch (e) {} };
     try { const pv = +localStorage.getItem('reb_ver') || 0; if (pv && pv < v && window.__toast) window.__toast('✅ v' + v + '로 업데이트됐어요'); localStorage.setItem('reb_ver', v); } catch (e) {}
   }
   function updBanner() {

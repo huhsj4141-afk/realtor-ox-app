@@ -89,6 +89,7 @@ class WebActivity : Activity() {
         @JavascriptInterface fun appVersion(): Long = Updater.version(this@WebActivity)
         @JavascriptInterface fun latestVersion(): Long = Updater.latestKnown(this@WebActivity)
         @JavascriptInterface fun update() = runOnUiThread { Updater.install(this@WebActivity) }
+        @JavascriptInterface fun checkUpdate() = runOnUiThread { Updater.check(this@WebActivity, true) }
         @JavascriptInterface fun asset(name: String): String =
             try { assets.open("web/$name").bufferedReader().readText() }
             catch (e: Exception) { try { assets.open(name).bufferedReader().readText() } catch (e2: Exception) { "" } }   // ox.json·exp.json 은 assets 바로 아래
