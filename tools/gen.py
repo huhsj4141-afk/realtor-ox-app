@@ -48,6 +48,8 @@ def call(path, body=None, tries=10):
                 log(f'  429 → {w}s 대기')
                 time.sleep(w)
                 continue
+            if e.code == 404 and ':generateContent' in path:      # 없어진 모델 → 다음 모델로 (한도와 똑같이)
+                raise DailyLimit('모델 없음: ' + msg[:200])
             if e.code >= 500:
                 log(f'  서버 오류 {e.code} → 다시 시도')
                 time.sleep(10 * (k + 1))
@@ -427,7 +429,9 @@ def mc_explanations():
             jline.dump(exp, path)
             log(f'객관식 해설 {len(exp)}개 · 오늘 만든 것 {made}')
     jline.dump(exp, path)
-    return len(exp) >= len(data)
+    left = sum(1 for q in data if exp.get(q['id'], {}).get('v', 0) < (3 if '계산' in (q.get('k') or '') else 2))
+    if left: log(f'남은 해설 {left}개 — 다음 실행에서 이어서')
+    return left == 0
 
 
 def mc_audio():
