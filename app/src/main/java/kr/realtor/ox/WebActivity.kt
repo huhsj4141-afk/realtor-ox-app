@@ -79,6 +79,7 @@ class WebActivity : Activity() {
         super.onResume()
         Updater.onLatest = { v -> js("window.__upd&&__upd($v)") }
         Updater.check(this, quiet = true)                  // 첫 화면 맨 위 배너로 알림
+        if (loaded) js("window.__fixTab&&__fixTab()")
     }
 
     override fun onDestroy() { voice.release(); io.shutdown(); web.destroy(); super.onDestroy() }

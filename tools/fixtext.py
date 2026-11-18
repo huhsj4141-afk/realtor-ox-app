@@ -46,6 +46,7 @@ def join_lines(x, cnt):
     x = re.sub(r'[\ue000-\uf8ff]', '', x)   # 글꼴 전용 깨진 글자
     x = re.sub(r'\s*(사\s*)?\d차\s*\d교시\s*[A-Z]형?-\d+-\d+\s*', '\n', x)
     x = re.sub(r'\s*제\s*\d\s*과목\s*:.*$', '', x)
+    x = re.sub(r"[ \t]*제\s*\d+\s*회\s*공인중개사\s*\d\b[ \t]*", " ", x).rstrip()   # 쪽 아래 머리글(제28회 공인중개사 1)
     return x.strip()
 
 def main():
