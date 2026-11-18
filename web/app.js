@@ -67,6 +67,7 @@
     .rdg{background:rgba(250,204,21,.32)!important;box-shadow:0 0 0 3px #facc15,0 0 18px rgba(250,204,21,.45)!important;border-radius:8px;font-weight:700!important;color:var(--ink)!important;transition:background .2s,box-shadow .2s} .rdg *{color:inherit}
     .thg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px} .thm{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border:1.5px solid var(--line);border-radius:14px;background:transparent;color:var(--ink);font:inherit;cursor:pointer} .thm.on{border-color:var(--pri);box-shadow:0 0 0 2px var(--pri2)} .thm .sw{position:relative;width:46px;height:30px;border-radius:9px;overflow:hidden;border:1px solid rgba(128,128,128,.3)} .thm .sw i{position:absolute;left:6px;top:6px;width:22px;height:18px;border-radius:5px} .thm .sw b{position:absolute;right:6px;bottom:6px;width:12px;height:12px;border-radius:50%} .thm .nm{font-size:13.5px;font-weight:700} .thm small{font-size:11px;color:var(--sub)}
     #nzb.on{background:var(--pri2);border-color:var(--pri)} #nzp{position:fixed;top:64px;right:10px;left:10px;max-width:420px;margin-left:auto;z-index:90;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 30px rgba(0,0,0,.35);padding:12px} #nzp .nzh{display:flex;align-items:center;margin-bottom:8px} #nzp .nzh b{flex:1;font-size:15px} #nzp button{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:12px;padding:10px 6px;cursor:pointer} #nzp .nzg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px} #nzp .nzg button{font-size:13px;white-space:nowrap;padding:11px 2px} header.top h1{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(15px,4.6vw,22px)} #nzp .nzg button.on{background:var(--pri2);border-color:var(--pri);color:var(--pri);font-weight:700} #nzp .nzv{display:flex;align-items:center;gap:10px;margin:12px 2px 10px;font-size:13px;color:var(--sub)} #nzp .nzv input{flex:1;accent-color:var(--pri)} #nzp .nzoff{width:100%;font-weight:700} #nzx{padding:4px 10px!important}
+    #beg{margin-top:10px} #beg.begon{border:1.5px solid var(--warn);color:var(--warn);font-weight:700} .begc{margin-top:8px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--bg)} .begc .bgh{margin:14px 0 6px;font-size:15.5px;color:var(--pri)} .begc .bgh:first-child{margin-top:2px} .begc .bgp{margin:4px 0;line-height:1.7} .begc .bgl{margin:3px 0 3px 4px;line-height:1.65} .begc #begSay{margin-top:12px}
     .glb{position:fixed;left:12px;right:12px;bottom:84px;z-index:150;background:#1e1b4b;color:#fff;border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.55;box-shadow:0 8px 24px rgba(0,0,0,.3)}
     .glb b{color:#c4b5fd;margin-right:6px}
     .slog{font-size:14px;display:block} .slog .d{font-weight:700;margin:14px 0 4px;display:flex;justify-content:space-between}
@@ -795,6 +796,74 @@
     b.onclick = nzPanel; hdrPut(b);
     const g = document.getElementById('hdrb'); if (g && g.firstChild !== b) g.insertBefore(b, g.firstChild);
   })();
+
+  /* ---------- 🐣 처음부터 알려줘: 도저히 모르겠는 문제를 기초부터 (한 번 받으면 저장) ---------- */
+  function begRender(t) {
+    const esc = x => String(x).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    return t.split('\n').map(l => {
+      const b = esc(l).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+      if (/^#{1,4}\s/.test(l)) return `<h4 class="bgh">${b.replace(/^#+\s*/, '')}</h4>`;
+      if (/^\s*[-•·]\s/.test(l)) return `<div class="bgl">${b.replace(/^\s*[-•·]\s*/, '• ')}</div>`;
+      return l.trim() ? `<p class="bgp">${b}</p>` : '';
+    }).join('');
+  }
+  function begPrompt(q) {
+    const e = expOf(q) || {};
+    return `너는 법률·부동산을 처음 배우는 사람을 가르치는 공인중개사 강사야. 아래 기출문제를 아무 기초 지식이 없는 사람도 이해하도록 처음부터 차근차근 설명해 줘. 해요체, 쉬운 말, 생활 속 예시를 들어.
+아래 제목과 순서를 꼭 지켜(제목 줄은 '## '로 시작):
+## 이 문제가 묻는 것
+(2~3문장)
+## 먼저 알아야 할 낱말
+(문제에 나온 어려운 용어 3~6개를 '- 용어: 쉬운 풀이와 예시' 형식으로)
+## 기본 원리
+(이 단원의 핵심 규칙을 비유와 예시로 4~6문장)
+## 보기 하나씩
+('- ① 맞아요/틀려요: 이유' 형식으로 ①~⑤ 모두, 틀린 보기는 어디를 어떻게 고치면 맞는지)
+## 정답 찾는 순서
+(이런 문제를 만나면 어떻게 생각하면 되는지 3단계, '- 1단계: …')
+## 한 줄로 기억하기
+(한 문장)
+한자·영어 약어는 풀어 쓰고, 확실하지 않은 법 내용은 지어내지 마. 아래 정답과 참고 해설을 기준으로 해.
+[정답] ${q.a}번
+[문제]
+${q.x}
+[참고 해설] ${[e.summary, e.concept].filter(Boolean).join(' ')}`;
+  }
+  function decorateBeg() {
+    const q = (typeof S !== 'undefined' && S && S.list) ? S.list[S.i] : null;
+    if (cur !== 'quiz' || !q || !S.ans[q.id] || (S.exam && !S.done) || document.getElementById('beg')) return;
+    const tb = document.querySelector('#view .qtb'); if (!tb) return;
+    const K = 'reb_beg_' + q.id, saved = (() => { try { return localStorage.getItem(K); } catch (e) { return null; } })();
+    const ok = String(q.a).split(',').map(Number).includes(+S.ans[q.id]), unsure = (() => { const v = conf()[q.id]; return !!v && v !== 'sure'; })();
+    tb.insertAdjacentHTML('afterend', `<button class="btn full ${ok && !unsure ? '' : 'begon'}" id="beg">🐣 처음부터 알려줘 ${saved ? '<span class="svd">✓ 저장됨</span>' : '<span class="svd no">인터넷</span>'}</button><div id="begBox"></div>`);
+    const btn = document.getElementById('beg'), box = document.getElementById('begBox');
+    const show = t => {
+      box.innerHTML = `<div class="begc">${begRender(t)}<button class="btn full" id="begSay">🔊 이 설명 읽기</button></div>`;
+      const sb = document.getElementById('begSay');
+      sb.onclick = () => {
+        if (SAY.on) { sayStop(); sb.textContent = '🔊 이 설명 읽기'; return; }
+        const seg = []; box.querySelectorAll('.begc > h4, .begc > p, .begc > div').forEach(el => { const tx = sayClean(el.textContent); if (tx) seg.push({ t: tx, el }); });
+        sayRun(seg, sb, '🔊 이 설명 읽기');
+      };
+    };
+    btn.onclick = async () => {
+      const cached = (() => { try { return localStorage.getItem(K); } catch (e) { return null; } })();
+      if (cached) { box.innerHTML ? (box.innerHTML = '') : show(cached); return; }
+      if (btn.disabled) return;
+      if (!window.__gem) { if (window.__toast) __toast('이 기능은 앱에서만 돼요'); return; }
+      btn.disabled = true; const t0 = Date.now();
+      box.innerHTML = '<div class="fb na" style="font-weight:400;margin-top:8px"><span class="spin"></span> <b id="begT">기초부터 설명을 만드는 중… 0초</b><div class="muted" style="font-size:13px;margin-top:4px">길게 만드느라 보통 20~60초 걸려요. 다른 문제로 넘어가도 괜찮아요.</div></div>';
+      const tick = setInterval(() => { const e = document.getElementById('begT'); if (e) e.textContent = '기초부터 설명을 만드는 중… ' + Math.round((Date.now() - t0) / 1000) + '초'; else clearInterval(tick); }, 1000);
+      try {
+        const t = await window.__gem(begPrompt(q), { modelTier: 'default' }, false);
+        try { localStorage.setItem(K, t); } catch (e) {}
+        if (document.getElementById('begBox') === box) { show(t); btn.innerHTML = '🐣 처음부터 알려줘 <span class="svd">✓ 저장됨</span>'; }
+      } catch (e) {
+        if (document.getElementById('begBox') === box) box.innerHTML = '<div class="fb no">' + (e.message || '만들지 못했어요') + '</div>';
+      } finally { clearInterval(tick); btn.disabled = false; }
+    };
+  }
+  setInterval(decorateBeg, 600);
   /* ---------- 보기 지우기: 답 고르기 전, 아닌 보기를 눌러(또는 옆으로 밀어) 줄 긋기 ---------- */
   const ELIM = {};
   const elHint = () => { try { const n = +localStorage.getItem('reb_elh') || 0; localStorage.setItem('reb_elh', n + 1); return n < 6; } catch (e) { return false; } };
