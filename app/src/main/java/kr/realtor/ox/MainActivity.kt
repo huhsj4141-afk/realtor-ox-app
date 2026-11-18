@@ -51,8 +51,8 @@ class MainActivity : Activity() {
     }
     private var dk = false
     private fun c(light: String, dark: String) = Color.parseColor(if (dk) dark else light)
-    private val TXT get() = if (dk) "#E6EDF3" else "#111827"
-    private val SUB get() = if (dk) "#9AA4AF" else "#6B7280"
+    private val TXT get() = if (dk) "#E8EBF1" else "#1D2433"
+    private val SUB get() = if (dk) "#9AA3B5" else "#6B7385"
     private var spinBusy = false
 
     // 화면이 켜져 있을 때 들어오는 리모컨 키도 같은 매핑으로
@@ -90,7 +90,7 @@ class MainActivity : Activity() {
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
     private fun round(c: Int, r: Int) = GradientDrawable().apply { setColor(c); cornerRadius = dp(r).toFloat() }
     private fun card() = LinearLayout(this).apply {
-        orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(14), dp(16), dp(14)); background = round(c("#FFFFFF", "#161B22"), 16)
+        orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(14), dp(16), dp(14)); background = round(c("#FFFFFF", "#1B1F27"), 16)
         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(dp(12), dp(6), dp(12), dp(6)) }
     }
     private fun tv(t: String, sp: Float, bold: Boolean = false, color: String = TXT) = TextView(this).apply {
@@ -99,7 +99,7 @@ class MainActivity : Activity() {
     private fun btn(t: String, primary: Boolean = false, f: () -> Unit) = Button(this).apply {
         text = t; isAllCaps = false; textSize = 16f
         setTextColor(if (primary) Color.WHITE else Color.parseColor(TXT))
-        background = round(if (primary) Color.parseColor("#2563EB") else c("#EEF1F5", "#21262D"), 12)
+        background = round(if (primary) Color.parseColor("#2563EB") else c("#EEF1F5", "#262B35"), 12)
         layoutParams = LinearLayout.LayoutParams(0, dp(56), 1f).apply { setMargins(dp(4), dp(4), dp(4), dp(4)) }
         setOnClickListener { f() }
     }
@@ -107,7 +107,7 @@ class MainActivity : Activity() {
     private fun wide(b: Button) = b.apply { layoutParams = LinearLayout.LayoutParams(-1, dp(52)).apply { setMargins(dp(4), dp(6), dp(4), dp(4)) } }
 
     private fun buildUi(): View {
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(c("#F5F6F8", "#0B0F14")); setPadding(0, dp(12), 0, dp(24)) }
+        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(c("#F6F7F9", "#12151B")); setPadding(0, dp(12), 0, dp(24)) }
 
         // 지금 듣는 문항
         val c1 = card()
@@ -219,22 +219,26 @@ class MainActivity : Activity() {
         val center = FrameLayout(this).apply { addView(col) }
         val sv = ScrollView(this).apply { addView(center); isFillViewport = true; layoutParams = LinearLayout.LayoutParams(-1, 0, 1f) }
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; addView(sv); addView(tabBar()) }
-        return safeArea(root, c("#F5F6F8", "#0B0F14"))
+        return safeArea(root, c("#F6F7F9", "#12151B"))
     }
 
     /** 학습 화면과 같은 맨 아래 탭 4개 (듣기 = 지금 화면) */
     private fun tabBar(): View {
-        val bar = LinearLayout(this).apply { setBackgroundColor(c("#FFFFFF", "#161B22")); setPadding(0, dp(4), 0, dp(4)) }
+        val wrap = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(c("#FFFFFF", "#1B1F27")) }
+        wrap.addView(View(this).apply { setBackgroundColor(c("#E3E6EC", "#2C3240")); layoutParams = LinearLayout.LayoutParams(-1, 1) })
+        val bar = LinearLayout(this).apply { gravity = Gravity.CENTER_HORIZONTAL }
         listOf(Triple("🏠", "오늘", "home"), Triple("✏️", "문제", "setup"), Triple("🎧", "듣기", ""), Triple("📊", "기록", "wrong")).forEach { (ic, n, v) ->
             val on = v.isEmpty()
+            val sp = android.text.SpannableString("$ic\n$n").apply { setSpan(android.text.style.RelativeSizeSpan(1.75f), 0, ic.length, 0) }
             bar.addView(TextView(this).apply {
-                text = "$ic\n$n"; gravity = Gravity.CENTER; textSize = 13f; setLineSpacing(0f, 1.1f)
-                setTextColor(if (on) Color.parseColor(if (dk) "#6F9BFF" else "#2563EB") else Color.parseColor(SUB)); if (on) setTypeface(typeface, Typeface.BOLD)
-                layoutParams = LinearLayout.LayoutParams(0, dp(56), 1f)
+                text = sp; gravity = Gravity.CENTER; textSize = 12f; setLineSpacing(0f, 1.05f); setPadding(0, dp(6), 0, dp(8))
+                setTextColor(Color.parseColor(if (on) (if (dk) "#6F9BFF" else "#2457C5") else SUB)); if (on) setTypeface(typeface, Typeface.BOLD)
+                layoutParams = LinearLayout.LayoutParams(0, -2, 1f).apply { width = 0 }
                 setOnClickListener { if (!on) { startActivity(Intent(this@MainActivity, WebActivity::class.java).putExtra("tab", v).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)); finish(); overridePendingTransition(0, 0) } }
             })
         }
-        return bar
+        wrap.addView(bar)
+        return wrap
     }
 
     private fun drawMap() {
@@ -246,7 +250,7 @@ class MainActivity : Activity() {
                 addView(tv(name, 14f).apply { layoutParams = LinearLayout.LayoutParams(0, -2, 1f) })
                 addView(Button(this@MainActivity).apply {
                     text = Remote.label(s.mapOf(slot)); isAllCaps = false; textSize = 14f
-                    background = round(c("#EEF1F5", "#21262D"), 10); setTextColor(Color.parseColor(TXT)); setPadding(dp(12), 0, dp(12), 0)
+                    background = round(c("#EEF1F5", "#262B35"), 10); setTextColor(Color.parseColor(TXT)); setPadding(dp(12), 0, dp(12), 0)
                     setOnClickListener {
                         val cur = Remote.ACTIONS.indexOfFirst { it.first == s.mapOf(slot) }
                         AlertDialog.Builder(this@MainActivity).setTitle(name)
