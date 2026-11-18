@@ -92,6 +92,7 @@
     stop() { if (cur) { cur.stopped = true; const w = cur.wait; cur.wait = null; if (w) w.res('stopped'); cur = null; } N.ttsStop(); }
   };
 
+  window.__tts = tts;
   window.claude = {
     use: async (name) => name === 'db' ? db : name === 'user' ? { id: 'local', name: '나' } : name === 'sample' ? sample : name === 'tts' ? tts : null,
     declare: () => {}, ready: () => {}

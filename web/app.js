@@ -53,6 +53,17 @@
     .conf{display:flex;gap:6px;align-items:center;flex-wrap:nowrap} .conf .lb{flex:none!important;margin-right:4px}
     .svd{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:2px;background:rgba(22,163,74,.18);color:#16a34a} .svd.no{background:rgba(148,163,184,.2);color:#94a3b8} .bigai .svd{background:rgba(255,255,255,.25);color:#fff}
     nav.tabs button{position:relative} nav.tabs button b{width:56px;margin:0 auto;border-radius:14px} nav.tabs button.on b{background:var(--pri2)} nav.tabs button.on::before{content:'';position:absolute;top:0;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--pri)}
+    #hdrb{display:flex;gap:6px;margin-left:auto;margin-right:6px} #say,#padb{position:relative;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:17px;cursor:pointer;padding:0} header.top{position:sticky;top:0;z-index:50;background:var(--bg)} #say.on{background:#ef4444;color:#fff;border-color:#ef4444;animation:sayp 1.4s infinite} @keyframes sayp{50%{box-shadow:0 0 0 10px rgba(239,68,68,.15)}} #moreSay{display:none}
+        #padb.has::after{content:'';position:absolute;top:4px;right:4px;width:9px;height:9px;border-radius:50%;background:#facc15}
+    #pad{position:fixed;left:0;right:0;bottom:0;height:56vh;z-index:80;background:var(--card);border-top:1px solid var(--line);border-radius:18px 18px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.4);display:flex;flex-direction:column;transform:translateY(105%);transition:transform .18s}
+    #pad.show{transform:none} 
+    #pad .ph{display:flex;align-items:center;gap:6px;padding:8px 10px 4px} #pad .ph b{font-size:14px} #pad .sp{flex:1}
+    #pad button{font:inherit;font-size:13.5px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;padding:6px 10px;cursor:pointer}
+    #pad button.on{background:var(--pri2);color:var(--pri);border-color:var(--pri)} #padx{font-size:16px!important}
+    #pad .pdraw{flex:1;display:flex;flex-direction:column;min-height:0} #pad .pt{display:flex;gap:6px;padding:4px 10px 6px;align-items:center;flex-wrap:wrap}
+    #pad .pc{width:28px;height:28px;padding:0!important;border-radius:50%!important;background:var(--c)!important;border:2px solid transparent!important} #pad .pc.on{border-color:var(--pri)!important;box-shadow:0 0 0 2px var(--card) inset}
+    #padc{flex:1;min-height:0;margin:0 10px 10px;border-radius:12px;touch-action:none;background-color:var(--bg);background-image:linear-gradient(rgba(148,163,184,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.12) 1px,transparent 1px);background-size:24px 24px}
+    #padt{flex:1;margin:4px 10px 10px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:16px;line-height:1.6;padding:12px;resize:none}
     .glb{position:fixed;left:12px;right:12px;bottom:84px;z-index:150;background:#1e1b4b;color:#fff;border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.55;box-shadow:0 8px 24px rgba(0,0,0,.3)}
     .glb b{color:#c4b5fd;margin-right:6px}
     .slog{font-size:14px;display:block} .slog .d{font-weight:700;margin:14px 0 4px;display:flex;justify-content:space-between}
@@ -444,6 +455,168 @@
     const t = (cur === 'quiz' || cur === 'result') ? ((S && S.from) === 'home' ? 'home' : (S && S.from) === 'wrong' ? 'wrong' : 'setup') : TABOF[cur] || 'home';
     n.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === t)); } catch (e) {} };
   window.__upd = v => { LATEST = +v || 0; updBanner(); };
+
+  // 위쪽 제목 줄 오른쪽에 작은 아이콘으로 (내용을 가리지 않게, 어느 화면에서나 같은 자리)
+  function hdrPut(b) {
+    const top = document.querySelector('header.top'); if (!top) { document.body.appendChild(b); return; }
+    let g = document.getElementById('hdrb'); if (!g) { g = document.createElement('div'); g.id = 'hdrb'; top.appendChild(g); }
+    const v = document.getElementById('ver'); g.appendChild(b); if (v) top.appendChild(v);
+  }
+  /* ---------- 🔊 말해주기: 모든 화면 오른쪽 아래, 눈 감고 듣기 ---------- */
+  function sayClean(t) {
+    return String(t || '')
+      .replace(/\s*\([\u4e00-\u9fff]+\)/g, '')
+      .replace(/[①②③④⑤]/g, c => (MK5.indexOf(c) + 1) + '번, ')
+      .replace(/\\[a-zA-Z]+\{?|[{}^_$\\]/g, ' ')
+      .replace(/(^|\s)[OＯ○](?=\s|$)/g, '$1오').replace(/(^|\s)[XＸ×✕](?=\s|$)/g, '$1엑스')
+      .replace(/[→⇒]/g, ', ').replace(/[·•|]/g, ', ').replace(/[★☆]+/g, '')
+      .replace(/\p{Extended_Pictographic}|️|‍/gu, '')
+      .replace(/\s*\n+\s*/g, '. ').replace(/\s{2,}/g, ' ').replace(/(\.\s*){2,}/g, '. ').trim();
+  }
+  function screenScript() {
+    const view = document.getElementById('view'); if (!view) return '';
+    const q = (typeof S !== 'undefined' && S && S.list) ? S.list[S.i] : null;
+    if (cur === 'quiz' && q) {
+      const parts = [];
+      const lines = q.x.split('\n'), idx = lines.findIndex(l => /^\s*①/.test(l));
+      parts.push(idx > 0 ? lines.slice(0, idx).join(' ') : q.x);
+      if (idx > 0) parts.push(lines.slice(idx).join('\n'));
+      const pick = S.ans[q.id], ex = S.exam && !S.done;
+      if (pick && !ex) {
+        const ans = String(q.a).split(',').map(Number), pk = +pick, ok = ans.includes(pk);
+        parts.push((ok ? '맞았어요. ' : '틀렸어요. ') + '정답은 ' + ans.join('번, ') + '번이에요.');
+        const e = expOf(q);
+        if (e) {
+          if (e.summary) parts.push(e.summary);
+          const ch = e.choices && e.choices[ans[0] - 1];
+          if (ch && ch.why) parts.push('정답 풀이. ' + ch.why);
+          if (!ok && e.choices && e.choices[pk - 1] && e.choices[pk - 1].why) parts.push('내가 고른 ' + pk + '번. ' + e.choices[pk - 1].why);
+          if (e.concept) parts.push('핵심 개념. ' + e.concept);
+          if (e.memo) parts.push('암기. ' + (Array.isArray(e.memo) ? e.memo.join('. ') : e.memo));
+        } else { const ab = document.getElementById('aibox'); if (ab && ab.textContent.trim().length > 20) parts.push(ab.innerText); }
+        const mb = document.getElementById('moreBox'); const mt = mb && mb.querySelector('.fb');
+        if (mt && mt.textContent.trim()) parts.push('더 자세히. ' + mt.textContent);
+      }
+      return parts.map(sayClean).join('. ');
+    }
+    // 다른 화면: 위에서부터 카드 3개의 제목과 본문(버튼 글자는 빼고)
+    const cards = [...view.querySelectorAll('.card, .hero, #mgr')].filter(c => !c.closest('.card .card')).slice(0, 3);
+    const txt = (cards.length ? cards : [view]).map(c => {
+      let t = c.innerText;      // 화면에 보이는 그대로(줄바꿈 포함), 버튼 글자는 빼기
+      c.querySelectorAll('button, select, input').forEach(x => { const bt = (x.innerText || x.value || '').trim(); if (bt) t = t.replace(bt, ' '); });
+      return t;
+    }).join('\n');
+    const keep = txt.split('\n').map(l => l.trim()).filter(l => l.length > 2 && !/^[\d\s.%,·:/■-]+$/.test(l) && !/^막대|^(월|화|수|목|금|토|일)$|보기$|보기 \(/.test(l));
+    return sayClean(keep.join('\n')).slice(0, 700);
+  }
+  const SAY = { on: false };
+  function sayBtn() {
+    let b = document.getElementById('say');
+    if (!b) {
+      b = document.createElement('button'); b.id = 'say'; b.setAttribute('aria-label', '화면 읽어 주기'); b.textContent = '🔊';
+      hdrPut(b);
+      b.onclick = () => {
+        const T = window.__tts;
+        if (!T) { if (window.__toast) __toast('읽기를 쓸 수 없어요'); return; }
+        if (SAY.on || T.busy()) { try { T.stop(); } catch (e) {} SAY.on = false; b.classList.remove('on'); b.textContent = '🔊'; return; }
+        const t = screenScript() || '이 화면은 고르는 버튼만 있어요. 문제를 시작하면 문제와 보기, 해설을 읽어 드릴게요.';
+        SAY.on = true; b.classList.add('on'); b.textContent = '⏹';
+        const chunks = []; t.split(/(?<=[.?!요다])\s+/).forEach(x => { if (chunks.length && (chunks[chunks.length - 1] + ' ' + x).length < 500) chunks[chunks.length - 1] += ' ' + x; else chunks.push(x); });
+        T.speak(chunks.map(x => ({ text: x })), {}).catch(e => { if (e && e.code !== 'viewer_stopped' && window.__toast) __toast(e.message); })
+          .finally(() => { SAY.on = false; b.classList.remove('on'); b.textContent = '🔊'; });
+      };
+    }
+  }
+  sayBtn();
+
+  /* ---------- 📝 필기장: 문제마다 따로 저장되는 그리기·메모 (화면 한쪽 작은 버튼) ---------- */
+  const PAD = { open: false, key: '', strokes: [], cur: null, color: '#e8ebf1', w: 3, erase: false, tab: 'draw' };
+  const padKey = () => { const q = (cur === 'quiz' && typeof S !== 'undefined' && S && S.list) ? S.list[S.i] : null; return q ? q.id : 'free'; };
+  const padLoad = k => { try { return JSON.parse(localStorage.getItem('reb_pad_' + k) || '[]'); } catch (e) { return []; } };
+  function padSave() {
+    try {
+      const k = PAD.key, t = (document.getElementById('padt') || {}).value || '';
+      if (PAD.strokes.length) localStorage.setItem('reb_pad_' + k, JSON.stringify(PAD.strokes)); else localStorage.removeItem('reb_pad_' + k);
+      if (t.trim()) localStorage.setItem('reb_padt_' + k, t); else localStorage.removeItem('reb_padt_' + k);
+      const ix = JSON.parse(localStorage.getItem('reb_pad_ix') || '[]').filter(x => x !== k);
+      if (PAD.strokes.length || t.trim()) ix.push(k);
+      while (ix.length > 300) { const o = ix.shift(); localStorage.removeItem('reb_pad_' + o); localStorage.removeItem('reb_padt_' + o); }
+      localStorage.setItem('reb_pad_ix', JSON.stringify(ix));
+    } catch (e) { if (window.__toast) __toast('필기 저장 공간이 꽉 찼어요. 🗑로 지운 뒤 써 주세요'); }
+    padDot();
+  }
+  function padDot() {
+    const b = document.getElementById('padb'); if (!b) return;
+    let has = false; try { const k = padKey(); has = !!(localStorage.getItem('reb_pad_' + k) || localStorage.getItem('reb_padt_' + k)); } catch (e) {}
+    b.classList.toggle('has', has);
+  }
+  function padDraw() {
+    const cv = document.getElementById('padc'); if (!cv) return;
+    const r = cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+    if (cv.width !== Math.round(r.width * d) || cv.height !== Math.round(r.height * d)) { cv.width = Math.round(r.width * d); cv.height = Math.round(r.height * d); }
+    const g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, r.width, r.height);
+    g.lineCap = g.lineJoin = 'round';
+    PAD.strokes.concat(PAD.cur ? [PAD.cur] : []).forEach(st => {
+      g.globalCompositeOperation = st.e ? 'destination-out' : 'source-over';
+      g.strokeStyle = st.c; g.lineWidth = st.e ? 22 : st.w; g.beginPath();
+      st.p.forEach((pt, i) => { const x = pt[0] * r.width, y = pt[1] * r.height; i ? g.lineTo(x, y) : g.moveTo(x, y); });
+      if (st.p.length === 1) g.lineTo(st.p[0][0] * r.width + .1, st.p[0][1] * r.height);
+      g.stroke();
+    });
+    g.globalCompositeOperation = 'source-over';
+  }
+  function padSwitch() {
+    const k = padKey(); if (k === PAD.key) return;
+    if (PAD.key) padSave();
+    PAD.key = k; PAD.strokes = padLoad(k); PAD.cur = null;
+    const t = document.getElementById('padt'); if (t) { try { t.value = localStorage.getItem('reb_padt_' + k) || ''; } catch (e) { t.value = ''; } }
+    const lb = document.getElementById('padk'); if (lb) lb.textContent = k === 'free' ? '자유 필기' : k.replace(/^(\d+)-(\d)(\d)-(\d+)$/, '$1회 $4번') + ' 필기';
+    padDraw();
+  }
+  function padTab(t) {
+    PAD.tab = t; const p = document.getElementById('pad'); if (!p) return;
+    p.querySelectorAll('[data-pt]').forEach(b => b.classList.toggle('on', b.dataset.pt === t));
+    p.querySelector('.pdraw').style.display = t === 'draw' ? '' : 'none'; p.querySelector('#padt').style.display = t === 'memo' ? '' : 'none';
+    if (t === 'draw') requestAnimationFrame(padDraw);
+  }
+  function padOpen(on) {
+    PAD.open = on; let p = document.getElementById('pad');
+    if (!on) { if (p) { padSave(); p.classList.remove('show'); } document.body.classList.remove('padon'); return; }
+    if (!p) {
+      document.body.insertAdjacentHTML('beforeend', `<div id="pad">
+        <div class="ph"><b id="padk"></b><span class="sp"></span><button data-pt="draw">✏️ 그리기</button><button data-pt="memo">⌨️ 글</button><button id="padx" aria-label="닫기">✕</button></div>
+        <div class="pdraw"><div class="pt">
+          <button class="pc on" data-c="#e8ebf1" style="--c:#e8ebf1"></button><button class="pc" data-c="#ef4444" style="--c:#ef4444"></button><button class="pc" data-c="#60a5fa" style="--c:#60a5fa"></button><button class="pc" data-c="#facc15" style="--c:#facc15"></button>
+          <button id="padw">굵게</button><button id="pade">지우개</button><button id="padu">↶</button><button id="padz">🗑</button></div>
+          <canvas id="padc"></canvas></div>
+        <textarea id="padt" placeholder="풀이 메모를 적어 두세요. 문제마다 따로 저장돼요."></textarea></div>`);
+      p = document.getElementById('pad');
+      p.querySelector('#padx').onclick = () => padOpen(false);
+      p.querySelectorAll('[data-pt]').forEach(b => b.onclick = () => padTab(b.dataset.pt));
+      p.querySelectorAll('.pc').forEach(b => b.onclick = () => { PAD.color = b.dataset.c; PAD.erase = false; p.querySelectorAll('.pc').forEach(x => x.classList.toggle('on', x === b)); p.querySelector('#pade').classList.remove('on'); });
+      p.querySelector('#padw').onclick = e => { PAD.w = PAD.w === 3 ? 6 : 3; e.target.classList.toggle('on', PAD.w === 6); };
+      p.querySelector('#pade').onclick = e => { PAD.erase = !PAD.erase; e.target.classList.toggle('on', PAD.erase); };
+      p.querySelector('#padu').onclick = () => { PAD.strokes.pop(); padDraw(); padSave(); };
+      p.querySelector('#padz').onclick = () => { if (!PAD.strokes.length && !p.querySelector('#padt').value) return; if (confirm('이 문제의 필기를 모두 지울까요?')) { PAD.strokes = []; p.querySelector('#padt').value = ''; padDraw(); padSave(); } };
+      p.querySelector('#padt').addEventListener('input', () => { clearTimeout(PAD.tt); PAD.tt = setTimeout(padSave, 600); });
+      const cv = p.querySelector('#padc');
+      const pos = e => { const r = cv.getBoundingClientRect(); return [Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))]; };
+      cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); PAD.cur = { c: PAD.color, w: PAD.w, e: PAD.erase ? 1 : 0, p: [pos(e)] }; padDraw(); });
+      cv.addEventListener('pointermove', e => { if (!PAD.cur) return; const pt = pos(e), l = PAD.cur.p[PAD.cur.p.length - 1]; if (Math.abs(pt[0] - l[0]) + Math.abs(pt[1] - l[1]) > .002) { PAD.cur.p.push(pt.map(v => Math.round(v * 10000) / 10000)); padDraw(); } });
+      const end = () => { if (!PAD.cur) return; PAD.strokes.push(PAD.cur); PAD.cur = null; padDraw(); padSave(); };
+      cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+      window.addEventListener('resize', () => PAD.open && padDraw());
+    }
+    PAD.key = ''; padSwitch(); padTab(PAD.tab);
+    document.body.classList.add('padon'); requestAnimationFrame(() => { p.classList.add('show'); padDraw(); });
+  }
+  function padBtn() {
+    if (document.getElementById('padb')) return;
+    const b = document.createElement('button'); b.id = 'padb'; b.textContent = '📝'; b.setAttribute('aria-label', '필기장');
+    b.onclick = () => padOpen(!PAD.open); hdrPut(b);
+  }
+  padBtn();
+  setInterval(() => { if (PAD.open) padSwitch(); else padDot(); }, 600);
   /* ---------- 보기 지우기: 답 고르기 전, 아닌 보기를 눌러(또는 옆으로 밀어) 줄 긋기 ---------- */
   const ELIM = {};
   const elHint = () => { try { const n = +localStorage.getItem('reb_elh') || 0; localStorage.setItem('reb_elh', n + 1); return n < 6; } catch (e) { return false; } };
