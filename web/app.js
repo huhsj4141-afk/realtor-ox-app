@@ -893,16 +893,16 @@ ${q.x}
     lines.slice(idx).forEach(l => { const m = /^\s*([①②③④⑤])/.exec(l); if (m) ch.push({ n: MK5.indexOf(m[1]) + 1, t: l.trim() }); else if (ch.length) ch[ch.length - 1].t += '\n' + l; });
     if (ch.length !== 5) return;
     const set = ELIM[q.id] = ELIM[q.id] || new Set();
-    qt.innerHTML = '<div class="qstem">' + h(lines.slice(0, idx).join('\n')) + '</div>' + (elHint() ? '<div class="elh">💡 아닌 보기는 눌러서 줄 긋기</div>' : '') +
+    qt.innerHTML = '<div class="qstem">' + h(lines.slice(0, idx).join('\n')) + '</div>' + (elHint() ? '<div class="elh">💡 아닌 보기는 옆으로 밀어서 줄 긋기</div>' : '') +
       ch.map(c => `<div class="elc ${set.has(c.n) ? 'x' : ''}" data-n="${c.n}">${h(c.t)}</div>`).join('');
     qt.dataset.el = q.id;
     const sync = () => document.querySelectorAll('#view .choices button').forEach(b => b.classList.toggle('elx', set.has(+b.dataset.c)));
     const tog = el => { const n = +el.dataset.n; set.has(n) ? set.delete(n) : set.add(n); el.classList.toggle('x', set.has(n)); sync(); };
     qt.querySelectorAll('.elc').forEach(el => {
-      let x0 = 0, swiped = false;
-      el.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; swiped = false; }, { passive: true });
-      el.addEventListener('touchend', e => { if (Math.abs(e.changedTouches[0].clientX - x0) > 40) { swiped = true; tog(el); } }, { passive: true });
-      el.addEventListener('click', () => { if (swiped) { swiped = false; return; } tog(el); });
+      // 옆으로 밀 때만 줄 긋기(누르기·위아래 스크롤로는 안 그어짐)
+      let x0 = 0, y0 = 0;
+      el.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+      el.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 2) tog(el); }, { passive: true });
     });
     sync();
   }
