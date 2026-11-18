@@ -693,7 +693,7 @@ function oxTimerUp(){if(OXSLEND&&Date.now()>OXSLEND){OXSLEND=0;oxPause();oxTalk(
 function buildOX(){OXQ=[];Q.forEach(q=>{if(q.ocr||!/^[1-5]$/.test(q.a)||q.k.includes('박스형')||isCalc(q))return;
   const x=q.x;const idx=[...'①②③④⑤'].map(m=>x.indexOf(m));if(idx.some(i=>i<0)||idx.some((v,i)=>i&&v<idx[i-1]))return;
   const stem=x.slice(0,idx[0]).trim();const neg=/틀린 것|옳지 않은 것|아닌 것|해당하지 않는|잘못된 것|부적절한 것/.test(stem.replace(/\s+/g,' '));const pos=/옳은 것|맞는 것|해당하는 것|적절한 것/.test(stem);if(!neg&&!pos)return;
-  for(let i=0;i<5;i++){const s=x.slice(idx[i]+1,i<4?idx[i+1]:undefined).replace(/\s+/g,' ').trim();if(s.length<8||s.length>260)continue;const isAns=String(i+1)===q.a;OXQ.push({q,i,s,o:neg?!isAns:isAns,ctx:stem.replace(/\s+/g,' ').replace(/\(다툼이 있으면[^)]*\)/,'').slice(0,70)})}})}
+  for(let i=0;i<5;i++){const s=x.slice(idx[i]+1,i<4?idx[i+1]:undefined).replace(/\s+/g,' ').trim();if(s.length<8||s.length>260)continue;const isAns=String(i+1)===q.a;OXQ.push({q,i,s,o:neg?!isAns:isAns,ctx:stem.replace(/\s+/g,' ').replace(/\(다툼이 있으면[^)]*\)/,'').slice(0,70)})}});if(window.oxVarAdd)oxVarAdd()}
 const NUMRE=/\d+(?:[.,]\d+)?\s*(?:분의\s*\d+|개월|년|월|일|주|시간|%|퍼센트|배|명|인|층|㎡|제곱미터|억\s*원|억|만\s*원|원|세|회|필지)?/g;
 function blankOf(o){if(!o.o)return null;for(const m of o.s.matchAll(NUMRE)){const p=o.s[m.index-1]||'';if(p==='제'||/^\d+(?:[.,]\d+)?$/.test(m[0].trim())||/^(19|20)\d\d\s*년/.test(m[0]))continue;return{pre:o.s.slice(0,m.index),ans:m[0].trim(),post:o.s.slice(m.index+m[0].length)}}return null}
 function oxPool(){if(!OXQ)buildOX();const now=Date.now();let L=OXQ.filter(o=>OXP.sub===''||String(o.q.s)===OXP.sub);
@@ -725,7 +725,7 @@ function oxJump(d){const was=OXH;OXH=false;OXT++;stopSpeak();
   const R=OXR;if(!R)return;R.i=Math.max(0,Math.min(R.list.length,R.i+d));R.ans=null;R.show=false;R.exp=null;if(was&&R.i<R.list.length)oxHands();else{oxMediaOff();ox()}}
 
 /* 지문 해설 */
-async function oxWhy(o){let e=await loadEx(o.q);
+async function oxWhy(o){if(o.v)return {why:(o.w||'')+(o.bad&&o.fix?` (바뀐 말: '${o.bad}' ↔ 원래 '${o.fix}')`:''),trap:'',memo:''};let e=await loadEx(o.q);
   if(!e){const sm=await getSample();if(!sm)throw new Error('AI 해설은 claude.ai에서 열었을 때만 쓸 수 있어요.');const opts={modelTier:'default'};
     try{e=sm.json?await sm.json(exPrompt(o.q),opts):parseJSON((await sm(exPrompt(o.q),opts)).text)}
     catch(err){if(err&&err.code)throw new Error(err.code==='rate_limited'?'잠시 후 다시 눌러 주세요.':'해설을 만들지 못했어요.');e=parseJSON((await sm(exPrompt(o.q)+'\n반드시 JSON 객체 하나만 출력.',opts)).text)}

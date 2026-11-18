@@ -81,6 +81,7 @@ jobs:
           [ -d gen/a ] && cp -r gen/a gen/cue app/src/main/assets/ || true
           mkdir -p app/src/main/assets/web && cp web/* app/src/main/assets/web/
           [ -f gen/mc_exp.json ] && cp gen/mc_exp.json app/src/main/assets/web/ || true
+          [ -f gen/ox_var.json ] && cp gen/ox_var.json app/src/main/assets/web/ || true
           python3 - <<'PY'
           p='app/src/main/assets/web/index.html'; s=open(p,encoding='utf8').read()
           i=s.find('<script'); s=s[:i]+'<script src="shim.js"></script>\n'+s[i:]

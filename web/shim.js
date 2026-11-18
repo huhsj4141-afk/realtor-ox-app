@@ -12,7 +12,19 @@
   /* ---- db: 폰 저장소 ---- */
   let MC = null;
   const mc = () => { if (MC === null) { try { MC = JSON.parse(N.asset('mc_exp.json') || '{}'); } catch (e) { MC = {}; } } return MC; };
-  window.__mcx = id => mc()[id] || null;      // 앱에 미리 넣어 둔 객관식 해설 바로 꺼내기(인터넷·한도 필요 없음)
+  window.__mcx = id => mc()[id] || null;
+  // AI가 기출 보기를 뒤집어 만든 OX 문장(맞는 말↔틀린 말) — 매일 조금씩 늘어나요
+  window.oxVarAdd = () => {
+    try {
+      const V = JSON.parse(N.asset('ox_var.json') || '{}');
+      Object.entries(V).forEach(([k, v]) => {
+        const m = /^(.+)_(\d)$/.exec(k); if (!m || !v || !v.s) return;
+        const q = (typeof BYID !== 'undefined') && BYID[m[1]]; if (!q || q.ocr) return;
+        const stem = q.x.split('①')[0].replace(/\s+/g, ' ').replace(/\(다툼이 있으면[^)]*\)/, '').trim().slice(0, 70);
+        OXQ.push({ q, i: +m[2] - 1, s: v.s, o: !!v.o, ctx: stem, v: 1, w: v.w || '', bad: v.bad || '', fix: v.fix || '' });
+      });
+    } catch (e) {}
+  };      // 앱에 미리 넣어 둔 객관식 해설 바로 꺼내기(인터넷·한도 필요 없음)
   const key = (c, d) => 'db:' + c + '/' + d;
   const db = {
     collection: (c) => ({

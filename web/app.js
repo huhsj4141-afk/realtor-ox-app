@@ -118,13 +118,26 @@
     const MKS = window.__oxmk = window.__oxmk || asset('ox_mark.json') || {};
     OXD.forEach((tr, ti) => tr.items.forEach((it, i) => { if (it.t === theme) ox.push({ s: it.s, o: it.o, e: OXE[`${ti}_${i}`] || '', m: MKS[`${ti}_${i}`] }); }));
     const el = document.createElement('div'); el.className = 'kc';
-    el.innerHTML = `<div><div class="row"><h3 class="grow">📇 ${h(theme)}</h3><button class="btn sm" id="kcx">닫기</button></div>
+    el.innerHTML = `<div><div class="row"><h3 class="grow">📇 ${h(theme)}</h3><button class="btn sm" id="kcsay">🔊 읽기</button><button class="btn sm" id="kcx">닫기</button></div>
       <div class="muted">${qs.length ? `기출 ${qs.length}회 출제 · 빈출 ${hotStars(theme)}` : ''}</div>
       ${concepts.length ? `<h4 style="margin:14px 0 4px">핵심 정리</h4><ul style="padding-left:18px;margin:0">${concepts.map(c => `<li>${h(c)}</li>`).join('')}</ul>` : ''}
       ${ox.length ? `<h4 style="margin:16px 0 4px">OX 암기 카드 <span class="muted" style="font-weight:400;font-size:13px">눌러서 정답 보기</span></h4>${ox.slice(0, 12).map(x => `<div class="fc"><div>${h(x.s)}</div><div class="a">${x.m ? `<div style="margin-bottom:4px">${h(x.s).split(h(x.m.bad)).join(`<span class="bad">${h(x.m.bad)}</span>`)}<div class="good">→ 바르게: ${h(x.m.fix)}</div></div>` : ''}<span class="o" style="color:${x.o ? '#16a34a' : '#dc2626'}">${x.o ? 'O' : 'X'}</span>${emph(x.e)}</div></div>`).join('')}` : ''}
       ${!concepts.length && !ox.length ? '<div class="muted" style="margin-top:12px">이 테마는 아직 정리된 내용이 없어요. 문제 해설이 만들어지면 채워져요.</div>' : ''}</div>`;
-    el.onclick = e => { if (e.target === el || e.target.id === 'kcx') el.remove(); const f = e.target.closest('.fc'); if (f) f.classList.toggle('open'); };
+    el.onclick = e => { if (e.target === el || e.target.id === 'kcx') { if (SAY.on) sayStop(); el.remove(); } const f = e.target.closest('.fc'); if (f) f.classList.toggle('open'); };
     document.body.appendChild(el);
+    const kb = el.querySelector('#kcsay');
+    kb.onclick = ev => {
+      ev.stopPropagation();
+      if (SAY.on) { sayStop(); kb.textContent = '🔊 읽기'; return; }
+      const seg = [{ t: sayClean('핵심 카드. ' + theme), el: el.querySelector('h3') }];
+      el.querySelectorAll('li').forEach(li => seg.push({ t: sayClean(li.textContent), el: li }));
+      el.querySelectorAll('.fc').forEach((f, k) => {
+        const q = f.firstElementChild, a = f.querySelector('.a');
+        seg.push({ t: sayClean('오엑스 ' + (k + 1) + '번. ' + q.textContent), el: f });
+        if (a) seg.push({ t: sayClean('정답. ' + a.textContent), el: f, open: () => f.classList.add('open') });
+      });
+      sayRun(seg, kb, '🔊 읽기');
+    };
   }
   window.openCard = card;
 
@@ -583,6 +596,16 @@
     try { const r = el.getBoundingClientRect(); if (r.top < 70 || r.bottom > innerHeight - 90) { if (r.height > innerHeight * .55) window.scrollBy({ top: r.top - 80, behavior: 'smooth' }); else el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } } catch (e) {}
   }
   const SAY = { on: false };
+  // 조각들을 차례로 읽고, 읽는 곳을 강조 (조각의 el 은 요소 또는 요소를 돌려주는 함수, open 은 읽기 직전에 할 일)
+  function sayRun(seg, b, idle) {
+    const T = window.__tts; if (!T) return;
+    const lines = []; seg.forEach(sg => { let buf = ''; sg.t.split(/(?<=[.?!요다])\s+/).forEach(x => { if (buf && (buf + ' ' + x).length > 500) { lines.push({ text: buf, el: sg.el, open: sg.open }); buf = x; } else buf = buf ? buf + ' ' + x : x; }); if (buf) lines.push({ text: buf, el: sg.el, open: sg.open }); });
+    SAY.on = true; SAY.lines = lines; SAY.btn = b; b.classList.add('on'); b.textContent = '⏹';
+    if (!SAY.hooked && T.onLine) { SAY.hooked = true; T.onLine(({ line }) => { const L = SAY.on && SAY.lines && SAY.lines[line]; if (!L) return; try { L.open && L.open(); } catch (e) {} sayMark(typeof L.el === 'function' ? L.el() : L.el); }); }
+    T.speak(lines.map(x => ({ text: x.text })), {}).catch(e => { if (e && e.code !== 'viewer_stopped' && window.__toast) __toast(e.message); })
+      .finally(() => { SAY.on = false; SAY.lines = null; sayMark(null); b.classList.remove('on'); b.textContent = idle; });
+  }
+  function sayStop() { const T = window.__tts; SAY.on = false; sayMark(null); try { T && T.stop(); } catch (e) {} if (SAY.btn) { SAY.btn.classList.remove('on'); } }
   function sayBtn() {
     let b = document.getElementById('say');
     if (!b) {
@@ -595,12 +618,7 @@
         // 해설까지 읽을 때는 해설을 화면에 펼쳐 두고 읽기(보이는 것과 듣는 것이 같게)
         try { const q = S.list[S.i]; if (cur === 'quiz' && q && S.ans[q.id] && !(S.exam && !S.done) && expOf(q)) { const ab = document.getElementById('aibox'); if (ab && ab.textContent.trim().length < 20) { const qa = document.getElementById('qa'); if (qa) qa.click(); } } } catch (e) {}
         let seg = screenScript(); if (!seg.length) seg = [{ t: '이 화면은 고르는 버튼만 있어요. 문제를 시작하면 문제와 보기, 해설을 읽어 드릴게요.', el: null }];
-        // 긴 조각은 500자 안쪽으로 나누되, 표시할 곳은 같게
-        const lines = []; seg.forEach(sg => { let buf = ''; sg.t.split(/(?<=[.?!요다])\s+/).forEach(x => { if (buf && (buf + ' ' + x).length > 500) { lines.push({ text: buf, el: sg.el }); buf = x; } else buf = buf ? buf + ' ' + x : x; }); if (buf) lines.push({ text: buf, el: sg.el }); });
-        SAY.on = true; SAY.lines = lines; b.classList.add('on'); b.textContent = '⏹';
-        if (!SAY.hooked && T.onLine) { SAY.hooked = true; T.onLine(({ line }) => { if (SAY.on && SAY.lines && SAY.lines[line]) { const el = SAY.lines[line].el; sayMark(typeof el === 'function' ? el() : el); } }); }
-        T.speak(lines.map(x => ({ text: x.text })), {}).catch(e => { if (e && e.code !== 'viewer_stopped' && window.__toast) __toast(e.message); })
-          .finally(() => { SAY.on = false; SAY.lines = null; sayMark(null); b.classList.remove('on'); b.textContent = '🔊'; });
+        sayRun(seg, b, '🔊');
       };
     }
   }
