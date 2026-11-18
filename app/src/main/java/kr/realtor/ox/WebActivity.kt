@@ -20,6 +20,15 @@ class WebActivity : Activity() {
     private lateinit var voice: ExoPlayer
     private val io = Executors.newFixedThreadPool(2)
     private var speakId: String? = null
+    private var loaded = false
+
+    /** 듣기 화면의 아래 탭에서 넘어올 때 그 탭 열기 */
+    private fun goTab(i: Intent?) {
+        val t = i?.getStringExtra("tab") ?: return
+        if (!loaded || !t.matches(Regex("[a-z]+"))) return
+        i.removeExtra("tab"); js("typeof go==='function'&&go('$t')")
+    }
+    override fun onNewIntent(i: Intent) { super.onNewIntent(i); setIntent(i); goTab(i) }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(b: Bundle?) {
@@ -39,6 +48,7 @@ class WebActivity : Activity() {
             webChromeClient = WebChromeClient()
             // 인터넷 주소(원본 PDF·신고 등)는 앱 밖 브라우저로 열기
             webViewClient = object : android.webkit.WebViewClient() {
+                override fun onPageFinished(v: WebView, url: String) { loaded = true; goTab(intent) }
                 override fun shouldOverrideUrlLoading(v: WebView, r: android.webkit.WebResourceRequest): Boolean {
                     val u = r.url
                     if (u.scheme == "http" || u.scheme == "https") {

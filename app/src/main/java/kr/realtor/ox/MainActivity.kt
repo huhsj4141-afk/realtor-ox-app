@@ -47,7 +47,7 @@ class MainActivity : Activity() {
     private val prefs by lazy { getSharedPreferences("ox", android.content.Context.MODE_PRIVATE) }
     private fun wantDark(): Boolean = when (prefs.getString("theme", "auto")) {
         "dark" -> true; "light" -> false
-        else -> java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY).let { it >= 19 || it < 7 }
+        else -> (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES   // 폰 다크 모드를 따라감(학습 화면과 같게)
     }
     private var dk = false
     private fun c(light: String, dark: String) = Color.parseColor(if (dk) dark else light)
@@ -108,7 +108,6 @@ class MainActivity : Activity() {
 
     private fun buildUi(): View {
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(c("#F5F6F8", "#0B0F14")); setPadding(0, dp(12), 0, dp(24)) }
-        col.addView(tv("🎧 공인중개사 OX 듣기", 22f, true).apply { setPadding(dp(18), dp(8), dp(18), dp(6)) })
 
         // 지금 듣는 문항
         val c1 = card()
@@ -130,27 +129,28 @@ class MainActivity : Activity() {
         stmt.movementMethod = android.text.method.LinkMovementMethod.getInstance()
         expV.movementMethod = android.text.method.LinkMovementMethod.getInstance()
         todayV = tv("", 13f, color = SUB).apply { setPadding(0, dp(2), 0, 0) }
-        listOf(spinner, todayV!!, pos, stmt, expV).forEach { c1.addView(it) }
+        stmt.textSize = 21f; stmt.setLineSpacing(0f, 1.35f)
+        listOf(spinner, pos, stmt, expV).forEach { c1.addView(it) }
         col.addView(c1)
 
         // 조작 버튼 (리모컨 동작과 같은 것만)
         val c2 = card()
         playBtn = btn("▶ 재생", true) { svc?.act("toggle") }
         c2.addView(row(btn("◀ 뒤로") { svc?.act("stepBack") }, playBtn, btn("앞으로 ▶") { svc?.act("stepFwd") }))
-        c2.addView(row(btn("⏮ 이전 문항") { svc?.act("itemPrev") }, btn("다음 문항 ⏭") { svc?.act("itemNext") }))
-        c2.addView(row(btn("★ 북마크") { svc?.act("bookmark") }, btn("🤖 더 자세히") { svc?.act("detail") ?: android.widget.Toast.makeText(this, "먼저 ▶ 재생을 눌러 주세요", android.widget.Toast.LENGTH_SHORT).show() }))
+        fun small(b: Button) = b.apply { textSize = 14f; layoutParams = LinearLayout.LayoutParams(0, dp(46), 1f).apply { setMargins(dp(3), dp(4), dp(3), dp(2)) } }
+        c2.addView(row(small(btn("⏮ 이전 문항") { svc?.act("itemPrev") }), small(btn("다음 문항 ⏭") { svc?.act("itemNext") })))
+        c2.addView(row(small(btn("★ 북마크") { svc?.act("bookmark") }), small(btn("🤖 더 자세히") { svc?.act("detail") ?: android.widget.Toast.makeText(this, "먼저 ▶ 재생을 눌러 주세요", android.widget.Toast.LENGTH_SHORT).show() })))
         alertBtn = wide(btn("🚌 하차 알림 끄기", true) { svc?.stopAlert() }).apply { visibility = View.GONE }
         c2.addView(alertBtn)
         col.addView(c2)
 
         // 타이머
         val ct = card()
-        ct.addView(tv("⏲ 타이머", 16f, true))
-        ct.addView(tv("잠자기: 정한 시간 뒤 소리가 작아지다 멈춰요", 13f, color = SUB).apply { setPadding(0, dp(6), 0, 0) })
-        ct.addView(row(*listOf(0, 15, 30, 60).map { m -> btn(if (m == 0) "끄기" else "${m}분") { svc?.setSleep(m) } }.toTypedArray()))
-        ct.addView(tv("🚌 하차 알림: 2분 전 한 번, 시간이 되면 진동과 음성으로 계속 알려요 (아무 버튼이나 누르면 꺼짐)", 13f, color = SUB).apply { setPadding(0, dp(10), 0, 0) })
-        ct.addView(row(*listOf(0, 5, 10, 15).map { m -> btn(if (m == 0) "끄기" else "${m}분") { svc?.setBus(m) } }.toTypedArray()))
-        ct.addView(row(*listOf(20, 30, 40, 60).map { m -> btn("${m}분") { svc?.setBus(m) } }.toTypedArray()))
+        fun tb(t: String, f: () -> Unit) = btn(t, false, f).apply { textSize = 14f; layoutParams = LinearLayout.LayoutParams(0, dp(42), 1f).apply { setMargins(dp(3), dp(3), dp(3), dp(3)) } }
+        ct.addView(tv("😴 잠자기 타이머", 15f, true))
+        ct.addView(row(*listOf(0, 15, 30, 60).map { m -> tb(if (m == 0) "끄기" else "${m}분") { svc?.setSleep(m) } }.toTypedArray()))
+        ct.addView(tv("🚌 하차 알림", 15f, true).apply { setPadding(0, dp(10), 0, 0) })
+        ct.addView(row(*listOf(0, 10, 20, 30, 40).map { m -> tb(if (m == 0) "끄기" else "${m}분") { svc?.setBus(m) } }.toTypedArray()))
         timerV = tv("", 14f).apply { setPadding(0, dp(6), 0, 0) }
         ct.addView(timerV)
         col.addView(ct)
@@ -217,7 +217,24 @@ class MainActivity : Activity() {
         // 가운데 정렬, 넓은 화면에서도 너무 퍼지지 않게
         col.layoutParams = FrameLayout.LayoutParams(minOf(resources.displayMetrics.widthPixels, dp(640)), FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL)
         val center = FrameLayout(this).apply { addView(col) }
-        return safeArea(ScrollView(this).apply { addView(center); isFillViewport = true }, c("#F5F6F8", "#0B0F14"))
+        val sv = ScrollView(this).apply { addView(center); isFillViewport = true; layoutParams = LinearLayout.LayoutParams(-1, 0, 1f) }
+        val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; addView(sv); addView(tabBar()) }
+        return safeArea(root, c("#F5F6F8", "#0B0F14"))
+    }
+
+    /** 학습 화면과 같은 맨 아래 탭 4개 (듣기 = 지금 화면) */
+    private fun tabBar(): View {
+        val bar = LinearLayout(this).apply { setBackgroundColor(c("#FFFFFF", "#161B22")); setPadding(0, dp(4), 0, dp(4)) }
+        listOf(Triple("🏠", "오늘", "home"), Triple("✏️", "문제", "setup"), Triple("🎧", "듣기", ""), Triple("📊", "기록", "wrong")).forEach { (ic, n, v) ->
+            val on = v.isEmpty()
+            bar.addView(TextView(this).apply {
+                text = "$ic\n$n"; gravity = Gravity.CENTER; textSize = 13f; setLineSpacing(0f, 1.1f)
+                setTextColor(if (on) Color.parseColor(if (dk) "#6F9BFF" else "#2563EB") else Color.parseColor(SUB)); if (on) setTypeface(typeface, Typeface.BOLD)
+                layoutParams = LinearLayout.LayoutParams(0, dp(56), 1f)
+                setOnClickListener { if (!on) { startActivity(Intent(this@MainActivity, WebActivity::class.java).putExtra("tab", v).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)); finish(); overridePendingTransition(0, 0) } }
+            })
+        }
+        return bar
     }
 
     private fun drawMap() {
