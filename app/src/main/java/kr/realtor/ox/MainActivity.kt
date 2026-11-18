@@ -84,6 +84,9 @@ class MainActivity : Activity() {
 
     override fun onResume() { super.onResume(); Updater.check(this) }
 
+    // 탭 넘어갈 때 옆으로 미끄러지는 효과 없이 (학습 화면 탭들과 똑같이)
+    override fun finish() { super.finish(); @Suppress("DEPRECATION") overridePendingTransition(0, 0) }
+
     override fun onDestroy() { h.removeCallbacksAndMessages(null); super.onDestroy() }
 
     // ---------- 화면 구성 ----------

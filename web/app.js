@@ -51,6 +51,7 @@
     .fb.top small,.fb.top span{font-size:13px;font-weight:600} .fb.top{font-size:18px;font-weight:800;padding:12px 14px;margin:0 0 12px;border-radius:12px}
     .chx:not(.ans):not(.mine){opacity:.82} .chx.ans{border-width:2px} .chx .bd{font-size:11px}
     .conf{display:flex;gap:6px;align-items:center;flex-wrap:nowrap} .conf .lb{flex:none!important;margin-right:4px}
+    .svd{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:2px;background:rgba(22,163,74,.18);color:#16a34a} .svd.no{background:rgba(148,163,184,.2);color:#94a3b8} .bigai .svd{background:rgba(255,255,255,.25);color:#fff}
     .glb{position:fixed;left:12px;right:12px;bottom:84px;z-index:150;background:#1e1b4b;color:#fff;border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.55;box-shadow:0 8px 24px rgba(0,0,0,.3)}
     .glb b{color:#c4b5fd;margin-right:6px}
     .slog{font-size:14px;display:block} .slog .d{font-weight:700;margin:14px 0 4px;display:flex;justify-content:space-between}
@@ -146,7 +147,10 @@
       row.className = "qtb"; row.removeAttribute('style');
     }
     const mo = document.getElementById('more'), ab = document.getElementById('aibox');
-    if (mo) mo.style.display = S.ans[q.id] && ab && ab.textContent.trim().length > 20 ? '' : 'none';
+    const moSaved = (() => { try { return !!localStorage.getItem('reb_more_' + q.id); } catch (e) { return false; } })();
+    if (mo) mo.style.display = S.ans[q.id] && (moSaved || (ab && ab.textContent.trim().length > 20)) ? '' : 'none';
+    const qa = document.getElementById('qa');
+    if (qa && !qa.querySelector('.svd')) qa.insertAdjacentHTML('beforeend', expOf(q) ? ' <span class="svd">✓ 저장됨</span>' : ' <span class="svd no">인터넷</span>');
     const ex = S.exam && !S.done, pick = S.ans[q.id];
     const fb = document.querySelector('#view .fb');
     if (pick && !ex && fb && !fb.classList.contains('top')) {

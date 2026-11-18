@@ -167,7 +167,7 @@
         try {
           const q = S.list[S.i], box = document.getElementById('aibox');
           if (q && box && !document.getElementById('more')) {
-            box.insertAdjacentHTML('afterend', '<button class="btn full" id="more" style="margin-top:8px">🤖 더 자세히 (Gemini)</button><div id="moreBox"></div>');
+            box.insertAdjacentHTML('afterend', '<button class="btn full" id="more" style="margin-top:8px">🤖 더 자세히 <span class="svd no">인터넷</span></button><div id="moreBox"></div>');
             const MK = 'reb_more_' + q.id;
             const show = (b, t) => {
               b.innerHTML = '<div class="fb" style="white-space:pre-wrap;font-weight:400;margin-top:8px">' + t.replace(/</g, '&lt;') + '</div><button class="btn full" id="moreSay">🔊 읽어 주기</button>';
@@ -180,7 +180,7 @@
               };
             };
             const saved = localStorage.getItem(MK);
-            if (saved) { document.getElementById('more').textContent = '🤖 더 자세히 (저장됨)'; }
+            if (saved) { document.getElementById('more').innerHTML = '🤖 더 자세히 <span class="svd">✓ 저장됨</span>'; }
             document.getElementById('more').onclick = async () => {
               const btn = document.getElementById('more'), b = document.getElementById('moreBox');
               if (localStorage.getItem(MK)) return show(b, localStorage.getItem(MK));   // 한 번 받은 설명은 바로
@@ -196,7 +196,7 @@
               } catch (e) {
                 const nb = document.getElementById('moreBox'); if (nb) nb.innerHTML = '<div class="fb no">' + (e.message || '실패') + '</div>';
               } finally {
-                clearInterval(tick); const nbtn = document.getElementById('more'); if (nbtn) { nbtn.disabled = false; nbtn.textContent = '🤖 더 자세히 (Gemini)'; }
+                clearInterval(tick); const nbtn = document.getElementById('more'); if (nbtn) { nbtn.disabled = false; nbtn.innerHTML = localStorage.getItem(MK) ? '🤖 더 자세히 <span class="svd">✓ 저장됨</span>' : '🤖 더 자세히 <span class="svd no">인터넷</span>'; }
               }
             };
           }
