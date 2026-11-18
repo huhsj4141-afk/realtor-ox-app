@@ -476,7 +476,7 @@ document.addEventListener('keydown',e=>{
 /* ================= 단순 UI (탭 4개: 오늘 · 문제 · 듣기 · 기록) ================= */
 (function(){
 const _home=home,_setup=setup,_themes=themes,_exam=exam,_wrong=wrong,_ox=ox,_plan=plan,_go=go;
-let PT='easy',RT='wrong';
+let PT='pick',RT='wrong';
 const st=document.createElement('style');st.textContent=`
 nav.tabs button b{font-size:21px}
 .hero{background:linear-gradient(135deg,var(--pri),var(--pri3,#4a7be0));color:#fff;border:0}
@@ -524,7 +524,7 @@ home=function(){
   V.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{const it=ex[+b.dataset.x];const l=Q.filter(q=>q.n===it.ex.n&&q.ct===it.ex.ct).sort((a,b)=>a.no-b.no);startQuiz(l,{from:'home',title:`제${it.ex.n}회 ${CT[it.ex.ct]}`,exam:{n:it.ex.n,ct:it.ex.ct,sec:it.ex.ct===22?3000:6000}})})};
 
 /* ---- 문제 ---- */
-const PSEG=[['easy','추천'],['pick','골라 풀기'],['themes','빈출 테마'],['exam','모의고사']];
+const PSEG=[['pick','골라 풀기'],['themes','빈출 테마'],['exam','모의고사']];
 /* 복습 하나로: 오늘 다시 볼 문제(간격 복습) → 마지막에 틀린 문제 → 헷갈림·찍음 표시한 문제, 겹치면 한 번만 */
 function revList(){const seen=new Set(),out=[],add=q=>{if(q&&!q.ocr&&!seen.has(q.id)){seen.add(q.id);out.push(q)}};
   dueList().forEach(add);shuffle(Q.filter(q=>P[q.id]&&P[q.id][1]===0)).forEach(add);
@@ -543,7 +543,7 @@ function easyView(){const W=Q.filter(q=>P[q.id]&&P[q.id][1]===0).length,due=dueL
     else go('photo')})}
 function bindSeg(id){const el=document.getElementById(id);if(!el)return;el.onclick=e=>{const b=e.target.closest('button');if(!b)return;const v=b.dataset.v;
   if(id==='pseg'){PT=v;go(v==='easy'||v==='pick'?'setup':v)}else{RT=v;go(v==='plan'?'plan':v==='stats'?'stats':v==='journal'?'journal':'wrong')}}}
-setup=function(a){if(PT!=='pick')PT='easy';if(PT==='easy')return easyView();_setup(a);V.insertAdjacentHTML('afterbegin',seg(PSEG,'pick','pseg'));bindSeg('pseg')};
+setup=function(a){PT='pick';_setup(a);V.insertAdjacentHTML('afterbegin',seg(PSEG,'pick','pseg'));bindSeg('pseg')};
 themes=function(a){PT='themes';_themes(a);V.insertAdjacentHTML('afterbegin',seg(PSEG,'themes','pseg'));bindSeg('pseg')};
 exam=function(a){PT='exam';_exam(a);V.insertAdjacentHTML('afterbegin',seg(PSEG,'exam','pseg'));bindSeg('pseg')};
 
@@ -551,7 +551,7 @@ exam=function(a){PT='exam';_exam(a);V.insertAdjacentHTML('afterbegin',seg(PSEG,'
 ox=function(a){_ox(a);if(cur==='ox')dropBack()};
 
 /* ---- 기록 ---- */
-const RSEG=[['journal','📅 일지'],['wrong','오답·공식'],['stats','내 점수'],['plan','학습 계획']];
+const RSEG=[['journal','달력'],['wrong','오답'],['stats','점수'],['plan','계획']];
 wrong=function(a){RT='wrong';_wrong(a);V.insertAdjacentHTML('afterbegin',seg(RSEG,'wrong','rseg'));bindSeg('rseg')};
 plan=function(a){RT='plan';_plan(a);V.insertAdjacentHTML('afterbegin',seg(RSEG,'plan','rseg'));bindSeg('rseg')};
 function stats(){RT='stats';const s=subjStats();const sc=s.map(x=>x.rate==null?null:Math.round(x.rate*100));
@@ -791,16 +791,11 @@ function journalView(){backfill();const t=today0();const ym=LJ.ym||[t.getFullYea
      ${x.goal&&x.goal[0]?`<div class="muted" style="font-size:13px">🎯 오늘 목표 ${x.goal[1]}/${x.goal[0]}문제 ${x.goal[1]>=x.goal[0]?'✅ 달성':''}</div>`:''}
      ${x.ex?`<div class="muted" style="font-size:13px">📖 해설 ${x.ex}번 봄</div>`:''}
      ${subRows?`<div class="exh" style="margin-top:8px">과목별</div>${subRows}`:''}
-     ${x.approx?'<div class="muted" style="font-size:12px;margin-top:6px">※ 일지 기능 전 기록이라 문제 수만 대략 보여요 (시간·시간대 없음).</div>':''}`:'<div class="muted">이날은 기록이 없어요.</div>'}</div>
-  <div class="card"><h2>📈 내 기록으로 본 학습 처방 <span class="muted" style="font-size:13px">최근 4주 · AI 사용 없음</span></h2>
-   ${an.A.length?an.A.map(a=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-size:14px"><span class="chip ${a.lv>=2?'warnc':a.lv===0?'g':''}" style="margin-right:6px">${a.k}</span><b>${esc(a.t)}</b></div><div class="muted" style="font-size:13px;margin-top:3px">→ ${esc(a.d)}</div></div>`).join(''):'<div class="muted">며칠 더 공부하면 분석이 나와요.</div>'}
-   <button class="btn pri full" id="jrx" style="margin-top:10px">▶ 처방대로 20문제 풀기 <small style="opacity:.85">(약한 과목 · 내 실력 맞춤 난이도)</small></button>
-   <div class="muted" style="font-size:12px;margin-top:6px">기록이 쌓일수록(특히 시간대·집중 시간 분석은 1~2주) 처방이 정확해져요. 문제 탭의 🎯 맞춤 20문제에도 이 결과가 반영돼요.</div></div>`;
+     ${x.approx?'<div class="muted" style="font-size:12px;margin-top:6px">※ 일지 기능 전 기록이라 문제 수만 대략 보여요 (시간·시간대 없음).</div>':''}`:'<div class="muted">이날은 기록이 없어요.</div>'}</div>`;
   bindSeg('rseg');
   document.getElementById('jp').onclick=()=>{LJ.ym=[ym[1]?ym[0]:ym[0]-1,ym[1]?ym[1]-1:11];journalView()};
   document.getElementById('jn').onclick=()=>{LJ.ym=[ym[1]<11?ym[0]:ym[0]+1,ym[1]<11?ym[1]+1:0];journalView()};
-  document.getElementById('jcal').onclick=e=>{const b=e.target.closest('button[data-d]');if(b){LJ.sel=b.dataset.d;journalView()}};
-  document.getElementById('jrx').onclick=()=>rxStart(an)}
+  document.getElementById('jcal').onclick=e=>{const b=e.target.closest('button[data-d]');if(b){LJ.sel=b.dataset.d;journalView()}};}
 window.journalView=journalView;
 /* 맞춤 학습(🎯 맞춤 20문제)에 처방 반영: 집중 과목 문제를 절반 이상 */
 const _sa=startAdaptive;startAdaptive=function(pool,cnt,o){try{if(o&&/맞춤 학습|오늘 공부/.test(o.title||'')&&pool===Q){const an=analyze();const subs=((an.A.find(a=>a.subs)||{}).subs)||[];

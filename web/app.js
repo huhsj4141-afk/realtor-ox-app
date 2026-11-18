@@ -66,7 +66,7 @@
     #padt{flex:1;margin:4px 10px 10px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:16px;line-height:1.6;padding:12px;resize:none}
     .rdg{background:rgba(250,204,21,.32)!important;box-shadow:0 0 0 3px #facc15,0 0 18px rgba(250,204,21,.45)!important;border-radius:8px;font-weight:700!important;color:var(--ink)!important;transition:background .2s,box-shadow .2s} .rdg *{color:inherit}
     .thg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px} .thm{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border:1.5px solid var(--line);border-radius:14px;background:transparent;color:var(--ink);font:inherit;cursor:pointer} .thm.on{border-color:var(--pri);box-shadow:0 0 0 2px var(--pri2)} .thm .sw{position:relative;width:46px;height:30px;border-radius:9px;overflow:hidden;border:1px solid rgba(128,128,128,.3)} .thm .sw i{position:absolute;left:6px;top:6px;width:22px;height:18px;border-radius:5px} .thm .sw b{position:absolute;right:6px;bottom:6px;width:12px;height:12px;border-radius:50%} .thm .nm{font-size:13.5px;font-weight:700} .thm small{font-size:11px;color:var(--sub)}
-    #nzb.on{background:var(--pri2);border-color:var(--pri)} #nzp{position:fixed;top:64px;right:10px;left:10px;max-width:420px;margin-left:auto;z-index:90;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 30px rgba(0,0,0,.35);padding:12px} #nzp .nzh{display:flex;align-items:center;margin-bottom:8px} #nzp .nzh b{flex:1;font-size:15px} #nzp button{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:12px;padding:10px 6px;cursor:pointer} #nzp .nzg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px} #nzp .nzg button{font-size:13px;white-space:nowrap;padding:11px 2px} header.top h1{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(15px,4.6vw,22px)} #nzp .nzg button.on{background:var(--pri2);border-color:var(--pri);color:var(--pri);font-weight:700} #nzp .nzv{display:flex;align-items:center;gap:10px;margin:12px 2px 10px;font-size:13px;color:var(--sub)} #nzp .nzv input{flex:1;accent-color:var(--pri)} #nzp .nzoff{width:100%;font-weight:700} #nzx{padding:4px 10px!important}
+    #nzb.on{background:var(--pri2);border-color:var(--pri)} .nzp{position:fixed;top:64px;right:10px;left:10px;max-width:420px;margin-left:auto;z-index:90;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 30px rgba(0,0,0,.35);padding:12px} .nzp .nzh{display:flex;align-items:center;margin-bottom:8px} .nzp .nzh b{flex:1;font-size:15px} .nzp button{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:12px;padding:10px 6px;cursor:pointer} .nzp .nzg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px} .nzp .nzg button{font-size:13px;white-space:nowrap;padding:11px 2px} header.top h1{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(15px,4.6vw,22px)} .nzp .nzg button.on{background:var(--pri2);border-color:var(--pri);color:var(--pri);font-weight:700} .nzp .nzv{display:flex;align-items:center;gap:10px;margin:12px 2px 10px;font-size:13px;color:var(--sub)} .nzp .nzv input{flex:1;accent-color:var(--pri)} .nzp .nzoff{width:100%;font-weight:700} #nzx{padding:4px 10px!important}
     #beg{margin-top:10px} #beg.begon{border:1.5px solid var(--warn);color:var(--warn);font-weight:700} .begc{margin-top:8px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--bg)} .begc .bgh{margin:14px 0 6px;font-size:15.5px;color:var(--pri)} .begc .bgh:first-child{margin-top:2px} .begc .bgp{margin:4px 0;line-height:1.7} .begc .bgl{margin:3px 0 3px 4px;line-height:1.65} .begc #begSay{margin-top:12px}
     .xhid{display:none!important} .xtabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin:12px 0 0;padding:4px;border-radius:14px;background:var(--bg);border:1px solid var(--line)}
     .xtabs button{font:inherit;font-size:14px;font-weight:700;padding:11px 2px;border:0;border-radius:10px;background:transparent;color:var(--sub);cursor:pointer;white-space:nowrap}
@@ -248,20 +248,17 @@
       hero.insertAdjacentHTML('afterend', managerCard());
       $('#mgr .sit').onclick = e => { const b = e.target.closest('[data-s]'); if (b) runSitu(b.dataset.s); };
     }
-    if (!$('#rdcard')) {
-      ($('#mgr') || hero)?.insertAdjacentHTML('afterend', roundCard());
-      const b = $('#rdun'); if (b) b.onclick = () => startQuiz(shuffle(unsureIds().map(k => BYID[k])), { from: 'home', title: '헷갈렸던 문제' });
-    }
+    // 진도·과목별 수준은 기록 → 점수 탭에 있으니 첫 화면에선 뺌
+    [...document.querySelectorAll('#view .card')].forEach(c => { const h = c.querySelector('h2,h3'); if (h && /회독 진도|과목별 수준|내용 업데이트/.test(h.textContent)) c.remove(); });
   }
   function decorateSetup() {
     cleanCards([]);
-    document.querySelectorAll('#view [data-a="photo"]').forEach(b => b.remove());
-    const box = document.querySelector('#view [data-a]')?.parentElement;
-    if (box && !$('#kcl')) {
-      box.insertAdjacentHTML('beforeend', `<button id="kcl"><b>📇</b><div>핵심 카드<span>빈출 테마 순으로 개념 정리·OX 암기</span></div></button>`);
-      $('#kcl').className = box.querySelector('[data-a]').className;
-      $('#kcl').onclick = e => { e.stopPropagation(); themeList(); };
-    }
+  }
+  // 빈출 테마 맨 위에 📇 핵심 카드 (테마별 개념 정리)
+  function decorateThemes() {
+    const sg = $('#pseg'); if (!sg || $('#kcl')) return;
+    sg.insertAdjacentHTML('afterend', `<div class="bigl" style="margin-bottom:10px"><button id="kcl"><b>📇</b><div>핵심 카드<span>빈출 테마 순으로 개념 정리·OX 암기</span></div></button></div>`);
+    $('#kcl').onclick = () => themeList();
   }
   function themeList() {
     const f = freq();
@@ -275,8 +272,6 @@
   function decorateWrong() {
     cleanCards([]);
     document.querySelectorAll('#view .card').forEach(c => { if (/claude\.ai에서 열면/.test(c.textContent) && c.textContent.length < 160) c.remove(); });
-    if (!$('#logc')) drawLog(null);
-    themeCard();
     const first = document.querySelector('#view .card:not(#logc)');
     const un = unsureIds().length;
     // 오답노트: '틀린 문제 다시'와 '헷갈린 문제 다시'를 '🔁 복습하기' 하나로
@@ -461,9 +456,26 @@
     const top = document.querySelector('header.top'); if (!top) return;
     let el = document.getElementById('ver');
     if (!el) { el = document.createElement('button'); el.id = 'ver'; top.appendChild(el); const sy = document.getElementById('sync'); if (sy) sy.style.display = 'none'; }
-    el.textContent = '🔄 v' + v; el.title = '업데이트 확인';
-    el.onclick = () => { try { if (window.__toast) window.__toast('새 버전 확인 중…'); NB.checkUpdate(); } catch (e) {} };
+    el.textContent = '⚙'; el.title = '설정'; el.setAttribute('aria-label', '설정');
+    el.onclick = () => setPanel(v);
     try { const pv = +localStorage.getItem('reb_ver') || 0; if (pv && pv < v && window.__toast) window.__toast('✅ v' + v + '로 업데이트됐어요'); localStorage.setItem('reb_ver', v); } catch (e) {}
+  }
+  function setPanel(v) {
+    let p = document.getElementById('setp'); if (p) { p.remove(); return; }
+    const nz = document.getElementById('nzp'); if (nz) nz.remove();
+    let curT = 'auto'; try { curT = localStorage.getItem('reb_theme') || 'auto'; } catch (e) {}
+    const sw = Object.entries(THEMES).map(([k, t]) => {
+      const bg = t.bg || 'linear-gradient(135deg,#f6f7f9 50%,#12151b 50%)', pri = t.pri || '#6f9bff', card = t.card || 'transparent';
+      return `<button class="thm ${k === curT ? 'on' : ''}" data-t="${k}"><span class="sw" style="background:${bg}"><i style="background:${card}"></i><b style="background:${pri}"></b></span><span class="nm">${t.name}</span><small>${t.sub}</small></button>`;
+    }).join('');
+    const nv = LATEST && LATEST > v;
+    document.body.insertAdjacentHTML('beforeend', `<div id="setp" class="nzp"><div class="nzh"><b>🎨 화면 색</b><button id="spx" aria-label="닫기">✕</button></div>
+      <div class="thg">${sw}</div>
+      <button id="spu" class="nzoff">${nv ? '⬇ 새 버전 v' + LATEST + ' 받기' : '지금 v' + v + ' · 업데이트 확인'}</button></div>`);
+    p = document.getElementById('setp');
+    p.querySelector('#spx').onclick = () => p.remove();
+    p.querySelectorAll('.thm').forEach(b => b.onclick = () => { applyTheme(b.dataset.t); p.querySelectorAll('.thm').forEach(x => x.classList.toggle('on', x === b)); });
+    p.querySelector('#spu').onclick = () => { try { if (nv) NB.update(); else { if (window.__toast) window.__toast('새 버전 확인 중…'); NB.checkUpdate(); } } catch (e) {} p.remove(); };
   }
   function updBanner() {
     const old = document.getElementById('updb');
@@ -787,9 +799,9 @@
     document.querySelectorAll('#nzp [data-n]').forEach(x => x.classList.toggle('on', x.dataset.n === NZ.type));
   }
   function nzPanel() {
-    let p = document.getElementById('nzp'); if (p) { p.remove(); return; }
+    let p = document.getElementById('nzp'); if (p) { p.remove(); return; } document.getElementById('setp')?.remove();
     let last = 'pink'; try { last = localStorage.getItem('reb_nzt') || 'pink'; } catch (e) {}
-    document.body.insertAdjacentHTML('beforeend', `<div id="nzp"><div class="nzh"><b>집중 소음</b><button id="nzx" aria-label="닫기">✕</button></div>
+    document.body.insertAdjacentHTML('beforeend', `<div id="nzp" class="nzp"><div class="nzh"><b>집중 소음</b><button id="nzx" aria-label="닫기">✕</button></div>
       <div class="nzg">${Object.entries(NZT).map(([k, v]) => `<button data-n="${k}">${v}</button>`).join('')}</div>
       <div class="nzv"><span>소리 크기</span><input id="nzvol" type="range" min="0.05" max="1" step="0.05" value="${NZ.vol}"></div>
       <button id="nzoff" class="nzoff">${NZ.type ? '끄기' : '켜기 (' + NZT[last] + ')'}</button></div>`);
@@ -943,8 +955,6 @@ ${q.x}
     if (cur === 'home') {
       [...document.querySelectorAll('#view .card')].forEach(c => { if (/내용 업데이트/.test(c.textContent.slice(0, 40))) c.style.display = 'none'; });
       document.querySelectorAll('#view > .muted, #view > p.muted, #view .foot').forEach(e => { if (/사용량|요금/.test(e.textContent)) e.style.display = 'none'; });
-      const a = cardBy(/회독 진도/), b = cardBy(/과목별 수준/);
-      if (a && b && !a.dataset.fold) { fold(a, '📈 진도·과목별 수준'); a.dataset.fold = 1; b.classList.remove('card'); b.classList.add('foldin'); a.after(b); }
     }
     if (cur === 'wrong') {
       const empty = c => c && !c.querySelector('li, table, button') && c.textContent.trim().length < 150;   // 안내 문장만 있고 항목이 없는 카드
@@ -1092,7 +1102,7 @@ ${q.x}
   }, 1000);
   window.addEventListener('load', () => setTimeout(() => {
     wrap('quiz', () => { decorateQuiz(); decorateChoices(); decorateElim(); quizScroll(); });
-    const _rec = window.record; window.record = function (q, c) { const r = _rec.apply(this, arguments); logAnswer(q, c); return r; }; wrap('home', decorateHome); wrap('setup', decorateSetup); wrap('wrong', decorateWrong);
+    const _rec = window.record; window.record = function (q, c) { const r = _rec.apply(this, arguments); logAnswer(q, c); return r; }; wrap('home', decorateHome); wrap('setup', decorateSetup); wrap('wrong', decorateWrong); wrap('themes', decorateThemes);
     const v = document.querySelector('#tabs button.on')?.dataset.v;
     if (v === 'home') decorateHome();
   }, 50));
