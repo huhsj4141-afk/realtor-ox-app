@@ -6,6 +6,7 @@ def fixjson(t):
     t = re.sub(r'(?<!\\)\\(?=[A-Za-z]{2,})', r'\\\\', t)
     return re.sub(r'(?<!\\)\\(?![\\"/bfnrtu])', r'\\\\', t)
 
+import sys as _s, os as _o; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import jline
 import json, os, re, subprocess, sys, base64
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
@@ -59,7 +60,7 @@ def main(body_path, pdf_dir):
                 e = json.loads(fixjson(re.search(r'\{.*\}', txt, re.S).group(0))); e['v'] = 2; exp[qid] = e; made = True; break
             except Exception as er:
                 print('해설 실패', model, str(er)[:80])
-    json.dump(exp, open(ep, 'w', encoding='utf8'), ensure_ascii=False)
+    jline.dump(exp, ep)
     out.append('- 해설: 새로 만들었어요' if made else '- 해설: 이번엔 못 만들었어요(무료 한도) → 다음 자동 생성 때 다시')
     need_human = (not fixed) or any('정답' in x for x in reasons)
     if any('정답' in x for x in reasons):

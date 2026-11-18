@@ -9,6 +9,7 @@ def fixjson(t):
     t = re.sub(r'(?<!\\)\\(?=[A-Za-z]{2,})', r'\\\\', t)
     return re.sub(r'(?<!\\)\\(?![\\"/bfnrtu])', r'\\\\', t)
 
+import sys as _s, os as _o; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import jline
 import base64, json, os, re, subprocess, sys, time, urllib.request, urllib.error, wave, math, struct
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -401,15 +402,15 @@ def mc_explanations():
             txt = ''.join(p.get('text', '') for p in r['candidates'][0]['content']['parts'])
             exp[q['id']] = json.loads(fixjson(re.search(r'\{.*\}', txt, re.S).group(0))); exp[q['id']]['v'] = 3 if '계산' in (q.get('k') or '') else 2; made += 1
         except DailyLimit:
-            json.dump(exp, open(path, 'w', encoding='utf8'), ensure_ascii=False)
+            jline.dump(exp, path)
             if not models: raise
             model = models.pop(0); log('한도 → 다음 모델', model); continue
         except Exception as e:
             log('  건너뜀', q['id'], str(e)[:100]); continue
         if (len(exp) - n0) % 10 == 0:
-            json.dump(exp, open(path, 'w', encoding='utf8'), ensure_ascii=False)
+            jline.dump(exp, path)
             log(f'객관식 해설 {len(exp)}/{len(data)}')
-    json.dump(exp, open(path, 'w', encoding='utf8'), ensure_ascii=False)
+    jline.dump(exp, path)
     return len(exp) >= len(data)
 
 

@@ -47,7 +47,7 @@ jobs:
           for k in fix:
               if k not in done:
                   e.pop(k, None)      # 이번에 새로 고친 문항만: 깨진 글로 만든 해설 지우고 다시 만들기
-          json.dump(e, open(p, 'w'), ensure_ascii=False)
+          import sys; sys.path.insert(0, 'tools'); import jline; jline.dump(e, p)
           json.dump(sorted(set(fix) | done), open(ap, 'w'))
           PY
       - name: 저장
