@@ -68,6 +68,11 @@
     .thg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px} .thm{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border:1.5px solid var(--line);border-radius:14px;background:transparent;color:var(--ink);font:inherit;cursor:pointer} .thm.on{border-color:var(--pri);box-shadow:0 0 0 2px var(--pri2)} .thm .sw{position:relative;width:46px;height:30px;border-radius:9px;overflow:hidden;border:1px solid rgba(128,128,128,.3)} .thm .sw i{position:absolute;left:6px;top:6px;width:22px;height:18px;border-radius:5px} .thm .sw b{position:absolute;right:6px;bottom:6px;width:12px;height:12px;border-radius:50%} .thm .nm{font-size:13.5px;font-weight:700} .thm small{font-size:11px;color:var(--sub)}
     #nzb.on{background:var(--pri2);border-color:var(--pri)} #nzp{position:fixed;top:64px;right:10px;left:10px;max-width:420px;margin-left:auto;z-index:90;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 30px rgba(0,0,0,.35);padding:12px} #nzp .nzh{display:flex;align-items:center;margin-bottom:8px} #nzp .nzh b{flex:1;font-size:15px} #nzp button{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:12px;padding:10px 6px;cursor:pointer} #nzp .nzg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px} #nzp .nzg button{font-size:13px;white-space:nowrap;padding:11px 2px} header.top h1{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(15px,4.6vw,22px)} #nzp .nzg button.on{background:var(--pri2);border-color:var(--pri);color:var(--pri);font-weight:700} #nzp .nzv{display:flex;align-items:center;gap:10px;margin:12px 2px 10px;font-size:13px;color:var(--sub)} #nzp .nzv input{flex:1;accent-color:var(--pri)} #nzp .nzoff{width:100%;font-weight:700} #nzx{padding:4px 10px!important}
     #beg{margin-top:10px} #beg.begon{border:1.5px solid var(--warn);color:var(--warn);font-weight:700} .begc{margin-top:8px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--bg)} .begc .bgh{margin:14px 0 6px;font-size:15.5px;color:var(--pri)} .begc .bgh:first-child{margin-top:2px} .begc .bgp{margin:4px 0;line-height:1.7} .begc .bgl{margin:3px 0 3px 4px;line-height:1.65} .begc #begSay{margin-top:12px}
+    .xhid{display:none!important} .xtabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin:12px 0 0;padding:4px;border-radius:14px;background:var(--bg);border:1px solid var(--line)}
+    .xtabs button{font:inherit;font-size:14px;font-weight:700;padding:11px 2px;border:0;border-radius:10px;background:transparent;color:var(--sub);cursor:pointer;white-space:nowrap}
+    .xtabs button.on{background:var(--pri);color:#fff} .xtabs button.warn:not(.on){color:var(--warn)} .xtabs .xs{font-style:normal;font-size:11px;opacity:.85}
+    .xpanel{margin-top:6px} .xpanel #moreBox:empty,.xpanel #begBox:empty{display:none}
+    .qtb.q5{grid-template-columns:repeat(5,1fr)} .qtb{margin-top:14px!important}
     .glb{position:fixed;left:12px;right:12px;bottom:84px;z-index:150;background:#1e1b4b;color:#fff;border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.55;box-shadow:0 8px 24px rgba(0,0,0,.3)}
     .glb b{color:#c4b5fd;margin-right:6px}
     .slog{font-size:14px;display:block} .slog .d{font-weight:700;margin:14px 0 4px;display:flex;justify-content:space-between}
@@ -177,7 +182,7 @@
     }
     const mo = document.getElementById('more'), ab = document.getElementById('aibox');
     const moSaved = (() => { try { return !!localStorage.getItem('reb_more_' + q.id); } catch (e) { return false; } })();
-    if (mo) mo.style.display = S.ans[q.id] && (moSaved || (ab && ab.textContent.trim().length > 20)) ? '' : 'none';
+    if (mo && !mo.classList.contains('xhid')) mo.style.display = S.ans[q.id] && (moSaved || (ab && ab.textContent.trim().length > 20)) ? '' : 'none';
     const qa = document.getElementById('qa');
     if (qa && !qa.querySelector('.svd')) qa.insertAdjacentHTML('beforeend', expOf(q) ? ' <span class="svd">✓ 저장됨</span>' : ' <span class="svd no">인터넷</span>');
     const ex = S.exam && !S.done, pick = S.ans[q.id];
@@ -833,7 +838,7 @@ ${q.x}
     const q = (typeof S !== 'undefined' && S && S.list) ? S.list[S.i] : null;
     // 자리: '더 자세히' 바로 아래(없으면 도구 버튼 줄 아래). 해설을 펼치면 '더 자세히'가 생기니 그때 옮김
     const ex0 = document.getElementById('beg'), mb = document.getElementById('moreBox');
-    if (ex0 && mb && mb.nextElementSibling !== ex0) { const bx = document.getElementById('begBox'); mb.after(ex0); if (bx) ex0.after(bx); }
+    if (ex0 && mb && mb.nextElementSibling !== ex0 && !document.querySelector('#view .xtabs')) { const bx = document.getElementById('begBox'); mb.after(ex0); if (bx) ex0.after(bx); }
     if (cur !== 'quiz' || !q || !S.ans[q.id] || (S.exam && !S.done) || ex0) return;
     const tb = document.querySelector('#view .qtb'); if (!tb) return;
     const K = 'reb_beg_' + q.id, saved = (() => { try { return localStorage.getItem(K); } catch (e) { return null; } })();
@@ -880,6 +885,46 @@ ${q.x}
       requestAnimationFrame(() => window.scrollTo({ top: y, behavior: 'instant' }));
     } catch (e) {}
   }
+
+  /* ---------- 해설 묶음: [📖 해설 | 🔍 더 자세히 | 🐣 기초부터] 탭 하나로, 도구 버튼은 맨 아래 한 줄 ---------- */
+  function decorateTabs() {
+    const q = (typeof S !== 'undefined' && S && S.list) ? S.list[S.i] : null;
+    if (cur !== 'quiz' || !q || !S.ans[q.id] || (S.exam && !S.done)) return;
+    const card = document.querySelector('#view .card'); if (!card) return;
+    const qa = document.getElementById('qa'), more = document.getElementById('more'), beg = document.getElementById('beg');
+    const ab = document.getElementById('aibox'), mb = document.getElementById('moreBox'), bb = document.getElementById('begBox');
+    const tb = card.querySelector('.qtb'), qv = document.getElementById('qv');
+    if (!qa || !ab || !more || !mb || !beg || !bb || !tb) return;
+    let tabs = card.querySelector('.xtabs');
+    const saved = k => { try { return !!localStorage.getItem(k); } catch (e) { return false; } };
+    const lbl = (ic, t, ok) => `${ic} ${t}${ok ? ' <i class="xs">✓</i>' : ''}`;
+    if (!tabs) {
+      const conf = card.querySelector('.conf'), fb = card.querySelector('.fb');
+      (conf || fb || card.querySelector('.choices')).insertAdjacentHTML('afterend', `<div class="xtabs"><button data-x="ai"></button><button data-x="more"></button><button data-x="beg"></button></div><div class="xpanel"></div>`);
+      tabs = card.querySelector('.xtabs'); const pnl = card.querySelector('.xpanel');
+      pnl.append(ab, mb, bb);
+      [qa, more, beg].forEach(b => b.classList.add('xhid'));
+      if (qv) { qv.className = 'btn'; qv.innerHTML = '<span class="ic">🔁</span>숫자 바꾸기'; tb.insertBefore(qv, tb.lastElementChild); tb.classList.add('q5'); }
+      pnl.after(tb);                                      // 도구 줄은 해설 아래 맨 끝
+      tabs.querySelectorAll('button').forEach(b => b.onclick = () => xshow(b.dataset.x, true));
+      // 저장된 해설이 있으면 바로 펼쳐 보여 주기(인터넷 필요 없음)
+      xshow('ai', !!expOf(q) || ab.textContent.trim().length > 20);
+    }
+    const isCalc = /계산/.test(qa.textContent);
+    tabs.children[0].innerHTML = lbl('📖', isCalc ? '계산 풀이' : '해설', !!expOf(q));
+    tabs.children[1].innerHTML = lbl('🔍', '더 자세히', saved('reb_more_' + q.id));
+    tabs.children[2].innerHTML = lbl('🐣', '기초부터', saved('reb_beg_' + q.id));
+    tabs.children[2].classList.toggle('warn', beg.classList.contains('begon'));
+  }
+  function xshow(k, load) {
+    const card = document.querySelector('#view .card'); if (!card) return;
+    const map = { ai: ['qa', 'aibox'], more: ['more', 'moreBox'], beg: ['beg', 'begBox'] };
+    card.querySelectorAll('.xtabs button').forEach(b => b.classList.toggle('on', b.dataset.x === k));
+    Object.entries(map).forEach(([kk, [, box]]) => { const el = document.getElementById(box); if (el) el.style.display = kk === k ? '' : 'none'; });
+    const [btn, box] = map[k]; const el = document.getElementById(box);
+    if (load && el && el.textContent.trim().length < 20) { const b = document.getElementById(btn); if (b && !b.disabled) b.click(); }
+  }
+  setInterval(decorateTabs, 400);
   /* ---------- 보기 지우기: 답 고르기 전, 아닌 보기를 눌러(또는 옆으로 밀어) 줄 긋기 ---------- */
   const ELIM = {};
   const elHint = () => { try { const n = +localStorage.getItem('reb_elh') || 0; localStorage.setItem('reb_elh', n + 1); return n < 6; } catch (e) { return false; } };
