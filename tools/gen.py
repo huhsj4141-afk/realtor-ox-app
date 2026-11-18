@@ -393,7 +393,11 @@ def pick_flash():
     # 무료 등급 한도가 넉넉한 Flash-Lite를 씀 (정식판 우선, 최신 버전)
     fl = [n for n in names if 'flash-lite' in n and not re.search(r'tts|image|live|audio|embed|vision|thinking|robotics|computer', n)]
     fl.sort(key=lambda n: ('preview' not in n and 'exp' not in n, ver(n)), reverse=True)
-    log('객관식 해설 모델 순서:', fl[:3]); return fl[:3]
+    # Lite 한도를 다 쓰면 일반 Flash(한도 따로)로 이어서
+    fx = [n for n in names if re.fullmatch(r'gemini-\d+(\.\d+)?-flash', n)]
+    fx.sort(key=ver, reverse=True)
+    out = fl[:3] + fx[:2]
+    log('객관식 해설 모델 순서:', out); return out
 
 
 def mc_explanations():
