@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths-ignore: ['gen/**', '**.md']
   schedule:
+    - cron: '41 11 * * *'      # 20:41 한 번 더(예약이 빠질 때 대비)
     - cron: '47 8 * * *'       # 매일 17:47(한국): 무료 한도가 다시 채워진 직후(17:00) 객관식 해설 이어서 만들기
 permissions:
   contents: write

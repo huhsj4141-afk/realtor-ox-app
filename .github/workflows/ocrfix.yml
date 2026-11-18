@@ -3,6 +3,7 @@ name: ocrfix
 on:
   schedule:
     - cron: '25 8 * * *'      # 매일 17:25(한국), 무료 한도가 새로 채워진 직후 남은 문항 이어서
+    - cron: '13 11 * * *'     # 20:13 한 번 더(GitHub 예약이 가끔 빠져서 — 이미 했으면 금방 끝남)
   workflow_dispatch:
     inputs:
       step: { description: 'keygen 또는 run', default: run }
