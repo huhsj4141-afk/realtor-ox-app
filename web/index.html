@@ -546,7 +546,7 @@ async function explain(q){
 }
 
 /* 미니 수식 렌더러: \frac{}{}, ^{}, _{}, \sqrt{}, 기호 */
-const SYM={times:'×',div:'÷',cdot:'·',le:'≤',ge:'≥',leq:'≤',geq:'≥',neq:'≠',ne:'≠',approx:'≈',sum:'Σ',Sigma:'Σ',rightarrow:'→',to:'→',Rightarrow:'⇒',leftarrow:'←',pm:'±',infty:'∞',Delta:'Δ',delta:'δ',alpha:'α',beta:'β',sigma:'σ',mu:'μ',quad:'  ',qquad:'    ',left:'',right:'',percent:'%'};
+const SYM={cap:'∩',cup:'∪',emptyset:'∅',varnothing:'∅',leftrightarrow:'↔',Leftrightarrow:'⇔',iff:'⇔',neg:'¬',lnot:'¬',in:'∈',notin:'∉',subset:'⊂',supset:'⊃',therefore:'∴',because:'∵',ldots:'…',cdots:'⋯',circ:'°',times:'×',div:'÷',cdot:'·',le:'≤',ge:'≥',leq:'≤',geq:'≥',neq:'≠',ne:'≠',approx:'≈',sum:'Σ',Sigma:'Σ',rightarrow:'→',to:'→',Rightarrow:'⇒',leftarrow:'←',pm:'±',infty:'∞',Delta:'Δ',delta:'δ',alpha:'α',beta:'β',sigma:'σ',mu:'μ',quad:'  ',qquad:'    ',left:'',right:'',percent:'%'};
 function tex(s){s=String(s||'');let i=0;
   function grp(){while(s[i]===' ')i++;if(s[i]==='{'){i++;const r=seq('}');i++;return r}if(s[i]==='\\'){return cmd()}return esc(s[i++]||'')}
   function cmd(){i++;let n='';while(i<s.length&&/[a-zA-Z]/.test(s[i]))n+=s[i++];if(!n){const c=s[i++]||'';return esc(c==='%'?'%':c)}

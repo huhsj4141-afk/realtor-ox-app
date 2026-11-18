@@ -48,7 +48,7 @@
     .elh{font-size:12.5px;color:var(--mut,#94a3b8);margin:8px 0 2px}.elc{padding:3px 4px;margin:0 -4px;border-radius:8px;cursor:pointer;white-space:pre-wrap;transition:opacity .15s}.elc:active{background:rgba(148,163,184,.12)}.elc.x{text-decoration:line-through;text-decoration-color:#ef4444;text-decoration-thickness:3px;opacity:.4}.choices button.elx{opacity:.35;text-decoration:line-through;text-decoration-color:#ef4444}
     #ver{flex:none;font:inherit;font-size:13px;font-weight:600;color:var(--pri);background:var(--pri2);border:0;border-radius:999px;padding:6px 12px;cursor:pointer}#updb{display:block;width:100%;margin:0 0 12px;padding:14px 16px;border:0;border-radius:14px;background:#2563eb;color:#fff;font:inherit;font-size:17px;font-weight:700;text-align:left;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,.35)}#updb small{display:block;font-size:12.5px;font-weight:500;opacity:.85;margin-top:2px}
     .qno{font-size:12.5px;opacity:.55;align-self:center;margin-left:auto}
-    .fb.top small,.fb.top span{font-size:13px;font-weight:600} .fb.top{font-size:18px;font-weight:800;padding:12px 14px;margin:0 0 12px;border-radius:12px}
+    .fb.top small,.fb.top span{font-size:13px;font-weight:600} .fb.top{font-size:18px;font-weight:800;padding:12px 14px;margin:12px 0 10px;border-radius:12px}
     .chx:not(.ans):not(.mine){opacity:.82} .chx.ans{border-width:2px} .chx .bd{font-size:11px}
     .conf{display:flex;gap:6px;align-items:center;flex-wrap:nowrap} .conf .lb{flex:none!important;margin-right:4px}
     .svd{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:2px;background:rgba(22,163,74,.18);color:#16a34a} .svd.no{background:rgba(148,163,184,.2);color:#94a3b8} .bigai .svd{background:rgba(255,255,255,.25);color:#fff}
@@ -166,12 +166,10 @@
     if (qa && !qa.querySelector('.svd')) qa.insertAdjacentHTML('beforeend', expOf(q) ? ' <span class="svd">✓ 저장됨</span>' : ' <span class="svd no">인터넷</span>');
     const ex = S.exam && !S.done, pick = S.ans[q.id];
     const fb = document.querySelector('#view .fb');
-    if (pick && !ex && fb && !fb.classList.contains('top')) {
-      const cardEl = fb.closest('.card'); if (cardEl) { fb.classList.add('top'); cardEl.insertBefore(fb, cardEl.firstChild); }
-    }
+    if (pick && !ex && fb) fb.classList.add('top');     // 결과는 제자리(번호 버튼 바로 아래)에 크게 — 문제→보기→결과→해설 순서
     if (pick && !ex && fb && !document.querySelector('.conf')) {
       const cur = conf()[q.id];
-      (document.querySelector('#view .choices') || fb).insertAdjacentHTML('afterend', `<div class="conf"><span class="lb">확신도</span>
+      fb.insertAdjacentHTML('afterend', `<div class="conf"><span class="lb">확신도</span>
         ${[['sure', '😎 확실'], ['unsure', '🤔 헷갈림'], ['guess', '🎲 찍음']].map(([v, t]) => `<button data-v="${v}" class="${cur === v ? 'on' : ''}">${t}</button>`).join('')}</div>`);
       document.querySelector('.conf').onclick = e => {
         const b = e.target.closest('button'); if (!b) return;
