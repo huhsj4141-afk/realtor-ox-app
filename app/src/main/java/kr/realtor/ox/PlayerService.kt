@@ -178,7 +178,7 @@ class PlayerService : Service() {
         val s = asset("a/t${it.ti}_${it.i}_s.ogg")
         if ("t${it.ti}_${it.i}_c.ogg" !in Store.hasCtxAudio) return s
         return androidx.media3.exoplayer.source.ConcatenatingMediaSource2.Builder()
-            .add(asset("a/t${it.ti}_${it.i}_c.ogg"), C.TIME_UNSET).add(s, C.TIME_UNSET).build()
+            .add(asset("a/t${it.ti}_${it.i}_c.ogg"), 15_000L).add(s, 8_000L).build()   // 길이는 읽으면서 실제 값으로 바뀜
     }
     private fun slots(it: Item): List<MediaSource> = listOf(
         stmtSrc(it), SilenceMediaSource(gapSec * 1_000_000L),
