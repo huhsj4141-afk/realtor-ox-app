@@ -757,7 +757,7 @@
         <div class="ph"><b id="padk"></b><span class="sp"></span><button data-pt="draw">✏️ 그리기</button><button data-pt="memo">⌨️ 글</button><button id="padx" aria-label="닫기">✕</button></div>
         <div class="pdraw"><div class="pt">
           <button class="pc on" data-c="#e8ebf1" style="--c:#e8ebf1"></button><button class="pc" data-c="#ef4444" style="--c:#ef4444"></button><button class="pc" data-c="#60a5fa" style="--c:#60a5fa"></button><button class="pc" data-c="#facc15" style="--c:#facc15"></button>
-          <button id="padw">굵게</button><button id="pade">지우개</button><button id="padu">↶</button><button id="padz">🗑</button></div>
+          <button id="padw">굵게</button><button id="pade">지우개</button><button id="padp" title="손바닥이 닿아도 선이 안 그어져요">✋ 손바닥 무시</button><button id="padu">↶</button><button id="padz">🗑</button></div>
           <canvas id="padc"></canvas></div>
         <textarea id="padt" placeholder="풀이 메모를 적어 두세요. 문제마다 따로 저장돼요."></textarea></div>`);
       p = document.getElementById('pad');
@@ -766,14 +766,21 @@
       p.querySelectorAll('.pc').forEach(b => b.onclick = () => { PAD.color = b.dataset.c; PAD.erase = false; p.querySelectorAll('.pc').forEach(x => x.classList.toggle('on', x === b)); p.querySelector('#pade').classList.remove('on'); });
       p.querySelector('#padw').onclick = e => { PAD.w = PAD.w === 3 ? 6 : 3; e.target.classList.toggle('on', PAD.w === 6); };
       p.querySelector('#pade').onclick = e => { PAD.erase = !PAD.erase; e.target.classList.toggle('on', PAD.erase); };
+      try { PAD.palm = localStorage.getItem('reb_palm') !== '0'; } catch (e) { PAD.palm = true; }
+      p.querySelector('#padp').classList.toggle('on', PAD.palm);
+      p.querySelector('#padp').onclick = e => { PAD.palm = !PAD.palm; e.target.classList.toggle('on', PAD.palm); try { localStorage.setItem('reb_palm', PAD.palm ? '1' : '0'); } catch (x) {} };
       p.querySelector('#padu').onclick = () => { PAD.strokes.pop(); padDraw(); padSave(); };
       p.querySelector('#padz').onclick = () => { if (!PAD.strokes.length && !p.querySelector('#padt').value) return; if (confirm('이 문제의 필기를 모두 지울까요?')) { PAD.strokes = []; p.querySelector('#padt').value = ''; padDraw(); padSave(); } };
       p.querySelector('#padt').addEventListener('input', () => { clearTimeout(PAD.tt); PAD.tt = setTimeout(padSave, 600); });
       const cv = p.querySelector('#padc');
       const pos = e => { const r = cv.getBoundingClientRect(); return [Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))]; };
-      cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); PAD.cur = { c: PAD.color, w: PAD.w, e: PAD.erase ? 1 : 0, p: [pos(e)] }; padDraw(); });
-      cv.addEventListener('pointermove', e => { if (!PAD.cur) return; const pt = pos(e), l = PAD.cur.p[PAD.cur.p.length - 1]; if (Math.abs(pt[0] - l[0]) + Math.abs(pt[1] - l[1]) > .002) { PAD.cur.p.push(pt.map(v => Math.round(v * 10000) / 10000)); padDraw(); } });
-      const end = () => { if (!PAD.cur) return; PAD.strokes.push(PAD.cur); PAD.cur = null; padDraw(); padSave(); };
+      // 손바닥 무시: 닿는 면이 넓은 터치(손바닥·손날)와, 이미 쓰는 중에 들어온 두 번째 터치는 무시
+      const palmy = e => PAD.palm && e.pointerType === 'touch' && ((e.width || 0) > 38 || (e.height || 0) > 38);
+      cv.addEventListener('pointerdown', e => {
+        if (palmy(e) || (PAD.cur && PAD.pid !== e.pointerId)) return;
+        PAD.pid = e.pointerId; cv.setPointerCapture(e.pointerId); PAD.cur = { c: PAD.color, w: PAD.w, e: PAD.erase ? 1 : 0, p: [pos(e)] }; padDraw(); });
+      cv.addEventListener('pointermove', e => { if (!PAD.cur || e.pointerId !== PAD.pid) return; const pt = pos(e), l = PAD.cur.p[PAD.cur.p.length - 1]; if (Math.abs(pt[0] - l[0]) + Math.abs(pt[1] - l[1]) > .002) { PAD.cur.p.push(pt.map(v => Math.round(v * 10000) / 10000)); padDraw(); } });
+      const end = e => { if (!PAD.cur || (e && e.pointerId !== PAD.pid)) return; PAD.strokes.push(PAD.cur); PAD.cur = null; padDraw(); padSave(); };
       cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
       window.addEventListener('resize', () => PAD.open && padDraw());
     }
