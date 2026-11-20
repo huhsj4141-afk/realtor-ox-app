@@ -622,10 +622,10 @@
      과목 점수 = 최근 결과 기준 정답 수를 '아직 모름(30%)' 10문제로 보정한 값 → 적게 풀었을 땐 보수적으로 */
   function predict() {
     const st = subjStats(), k = 10, pr = .3;
-    const sub = st.map(x => Math.round(100 * (x.ok + k * pr) / (x.grad + k)));
+    const sub = st.map(x => 100 * (x.ok + k * pr) / (x.grad + k));
     const a1 = (sub[0] + sub[1]) / 2, a2 = (sub[2] + sub[3] + sub[4]) / 3;
     const ok1 = a1 >= 60 && sub[0] >= 40 && sub[1] >= 40, ok2 = a2 >= 60 && sub.slice(2).every(v => v >= 40);
-    return { sub, a1: Math.round(a1 * 10) / 10, a2: Math.round(a2 * 10) / 10, ok1, ok2, n: st.reduce((a, x) => a + x.grad, 0) };
+    return { sub: st.map(x => 100 * (x.ok + k * pr) / (x.grad + k)), a1: Math.round(a1 * 10) / 10, a2: Math.round(a2 * 10) / 10, ok1, ok2, n: st.reduce((a, x) => a + x.grad, 0) };
   }
   window.predict = predict;
   let PS0 = null;
@@ -640,8 +640,16 @@
     const p = predict(), cls = ok => ok ? 'ok' : 'no';
     const d = PS0 ? [p.a1 - PS0.a1, p.a2 - PS0.a2] : [0, 0];
     const dt = v => Math.abs(v) >= .1 ? `<i class="${v > 0 ? 'up' : 'dn'}">${v > 0 ? '▲' : '▼'}${Math.abs(v).toFixed(1)}</i>` : '';
-    c.innerHTML = `<small>예상 점수${p.n < 30 ? ' (추정)' : ''}</small><span>1차 <b class="${cls(p.ok1)}">${Math.round(p.a1)}</b>${dt(d[0])} · 2차 <b class="${cls(p.ok2)}">${Math.round(p.a2)}</b>${dt(d[1])}</span>`;
-    if (PS0 && (Math.abs(d[0]) >= .1 || Math.abs(d[1]) >= .1)) { c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); }
+    const f0 = PS0 ? [PS0.a1, PS0.a2] : [p.a1, p.a2];
+    c.innerHTML = `<small>예상 점수${p.n < 30 ? ' (추정)' : ''}</small><span>1차 <b class="${cls(p.ok1)}" id="ps1">${f0[0].toFixed(1)}</b>${dt(d[0])} · 2차 <b class="${cls(p.ok2)}" id="ps2">${f0[1].toFixed(1)}</b>${dt(d[1])}</span>`;
+    if (PS0 && (Math.abs(d[0]) >= .1 || Math.abs(d[1]) >= .1)) {
+      c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash');
+      // 점수가 0.1점씩 차오르는 모습 (약 1초)
+      const t0 = performance.now(), e1 = document.getElementById('ps1'), e2 = document.getElementById('ps2');
+      (function tick(t) { const k = Math.min(1, (t - t0) / 1000), ez = 1 - Math.pow(1 - k, 3);
+        if (e1) e1.textContent = (f0[0] + (p.a1 - f0[0]) * ez).toFixed(1); if (e2) e2.textContent = (f0[1] + (p.a2 - f0[1]) * ez).toFixed(1);
+        if (k < 1) requestAnimationFrame(tick); })(t0);
+    }
     PS0 = p;
   }
   window.scoreChip = scoreChip;
