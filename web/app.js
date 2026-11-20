@@ -63,7 +63,7 @@
     #pad .pdraw{flex:1;display:flex;flex-direction:column;min-height:0} #pad .pt{display:flex;gap:6px;padding:4px 10px 6px;align-items:center;flex-wrap:wrap}
     #pad .pk{min-width:38px;font-size:16px!important} #pad button:disabled{opacity:.35} #padw{flex:1 1 40px;min-width:40px;max-width:150px;accent-color:var(--pri)} #padwv{font-style:normal;font-size:12px;color:var(--sub2,#9aa3b5);min-width:14px}
     #pad .pc{width:26px;height:26px;flex:none;padding:0!important;border-radius:50%!important;background:var(--c)!important;border:2px solid transparent!important} #pad .pc.on{border-color:var(--pri)!important;box-shadow:0 0 0 2px var(--card) inset}
-    #padc{flex:1;min-height:0;margin:0 10px 10px;border-radius:12px;touch-action:none;background-color:var(--bg);background-image:linear-gradient(rgba(148,163,184,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.12) 1px,transparent 1px);background-size:24px 24px}
+    #pad .pcw{flex:1;min-height:0;position:relative;margin:0 10px 10px} #pad .pzm{position:absolute;right:6px;bottom:6px;display:flex;gap:4px;opacity:.85} #pad .pzm button{padding:4px 9px;background:var(--card);font-size:13px} #padc{position:absolute;inset:0;width:100%;height:100%;display:block;margin:0;border-radius:12px;touch-action:none;background-color:var(--bg);}
     #padt{flex:1;margin:4px 10px 10px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:16px;line-height:1.6;padding:12px;resize:none}
     .rdg{background:rgba(250,204,21,.32)!important;box-shadow:0 0 0 3px #facc15,0 0 18px rgba(250,204,21,.45)!important;border-radius:8px;font-weight:700!important;color:var(--ink)!important;transition:background .2s,box-shadow .2s} .rdg *{color:inherit}
     .thg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px} .thm{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border:1.5px solid var(--line);border-radius:14px;background:transparent;color:var(--ink);font:inherit;cursor:pointer} .thm.on{border-color:var(--pri);box-shadow:0 0 0 2px var(--pri2)} .thm .sw{position:relative;width:46px;height:30px;border-radius:9px;overflow:hidden;border:1px solid rgba(128,128,128,.3)} .thm .sw i{position:absolute;left:6px;top:6px;width:22px;height:18px;border-radius:5px} .thm .sw b{position:absolute;right:6px;bottom:6px;width:12px;height:12px;border-radius:50%} .thm .nm{font-size:13.5px;font-weight:700} .thm small{font-size:11px;color:var(--sub)}
@@ -702,7 +702,7 @@
   sayBtn();
 
   /* ---------- 📝 필기장: 문제마다 따로 저장되는 그리기·메모 (화면 한쪽 작은 버튼) ---------- */
-  const PAD = window.__PAD = { open: false, key: '', strokes: [], cur: null, color: 'ink', w: 3, tool: 'pen', snap: true, hist: [], redo: [], tab: 'draw' };
+  const PAD = window.__PAD = { open: false, key: '', strokes: [], cur: null, color: 'ink', w: 3, tool: 'pen', snap: true, hist: [], redo: [], tab: 'draw', v: { s: 1, ox: 0, oy: 0 } };
   const padKey = () => { const q = (cur === 'quiz' && typeof S !== 'undefined' && S && S.list) ? S.list[S.i] : null; return q ? q.id : 'free'; };
   const padLoad = k => { try { return JSON.parse(localStorage.getItem('reb_pad_' + k) || '[]'); } catch (e) { return []; } };
   function padSave() {
@@ -752,6 +752,26 @@
     }
     if (force) line();
   }
+  /* 확대·축소·이동: 화면 좌표 = (그림 좌표 − ox,oy) × 크기 × s */
+  function padBox() {
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    PAD.strokes.forEach(st => st.p.forEach(q => { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); }));
+    return x0 > x1 ? null : [x0, y0, x1, y1];
+  }
+  function padFit(onlyOut) {   // 그린 것이 다 보이게
+    const b = padBox(), v = PAD.v;
+    if (!b) { PAD.v = { s: 1, ox: 0, oy: 0 }; return; }
+    if (b[0] >= 0 && b[1] >= 0 && b[2] <= 1 && b[3] <= 1 && !onlyOut) { PAD.v = { s: 1, ox: 0, oy: 0 }; return; }
+    const m = .06, need = Math.min(1 / ((b[2] - b[0]) + m * 2), 1 / ((b[3] - b[1]) + m * 2));
+    const s = Math.max(.2, Math.min(onlyOut ? v.s : 1, need));
+    PAD.v = { s, ox: (b[0] + b[2]) / 2 - .5 / s, oy: (b[1] + b[3]) / 2 - .5 / s };
+  }
+  function padZoom(f, cx = .5, cy = .5) {   // cx,cy: 화면 비율 위치를 중심으로
+    const v = PAD.v, ns = Math.max(.2, Math.min(5, v.s * f));
+    const wx = v.ox + cx / v.s, wy = v.oy + cy / v.s;
+    PAD.v = { s: ns, ox: wx - cx / ns, oy: wy - cy / ns }; padDraw();
+  }
+  window.padZoom = padZoom;
   function padDraw() {
     const cv = document.getElementById('padc'); if (!cv) return;
     const r = cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
@@ -759,19 +779,28 @@
     const g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, r.width, r.height);
     g.lineCap = g.lineJoin = 'round';
     const ink = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#e8ebf1';
+    const V = PAD.v, W = r.width, H = r.height, X = x => (x - V.ox) * W * V.s, Y = y => (y - V.oy) * H * V.s;
+    // 모눈 (확대에 맞춰)
+    const gs = 24 * V.s; if (gs > 5) {
+      g.strokeStyle = 'rgba(148,163,184,.14)'; g.lineWidth = 1; g.beginPath();
+      for (let x = ((-V.ox * W * V.s) % gs + gs) % gs; x < W; x += gs) { g.moveTo(x, 0); g.lineTo(x, H); }
+      for (let y = ((-V.oy * H * V.s) % gs + gs) % gs; y < H; y += gs) { g.moveTo(0, y); g.lineTo(W, y); }
+      g.stroke();
+    }
+    const zl = document.getElementById('padzl'); if (zl) zl.textContent = Math.round(V.s * 100) + '%';
     PAD.strokes.concat(PAD.cur ? [PAD.cur] : []).forEach(st => {
-      const k = st.k || 'pen', pts = st.p.map(q => [q[0] * r.width, q[1] * r.height]);
+      const k = st.k || 'pen', pts = st.p.map(q => [X(q[0]), Y(q[1])]);
       g.save();
       g.globalCompositeOperation = st.e ? 'destination-out' : 'source-over';   // 예전 지우개 획
       g.strokeStyle = g.fillStyle = st.c === 'ink' || st.c === '#e8ebf1' ? ink : st.c;
-      g.lineWidth = st.e ? 22 : k === 'hl' ? st.w * 4 + 6 : st.w;
+      g.lineWidth = (st.e ? 22 : k === 'hl' ? st.w * 4 + 6 : st.w) * V.s;
       if (k === 'hl') { g.globalAlpha = .35; g.lineCap = 'butt'; }
       if (k === 'dash') g.setLineDash([st.w * 3 + 4, st.w * 2 + 5]);
       g.beginPath(); pts.forEach((q, i) => i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]));
       if (pts.length === 1) g.lineTo(pts[0][0] + .1, pts[0][1]);
       g.stroke();
       if (k === 'arrow' && pts.length > 1) {   // 화살촉
-        const b = pts[pts.length - 1], a = pts[Math.max(0, pts.length - 4)], ang = Math.atan2(b[1] - a[1], b[0] - a[0]), h = 8 + st.w * 2.2;
+        const b = pts[pts.length - 1], a = pts[Math.max(0, pts.length - 4)], ang = Math.atan2(b[1] - a[1], b[0] - a[0]), h = (8 + st.w * 2.2) * V.s;
         g.setLineDash([]); g.beginPath(); g.moveTo(b[0], b[1]);
         g.lineTo(b[0] - h * Math.cos(ang - .45), b[1] - h * Math.sin(ang - .45)); g.lineTo(b[0] - h * Math.cos(ang + .45), b[1] - h * Math.sin(ang + .45)); g.closePath(); g.fill();
       }
@@ -781,7 +810,7 @@
   function padSwitch() {
     const k = padKey(); if (k === PAD.key) return;
     if (PAD.key) padSave();
-    PAD.key = k; PAD.strokes = padLoad(k); PAD.cur = null; PAD.hist = []; PAD.redo = []; if (PAD.paint) PAD.paint();
+    PAD.key = k; PAD.strokes = padLoad(k); PAD.cur = null; PAD.hist = []; PAD.redo = []; padFit(); if (PAD.paint) PAD.paint();
     const t = document.getElementById('padt'); if (t) { try { t.value = localStorage.getItem('reb_padt_' + k) || ''; } catch (e) { t.value = ''; } }
     const lb = document.getElementById('padk'); if (lb) lb.textContent = k === 'free' ? '자유 필기' : k.replace(/^(\d+)-(\d)(\d)-(\d+)$/, '$1회 $4번') + ' 필기';
     padDraw();
@@ -805,7 +834,7 @@
           <button class="pc" data-c="ink" style="--c:var(--ink)"></button><button class="pc" data-c="#ef4444" style="--c:#ef4444"></button><button class="pc" data-c="#3b82f6" style="--c:#3b82f6"></button><button class="pc" data-c="#22c55e" style="--c:#22c55e"></button><button class="pc" data-c="#f59e0b" style="--c:#f59e0b"></button>
           <input id="padw" type="range" min="1" max="14" step="1" title="굵기"><i id="padwv"></i>
           <button id="pads" title="그린 선을 곧은 선·네모·동그라미로 맞춰요. 끝에서 펜을 잠깐 멈춰도 맞춰져요">📐</button><button id="padp" title="손바닥이 닿아도 선이 안 그어져요">✋</button></div>
-          <canvas id="padc"></canvas></div>
+          <div class="pcw"><canvas id="padc"></canvas><div class="pzm"><button id="padzo" aria-label="축소">－</button><button id="padzl" title="전체 보기">100%</button><button id="padzi" aria-label="확대">＋</button></div></div></div>
         <textarea id="padt" placeholder="풀이 메모를 적어 두세요. 문제마다 따로 저장돼요."></textarea></div>`);
       p = document.getElementById('pad');
       p.querySelector('#padx').onclick = () => padOpen(false);
@@ -834,23 +863,42 @@
       p.querySelector('#padz').onclick = () => { if (!PAD.strokes.length && !p.querySelector('#padt').value) return; if (confirm('이 문제의 필기를 모두 지울까요?')) { snapshot(); PAD.strokes = []; p.querySelector('#padt').value = ''; padDraw(); padSave(); paint(); } };
       p.querySelector('#padt').addEventListener('input', () => { clearTimeout(PAD.tt); PAD.tt = setTimeout(padSave, 600); });
       const cv = p.querySelector('#padc');
-      const pos = e => { const r = cv.getBoundingClientRect(); return [Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))]; };
+      const pos = e => { const r = cv.getBoundingClientRect(), V = PAD.v; return [(e.clientX - r.left) / (r.width * V.s) + V.ox, (e.clientY - r.top) / (r.height * V.s) + V.oy]; };
+      p.querySelector('#padzi').onclick = () => padZoom(1.25); p.querySelector('#padzo').onclick = () => padZoom(.8);
+      p.querySelector('#padzl').onclick = () => { padFit(); padDraw(); };
+      const T = new Map(); let pinch = null;   // 두 손가락: 벌리면 확대, 모으면 축소, 끌면 이동
       const R4 = v => Math.round(v * 10000) / 10000;
       const palmy = e => PAD.palm && e.pointerType === 'touch' && ((e.width || 0) > 38 || (e.height || 0) > 38);
       // 지우개: 손이 지나간 자리에 닿은 획을 통째로 지움
       const eraseAt = pt => {
-        const r = cv.getBoundingClientRect(), X = pt[0] * r.width, Y = pt[1] * r.height, rad = 10 + PAD.w * 1.5;
-        const keep = PAD.strokes.filter(st => !st.p.some(q => Math.hypot(q[0] * r.width - X, q[1] * r.height - Y) < rad + (st.w || 3) / 2));
+        const r = cv.getBoundingClientRect(), s = PAD.v.s, X = pt[0] * r.width * s, Y = pt[1] * r.height * s, rad = 10 + PAD.w * 1.5;
+        const keep = PAD.strokes.filter(st => !st.p.some(q => Math.hypot(q[0] * r.width * s - X, q[1] * r.height * s - Y) < rad + (st.w || 3) * s / 2));
         if (keep.length !== PAD.strokes.length) { if (!PAD.erasedOnce) { snapshot(); PAD.erasedOnce = true; } PAD.strokes = keep; padDraw(); }
       };
       let hold = null;
+      const pinchStart = () => { const [a, b] = [...T.values()], r = cv.getBoundingClientRect();
+        pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), cx: ((a[0] + b[0]) / 2 - r.left) / r.width, cy: ((a[1] + b[1]) / 2 - r.top) / r.height, v: { ...PAD.v } }; };
       cv.addEventListener('pointerdown', e => {
+        if (e.pointerType === 'touch' && !palmy(e)) {
+          T.set(e.pointerId, [e.clientX, e.clientY]);
+          // 두 번째 손가락이 바로(획이 짧을 때) 닿으면 확대·이동, 아니면 손바닥으로 보고 무시
+          if (T.size === 2 && (!PAD.cur || PAD.cur.p.length < 6) && !PAD.erasing) { PAD.cur = null; PAD.pid = null; clearTimeout(hold); pinchStart(); padDraw(); return; }
+        }
+        if (pinch) return;
         if (palmy(e) || (PAD.cur && PAD.pid !== e.pointerId)) return;
         PAD.pid = e.pointerId; cv.setPointerCapture(e.pointerId);
         if (PAD.tool === 'erase') { PAD.erasing = true; PAD.erasedOnce = false; eraseAt(pos(e)); return; }
         PAD.cur = { c: PAD.color, w: PAD.w, k: PAD.tool, p: [pos(e)] }; padDraw();
       });
       cv.addEventListener('pointermove', e => {
+        if (T.has(e.pointerId)) T.set(e.pointerId, [e.clientX, e.clientY]);
+        if (pinch && T.size >= 2) {
+          const [a, b] = [...T.values()], r = cv.getBoundingClientRect(), v0 = pinch.v;
+          const ns = Math.max(.2, Math.min(5, v0.s * Math.hypot(a[0] - b[0], a[1] - b[1]) / (pinch.d || 1)));
+          const cx = ((a[0] + b[0]) / 2 - r.left) / r.width, cy = ((a[1] + b[1]) / 2 - r.top) / r.height;
+          const wx = v0.ox + pinch.cx / v0.s, wy = v0.oy + pinch.cy / v0.s;   // 처음 두 손가락 가운데 있던 곳이 손가락을 따라옴
+          PAD.v = { s: ns, ox: wx - cx / ns, oy: wy - cy / ns }; padDraw(); return;
+        }
         if (e.pointerId !== PAD.pid) return;
         if (PAD.erasing) return eraseAt(pos(e));
         if (!PAD.cur) return;
@@ -864,13 +912,19 @@
         }
       });
       const end = e => {
+        if (e) T.delete(e.pointerId);
+        if (pinch) { if (T.size < 2) pinch = null; return; }
         if (e && e.pointerId !== PAD.pid) return;
         clearTimeout(hold);
         if (PAD.erasing) { PAD.erasing = false; padSave(); paint(); return; }
         if (!PAD.cur) return;
         const c = PAD.cur; PAD.cur = null;
         if (!c.fixed && (PAD.snap || c.k === 'arrow')) padShape(c, cv, c.k === 'arrow');
-        delete c.fixed; snapshot(); PAD.strokes.push(c); padDraw(); padSave(); paint();
+        delete c.fixed; snapshot(); PAD.strokes.push(c);
+        // 화면 가장자리까지 차거나 밖으로 나가면 다 보이게 살짝 축소
+        const b = padBox(), V = PAD.v, in0 = .04 / V.s;
+        if (b && (b[0] < V.ox + in0 || b[1] < V.oy + in0 || b[2] > V.ox + 1 / V.s - in0 || b[3] > V.oy + 1 / V.s - in0)) padFit(true);
+        padDraw(); padSave(); paint();
       };
       cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
       paint();
