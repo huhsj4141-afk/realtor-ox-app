@@ -31,6 +31,7 @@ jobs:
           openssl enc -d -aes-256-cbc -pbkdf2 -pass env:K -in private/priv.enc -out /tmp/priv.pem
           openssl pkeyutl -decrypt -inkey /tmp/priv.pem -in private/key.enc -out /tmp/aes.key
           openssl enc -d -aes-256-cbc -pbkdf2 -pass file:/tmp/aes.key -in private/pages.enc | tar xf - -C /tmp
+          MINUTES=12 python3 tools/glossgen.py || true   # 용어 풍선말 늘리기 (새 후보가 있을 때만)
           python3 tools/oxmark.py || true          # OX 틀린 지문의 틀린 부분 표시 (먼저, 금방 끝남)
           python3 tools/ocrfix.py /tmp/pg2 || true
           MINUTES=15 python3 tools/oxvar.py || true   # 남은 무료 한도로 OX 변형(기출 보기 뒤집기) 만들기
@@ -55,7 +56,7 @@ jobs:
         if: always()
         run: |
           git config user.name bot; git config user.email bot@users.noreply.github.com
-          git add -A private web/index.html data/mc.json gen/mc_exp.json 2>/dev/null || true; git add gen/ocrfix.json gen/ocrfix_applied.json gen/ox_mark.json 2>/dev/null || true; git add gen/ox_var.json 2>/dev/null || true
+          git add -A private web/index.html data/mc.json gen/mc_exp.json 2>/dev/null || true; git add gen/ocrfix.json gen/ocrfix_applied.json gen/ox_mark.json 2>/dev/null || true; git add gen/ox_var.json web/glossary.json gen/gloss_seen.json 2>/dev/null || true
           git commit -m "OCR 다시 옮겨 적기 [skip ci]" || true
           for i in 1 2 3; do git pull --rebase -q && git push -q && break; git rebase --abort 2>/dev/null; sleep 5; done
       - name: 새 앱 만들기
