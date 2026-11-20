@@ -173,9 +173,17 @@ GKEY = os.environ.get('GCLOUD_TTS_KEY', '').strip()
 GVOICE = os.environ.get('CLOUD_VOICE', 'ko-KR-Chirp3-HD-Achernar')
 
 
+TTS_MODE = [0]   # 0: 쉼표 쉬기+천천히, 1: 천천히만, 2: 기본 — 400 이면 다음 단계로
+
+
 def cloud_tts(text, raw):
-    body = {'input': {'text': text}, 'voice': {'languageCode': 'ko-KR', 'name': GVOICE},
-            'audioConfig': {'audioEncoding': 'LINEAR16', 'sampleRateHertz': 24000}}
+    def mk():
+        m = TTS_MODE[0]
+        inp = {'markup': re.sub(r',\s*', ', [pause short] ', text)} if m == 0 else {'text': text}
+        ac = {'audioEncoding': 'LINEAR16', 'sampleRateHertz': 24000}
+        if m < 2: ac['speakingRate'] = 0.92
+        return {'input': inp, 'voice': {'languageCode': 'ko-KR', 'name': GVOICE}, 'audioConfig': ac}
+    body = mk()
     for k in range(8):
         req = urllib.request.Request(f'https://texttospeech.googleapis.com/v1/text:synthesize?key={GKEY}',
                                      data=json.dumps(body).encode(), headers={'Content-Type': 'application/json'})
@@ -186,6 +194,8 @@ def cloud_tts(text, raw):
             msg = e.read().decode('utf8', 'replace')
             if e.code in (429, 500, 503):
                 log(f'  클라우드 TTS {e.code} → 대기'); time.sleep(20 * (k + 1)); continue
+            if e.code == 400 and TTS_MODE[0] < 2 and 'too long' not in msg:
+                TTS_MODE[0] += 1; log('  음성 설정 한 단계 낮춤:', TTS_MODE[0], msg[:150]); body = mk(); continue
             raise RuntimeError(f'클라우드 TTS HTTP {e.code}: {msg[:400]}')
         except (urllib.error.URLError, TimeoutError, OSError):
             time.sleep(10 * (k + 1))
@@ -215,7 +225,7 @@ def pron_redo(tmp, limit=400):
             k = f'{ti}_{i}'
             for kind, text in (('s', clean(it['s'])), ('e', exp.get(k, '')), ('c', ('상황입니다. ' + clean(ctx[k])) if k in ctx else '')):
                 out = os.path.join(a, f't{k}_{kind}.ogg'); fk = f'{k}_{kind}'
-                if not text or not os.path.exists(out) or pron(text) == text or done.get(fk) == pron(text): continue
+                if not text or not os.path.exists(out) or done.get(fk) == pron(text) or (fk not in done and pron(text) == text): continue
                 if n >= limit: break
                 try:
                     w = os.path.join(tmp, 'p.wav'); say_wav('', '', text, w)

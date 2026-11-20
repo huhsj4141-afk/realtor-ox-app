@@ -88,13 +88,21 @@ object Net {
         val k = key(ctx, "tts"); if (k.isBlank()) throw RuntimeException("구글 클라우드 음성 키가 없어요")
         val dir = File(ctx.cacheDir, "speak").apply { mkdirs() }
         return chunks(pron(ctx, text)).map { t ->
-            val f = File(dir, md5(t) + ".ogg")
+            val f = File(dir, md5("v2|" + t) + ".ogg")
             if (!f.exists()) {
-                val body = JSONObject()
-                    .put("input", JSONObject().put("text", t))
-                    .put("voice", JSONObject().put("languageCode", "ko-KR").put("name", VOICE))
-                    .put("audioConfig", JSONObject().put("audioEncoding", "OGG_OPUS")).toString()
-                val r = JSONObject(post("https://texttospeech.googleapis.com/v1/text:synthesize?key=$k", body))
+                // 또박또박: 쉼표 뒤 잠깐 쉬기([pause short]) + 조금 천천히(0.92). 지원 안 되면 한 단계씩 빼고 다시
+                val tries = listOf(
+                    JSONObject().put("markup", t.replace(Regex(",\\s*"), ", [pause short] ")) to 0.92,
+                    JSONObject().put("text", t) to 0.92,
+                    JSONObject().put("text", t) to 0.0)
+                var r: JSONObject? = null; var err: Exception? = null
+                for ((inp, rate) in tries) {
+                    val ac = JSONObject().put("audioEncoding", "OGG_OPUS"); if (rate > 0) ac.put("speakingRate", rate)
+                    val body = JSONObject().put("input", inp).put("voice", JSONObject().put("languageCode", "ko-KR").put("name", VOICE)).put("audioConfig", ac).toString()
+                    try { r = JSONObject(post("https://texttospeech.googleapis.com/v1/text:synthesize?key=$k", body)); break }
+                    catch (e: Exception) { err = e; if (!(e.message ?: "").contains("400")) throw e }
+                }
+                if (r == null) throw err ?: RuntimeException("음성을 못 만들었어요")
                 f.writeBytes(Base64.decode(r.getString("audioContent"), Base64.DEFAULT))
                 Usage.addTts(ctx, t.length.toLong())
             }
