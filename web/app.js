@@ -747,7 +747,7 @@
      누르면 → 지금 상황에 맞는 방법 추천(보면서 풀기 / 듣기 / 10분만) → 단계별로 자동 진행
      단계: 🔁 복습 → 🎯 약점 훈련 → 🆕 오늘 진도 → 🧩 마무리. 한 단계 끝나면 다음 단계 안내.
      듣기로 한 공부(들은 지문·시간)도 오늘 진도·경험치에 들어감 */
-  const COURSE = window.COURSE = { steps: [], i: 0, active: false };
+  const COURSE = window.COURSE = { steps: [], i: 0, active: false, session: null };
   function todayLog() { try { return LJ.d[dkey()] || {}; } catch (e) { return {}; } }
   function courseRecommend() {
     const h = new Date().getHours(), wd = new Date().getDay(), t = todayLog();
@@ -797,6 +797,7 @@
     const st = COURSE.steps[COURSE.i]; if (!st) return courseDone();
     const title = `${st.t} · ${COURSE.i + 1}/${COURSE.steps.length}단계`;
     if (st.ad) startAdaptive(st.ad.qs, st.ad.n, { from: 'home', title }); else startQuiz(st.qs, { from: 'home', title });
+    COURSE.session = S;
     COURSE.active = true;
   }
   function courseDone() {
@@ -805,6 +806,7 @@
     go('home');
   }
   function courseStart(mode, sleep) {
+    COURSE.active = false; COURSE.session = null;
     if (mode === 'listen') { pushToday(); return openListen('today', sleep || 0, 0); }
     COURSE.steps = buildCourse(mode === 'short'); COURSE.i = 0; courseRun();
   }
@@ -825,7 +827,7 @@
   }
   /* 단계가 끝난 결과 화면: 다음 단계 안내 */
   function courseNext() {
-    if (cur !== 'result' || !COURSE.active || document.getElementById('cnext')) return;
+    if (cur !== 'result' || !COURSE.active || S !== COURSE.session || document.getElementById('cnext')) return;
     const v = document.getElementById('view'); if (!v) return;
     const nx = COURSE.steps[COURSE.i + 1], dots = COURSE.steps.map((x, k) => `<i class="${k <= COURSE.i ? 'on' : ''}">${x.t.split(' ')[0]}</i>`).join('');
     const cheer = ['좋아요! 리듬 탔어요 💪', '잘하고 있어요 👏', '한 단계 끝! 🔥', '꾸준함이 합격을 만들어요 🌱'][COURSE.i % 4];
@@ -867,6 +869,7 @@
     document.getElementById('updb').onclick = () => { try { NB.update(); } catch (e) {} };
   }
   // 듣기 화면에서 돌아오면 아래 탭 선택 표시를 지금 화면에 맞게
+  window.__refreshStudy = () => { if (cur === 'home') home(); };
   window.__fixTab = () => { try { const n = document.getElementById('tabs'); if (!n || typeof TABOF === 'undefined') return;
     const t = (cur === 'quiz' || cur === 'result') ? ((S && S.from) === 'home' ? 'home' : (S && S.from) === 'wrong' ? 'wrong' : 'setup') : TABOF[cur] || 'home';
     n.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === t)); } catch (e) {} };
@@ -1753,6 +1756,10 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
   }, 1000);
   window.addEventListener('load', () => setTimeout(() => {
     wrap('quiz', () => { decorateQuiz(); decorateChoices(); decorateElim(); quizScroll(); dockQuiz(); });
+    const _go = window.go; window.go = go = function (v) {
+      if (v !== 'quiz' && v !== 'result') { COURSE.active = false; COURSE.session = null; }
+      return _go.apply(this, arguments);
+    };
     const _sq = window.startQuiz; window.startQuiz = function () { window.__xp0 = xpNow(); COURSE.active = false; return _sq.apply(this, arguments); };
     setTimeout(achCheck, 1500);
     setTimeout(scoreChip, 300);

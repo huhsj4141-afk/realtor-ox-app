@@ -154,10 +154,16 @@
         ap[k] = n;
       }
       if (ch) { localStorage.setItem('reb_journal', JSON.stringify({ v: 1, days: LJ.d })); localStorage.setItem('nat_applied', JSON.stringify(ap)); }
+      return ch;
     } catch (e) {}
   }
   setInterval(pushWrong, 5000);
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { pullListen(); pushWrong(); } });
+  // Android 화면으로 돌아올 때도 호출: visibilitychange가 없는 기기에서도 기록 반영
+  window.__syncListen = () => {
+    const changed = pullListen(); pushWrong();
+    if (changed && window.__refreshStudy) window.__refreshStudy();
+  };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') window.__syncListen(); });
 
   /* ---- 마지막으로 풀던 문제 기억 → 다음에 앱을 켜면 거기서 이어서 ---- */
   const RK = 'reb_resume';
