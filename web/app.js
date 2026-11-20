@@ -107,8 +107,8 @@
     #pscore i{font-style:normal;font-size:10.5px;margin-left:2px} #pscore i.up{color:#16a34a} #pscore i.dn{color:#ef4444}
     #pscore.flash{animation:psf .9s} @keyframes psf{0%{transform:scale(1)}20%{transform:scale(1.08);box-shadow:0 0 0 4px rgba(34,197,94,.25)}100%{transform:scale(1)}}
     .qdock{display:flex;flex-direction:column-reverse;position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:30;padding:8px 10px;background:var(--bg);border-top:1px solid var(--line)}
-    .qdock .qd{display:flex;gap:8px;width:100%;max-width:640px;margin:0 auto} .qdock .qd .btn{margin:0;height:48px} .qdock .qdi{flex:none;width:52px;padding:0;font-size:19px}
-    .qdock .qdi .ic{margin:0} .qdock #qb,.qdock #qdia{font-size:0} .qdock #qb .ic,.qdock #qdia .ic{font-size:19px} .qdock #qn{flex:1;font-size:17px}
+    .qdock .qd{display:flex;gap:8px;width:100%;max-width:640px;margin:0 auto} .qdock .qd .btn{margin:0;height:48px} .qdock .qdi{flex:none;width:58px;padding:0;font-size:10.5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1.15;white-space:nowrap;overflow:hidden}
+    .qdock .qdi .ic{margin:0;font-size:19px;line-height:1} .qdock #qn{flex:1;font-size:17px}
     .qdock .qmore{display:none;width:100%;max-width:640px;margin:0 auto 8px} .qdock.open .qmore{display:block} .qdock .qmore .qtb{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:0}
     body.qdocked #view{padding-bottom:84px}
     .fixl{display:flex;flex-direction:column;gap:6px;margin-top:8px} .fixl button{display:flex;align-items:center;gap:8px;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit;font-size:14px;line-height:1.45} .fixl button i{margin-left:auto;font-style:normal;color:var(--pri,#2563eb);font-weight:700}
@@ -1330,8 +1330,8 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
       dk = document.createElement('div'); dk.className = 'qdock';
       dk.innerHTML = '<div class="qd"></div><div class="qmore"></div>';
       const bar = dk.firstChild, more = dk.lastChild;
-      qp.innerHTML = '←'; qp.classList.add('qdi'); qp.setAttribute('aria-label', '이전 문제');
-      const mk = document.createElement('button'); mk.className = 'btn qdi'; mk.id = 'qmk'; mk.innerHTML = '⋯'; mk.setAttribute('aria-label', '더 보기');
+      qp.innerHTML = '<span class="ic">←</span>이전'; qp.classList.add('qdi'); qp.setAttribute('aria-label', '이전 문제');
+      const mk = document.createElement('button'); mk.className = 'btn qdi'; mk.id = 'qmk'; mk.innerHTML = '<span class="ic">⋯</span>더보기'; mk.setAttribute('aria-label', '더 보기');
       mk.onclick = () => dk.classList.toggle('open');
       bar.append(qp, mk, qn);
       const tb = document.querySelector('#view .qtb'); if (tb) more.appendChild(tb);
