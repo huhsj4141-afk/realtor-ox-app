@@ -102,6 +102,7 @@
     .bdg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px} .bdg>div{border:1px solid var(--line);border-radius:12px;padding:8px 6px;text-align:center;opacity:.45} .bdg>div.on{opacity:1;border-color:var(--pri)} .bdg b{display:block;font-size:24px} .bdg span{display:block;font-size:12.5px;font-weight:700} .bdg small{display:block;font-size:10.5px;color:var(--sub2,#9aa3b5);line-height:1.3;margin-top:2px}
     .achpop{position:fixed;inset:0;z-index:9998;display:grid;place-items:center;background:rgba(0,0,0,.35);animation:apf .2s} .achpop>div{background:var(--card);color:var(--ink);border-radius:18px;padding:22px 24px;text-align:center;max-width:300px;display:flex;flex-direction:column;gap:8px;animation:app .35s cubic-bezier(.2,1.4,.4,1)} .achpop b{font-size:20px} .achpop span{color:var(--sub2,#9aa3b5);font-size:14px} .achpop button{margin-top:6px;padding:10px;border-radius:12px;border:0;background:var(--pri);color:#fff;font-weight:700}
     @keyframes apf{from{opacity:0}} @keyframes app{from{transform:scale(.6);opacity:0}}
+    .qdock #qf,.qdock #qs{flex:1;font-size:17px}
     #pscore{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:2px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0;line-height:1.25}
     #pscore small{font-size:10.5px;color:var(--sub2,#9aa3b5)} #pscore span{font-size:13.5px;white-space:nowrap} #pscore b{font-size:16px} #pscore b.ok{color:#16a34a} #pscore b.no{color:#ef4444}
     #pscore i{font-style:normal;font-size:10.5px;margin-left:2px} #pscore i.up{color:#16a34a} #pscore i.dn{color:#ef4444}
@@ -116,6 +117,9 @@
     #mgr.inhero{margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.25)} #mgr .mgh{font-weight:700;font-size:14px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px} #mgr .mgh small{flex-basis:100%;font-weight:400;font-size:11.5px;opacity:.8}
     #mgr.inhero .fixl button{border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:inherit;font-size:13.5px;padding:8px 10px} #mgr.inhero .fixl button i{color:inherit}
     #mgr.inhero details summary{font-size:13px;opacity:.9} #mgr.inhero .sit button{background:rgba(255,255,255,.12);color:inherit;border-color:rgba(255,255,255,.3)}
+    .csheet>div{max-height:88vh} .cso{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:12px;margin-top:8px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:inherit}
+    .cso>b{font-size:26px} .cso span{display:flex;flex-direction:column;gap:2px} .cso small{font-size:12.5px;color:var(--sub2,#9aa3b5)} .cso.rec{border:2px solid var(--pri);background:color-mix(in srgb,var(--pri) 10%,var(--card))} .cso em{font-style:normal;font-size:11px;background:var(--pri);color:#fff;border-radius:999px;padding:1px 7px;margin-left:4px}
+    .cdots{display:flex;gap:6px;margin-bottom:8px} .cdots i{font-style:normal;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--line);opacity:.5} .cdots i.on{opacity:1;background:color-mix(in srgb,var(--pri) 25%,transparent)}
     .fixl{display:flex;flex-direction:column;gap:6px;margin-top:8px} .fixl button{display:flex;align-items:center;gap:8px;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit;font-size:14px;line-height:1.45} .fixl button i{margin-left:auto;font-style:normal;color:var(--pri,#2563eb);font-weight:700}
     .sit button{text-align:left;padding:12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit}
     .sit b{display:block;font-size:15px} .sit span{font-size:12px;opacity:.7}
@@ -273,6 +277,12 @@
     if (hero && !document.querySelector('.wk')) hero.insertAdjacentHTML('beforeend', weekStrip());
     if (hero && !$('#mgr')) {
       hero.insertAdjacentHTML('beforeend', managerCard());   // 오늘 공부 시작 카드 안으로 합침
+      const hg = document.getElementById('hgo');
+      if (hg) {
+        hg.onclick = () => courseSheet();
+        const t = todayLog(), sm = hg.querySelector('small');
+        if (sm && (t.ox || t.q)) sm.innerHTML += ` · 🎧 ${t.ox || 0}지문`;
+      }
       $('#mgr .sit').onclick = e => { const b = e.target.closest('[data-s]'); if (b) runSitu(b.dataset.s); };
       const dg = diagnose();
       $('#mgr').querySelectorAll('[data-f]').forEach(b => b.onclick = () => runFix(dg.acts[+b.dataset.f]));
@@ -554,7 +564,9 @@
 
   /* ================= 🏆 성취: 경험치·레벨·배지·축하 ================= */
   const LVN = ['입문', '새싹', '수험생', '꾸준러', '실력자', '고수', '합격권', '달인', '마스터', '전설'];
-  function xpNow() { let x = 0; for (const k in P) { const r = P[k], a = r[2] || 1, w = r[3] || 0; x += a * 3 + Math.max(0, a - w) * 7; } return x; }
+  function xpNow() { let x = 0; for (const k in P) { const r = P[k], a = r[2] || 1, w = r[3] || 0; x += a * 3 + Math.max(0, a - w) * 7; }
+    try { for (const k in LJ.d) { const d = LJ.d[k]; x += (d.ox || 0) * 2 + Math.floor((d.lsec || 0) / 60); } } catch (e) {}   // 🎧 지문 하나 2 XP + 1분에 1 XP
+    return x; }
   function lvOf(x) { let n = 1, need = 100, acc = 0; while (x >= acc + need) { acc += need; n++; need = 100 + (n - 1) * 60; } return { n, name: LVN[Math.min(LVN.length - 1, Math.floor((n - 1) / 3))], cur: x - acc, need }; }
   function achStats() {
     const ks = Object.keys(P), st = subjStats();
@@ -663,6 +675,96 @@
     PS0 = p;
   }
   window.scoreChip = scoreChip;
+
+  /* ================= 🚀 오늘 코스: '오늘 공부 시작' 하나로 합격까지 =================
+     누르면 → 지금 상황에 맞는 방법 추천(보면서 풀기 / 듣기 / 10분만) → 단계별로 자동 진행
+     단계: 🔁 복습 → 🎯 약점 훈련 → 🆕 오늘 진도 → 🧩 마무리. 한 단계 끝나면 다음 단계 안내.
+     듣기로 한 공부(들은 지문·시간)도 오늘 진도·경험치에 들어감 */
+  const COURSE = window.COURSE = { steps: [], i: 0, active: false };
+  function todayLog() { try { return LJ.d[dkey()] || {}; } catch (e) { return {}; } }
+  function courseRecommend() {
+    const h = new Date().getHours(), wd = new Date().getDay(), t = todayLog();
+    if (h >= 22 || h < 6) return ['listen', '🌙 늦은 시간엔 눈 감고 듣기가 오래 남아요 (20분 뒤 저절로 꺼져요)', 20];
+    if (wd >= 1 && wd <= 5 && ((h >= 7 && h < 9) || (h >= 17 && h < 20))) return ['listen', '🚌 이동하는 시간이면 듣기로 진도를 빼요', 0];
+    if ((t.q || 0) >= 30 && (t.lsec || 0) < 300) return ['listen', '👀 문제를 많이 풀었어요. 귀로 바꿔서 눈을 쉬어요', 0];
+    if ((t.q || 0) === 0 && (t.lsec || 0) >= 900) return ['solve', '🎧 오늘 들은 걸 문제로 확인해 봐요', 0];
+    return ['solve', '✍️ 보면서 풀기가 실력이 가장 빨리 늘어요', 0];
+  }
+  function buildCourse(short) {
+    const tp = todayPlan(), used = new Set();
+    const take = (arr, n) => { const o = []; for (const q of arr) { if (q && !q.ocr && !used.has(q.id) && o.length < n) { used.add(q.id); o.push(q); } } return o; };
+    let due = []; try { due = dueList(); } catch (e) {}
+    const uns = unsureIds().map(k => BYID[k]).filter(Boolean);
+    const acts = diagnose().acts.filter(a => a.k === 'sub' || a.k === 'weak');
+    const weak = acts.length ? fixSet(acts, 30) : [];
+    const list = [], seen0 = new Set(); let ad = null;   // (오늘 계획 → 문제 목록·맞춤 문제)
+    tp.items.forEach(it => { if (it.mode === 'list') (it.qs || []).forEach(q => { if (!seen0.has(q.id) && list.length < 60) { seen0.add(q.id); list.push(q); } }); else if (it.mode === 'ad' && it.n) ad = it; });
+    if (short) {   // ⚡ 10분: 복습·약점 위주 10문제 한 단계
+      const qs = take(due.concat(uns, weak, list), 10);
+      return qs.length ? [{ t: '⚡ 10분 집중', sub: '복습·약점 위주', qs }] : [{ t: '⚡ 10분 집중', ad: { qs: Q, n: 10 } }];
+    }
+    const st = [];
+    const r = take(due.concat(uns), 10); if (r.length) st.push({ t: '🔁 복습', sub: '잊기 직전 문제부터', qs: r });
+    const w = take(weak, 10); if (w.length) st.push({ t: '🎯 약점 훈련', sub: [...new Set(acts.filter(a => a.s != null).map(a => SUBS[a.s]))].slice(0, 2).join('·') || '매니저 처방', qs: w });
+    const n = take(list, 12); if (n.length) st.push({ t: '🆕 오늘 진도', sub: '새 문제', qs: n }); else if (ad && ad.n) st.push({ t: '🆕 오늘 진도', sub: '실력에 맞춘 문제', ad });
+    const m = take(list, 12); if (m.length) st.push({ t: '🧩 마무리', sub: '섞어서 한 번 더', qs: m });
+    if (!st.length) st.push({ t: '🎯 맞춤 20문제', sub: '오늘 목표 끝! 더 하기', ad: { qs: Q, n: 20 } });
+    return st;
+  }
+  function pushToday() {   // 듣기용: 복습·헷갈림·약점 문제와 약한 과목을 앱 듣기에 넘김
+    try {
+      let due = []; try { due = dueList(); } catch (e) {}
+      const acts = diagnose().acts.filter(a => a.k === 'sub' || a.k === 'weak');
+      const refs = [...due, ...unsureIds().map(k => BYID[k]), ...(acts.length ? fixSet(acts, 40) : [])].filter(Boolean).map(q => q.id);
+      const subs = [...new Set(acts.map(a => a.s).filter(s => s != null))];
+      window.NativeBridge && NativeBridge.setToday && NativeBridge.setToday(JSON.stringify({ refs, subs }));
+    } catch (e) {}
+  }
+  function courseRun() {
+    const st = COURSE.steps[COURSE.i]; if (!st) return courseDone();
+    const title = `${st.t} · ${COURSE.i + 1}/${COURSE.steps.length}단계`;
+    if (st.ad) startAdaptive(st.ad.qs, st.ad.n, { from: 'home', title }); else startQuiz(st.qs, { from: 'home', title });
+    COURSE.active = true;
+  }
+  function courseDone() {
+    COURSE.active = false; const t = todayLog();
+    celebrate('🎉 오늘 코스 완료!', `오늘 ${t.q || 0}문제 · 🎧 ${Math.round((t.lsec || 0) / 60)}분. 자기 전에 🎧 듣기로 한 번 더 들으면 더 오래 남아요`);
+    go('home');
+  }
+  function courseStart(mode, sleep) {
+    if (mode === 'listen') { pushToday(); return openListen('today', sleep || 0, 0); }
+    COURSE.steps = buildCourse(mode === 'short'); COURSE.i = 0; courseRun();
+  }
+  window.courseStart = courseStart;
+  function courseSheet() {
+    const [rec, why, sl] = courseRecommend(), st = buildCourse(false), t = todayLog();
+    const opt = (k, ic, ttl, sub) => `<button class="cso ${k === rec ? 'rec' : ''}" data-m="${k}"><b>${ic}</b><span><b>${ttl}${k === rec ? ' <em>추천</em>' : ''}</b><small>${sub}</small></span></button>`;
+    const o = [opt('solve', '📖', '보면서 풀기', st.map(x => x.t.split(' ')[1]).join(' → ') + ` · ${st.reduce((a, x) => a + (x.qs ? x.qs.length : x.ad.n), 0)}문제`),
+      opt('listen', '🎧', '듣기로 진도 빼기', '복습·약점 지문부터 들려줘요. 화면 꺼도 돼요 · 지문 2개 = 1문제로 쳐요'),
+      opt('short', '⚡', '10분만', '바쁠 땐 복습·약점 10문제만')];
+    if (rec === 'listen') o.unshift(o.splice(1, 1)[0]);
+    const el = document.createElement('div'); el.className = 'kc csheet';
+    el.innerHTML = `<div><div class="row"><h3 class="grow">오늘 어떻게 할까요?</h3><button class="btn sm" id="csx">닫기</button></div>
+      <div class="muted" style="font-size:13px;margin:2px 0 10px">${why}</div>${o.join('')}
+      <div class="muted" style="font-size:12px;margin-top:8px">오늘 ${t.q || 0}문제 풀고 🎧 ${t.ox || 0}지문 들었어요</div></div>`;
+    el.onclick = e => { if (e.target === el || e.target.id === 'csx') return el.remove(); const b = e.target.closest('[data-m]'); if (b) { el.remove(); courseStart(b.dataset.m, b.dataset.m === 'listen' ? sl : 0); } };
+    document.body.appendChild(el);
+  }
+  /* 단계가 끝난 결과 화면: 다음 단계 안내 */
+  function courseNext() {
+    if (cur !== 'result' || !COURSE.active || document.getElementById('cnext')) return;
+    const v = document.getElementById('view'); if (!v) return;
+    const nx = COURSE.steps[COURSE.i + 1], dots = COURSE.steps.map((x, k) => `<i class="${k <= COURSE.i ? 'on' : ''}">${x.t.split(' ')[0]}</i>`).join('');
+    const cheer = ['좋아요! 리듬 탔어요 💪', '잘하고 있어요 👏', '한 단계 끝! 🔥', '꾸준함이 합격을 만들어요 🌱'][COURSE.i % 4];
+    v.insertAdjacentHTML('afterbegin', `<div class="card" id="cnext"><div class="cdots">${dots}</div><b style="font-size:17px">${cheer}</b>
+      ${nx ? `<div class="muted" style="font-size:13.5px;margin:4px 0 10px">다음: <b>${nx.t}</b> · ${nx.sub || ''} ${nx.qs ? nx.qs.length + '문제' : ''}</div><button class="go" id="cgo">▶ 계속하기</button>`
+           : `<div class="muted" style="font-size:13.5px;margin:4px 0 10px">오늘 코스를 다 끝냈어요!</div><button class="go" id="cgo">🎉 마치기</button>`}
+      <button class="btn full" id="cstop" style="margin-top:8px">오늘은 여기까지</button></div>`);
+    [...v.querySelectorAll('.card')].forEach(c => { if (/오늘 수준 체크/.test(c.textContent) && c.id !== 'cnext') c.remove(); });   // 코스 중엔 딴 길 안 보이게
+    document.getElementById('cgo').onclick = () => { COURSE.i++; courseRun(); };
+    document.getElementById('cstop').onclick = () => { COURSE.active = false; go('home'); };
+  }
+  setInterval(courseNext, 400);
   function setPanel(v) {
     let p = document.getElementById('setp'); if (p) { p.remove(); return; }
     const nz = document.getElementById('nzp'); if (nz) nz.remove();
@@ -1327,7 +1429,8 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
      ⋯ 를 누르면 원본·핵심 카드·신고·숫자 바꾸기 */
   function dockQuiz() {
     if (cur !== 'quiz') { document.querySelector('.qdock')?.remove(); document.body.classList.remove('qdocked'); return; }
-    const qn = document.getElementById('qn'), qp = document.getElementById('qp'); if (!qn || !qp) return;
+    // 마지막 문제에선 '다음' 대신 '결과 보기'(qf)나 '제출하기'(qs)
+    const qn = [...document.querySelectorAll('#view #qn, #view #qf, #view #qs')][0] || document.querySelector('.qdock #qn, .qdock #qf, .qdock #qs'), qp = document.getElementById('qp'); if (!qn || !qp) return;
     let dk = document.querySelector('.qdock');
     if (!dk || !dk.contains(qn)) {
       dk?.remove();
@@ -1575,7 +1678,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
   }, 1000);
   window.addEventListener('load', () => setTimeout(() => {
     wrap('quiz', () => { decorateQuiz(); decorateChoices(); decorateElim(); quizScroll(); dockQuiz(); });
-    const _sq = window.startQuiz; window.startQuiz = function () { window.__xp0 = xpNow(); return _sq.apply(this, arguments); };
+    const _sq = window.startQuiz; window.startQuiz = function () { window.__xp0 = xpNow(); COURSE.active = false; return _sq.apply(this, arguments); };
     setTimeout(achCheck, 1500);
     setTimeout(scoreChip, 300);
     const _rec = window.record; window.record = function (q, c) { const r = _rec.apply(this, arguments); logAnswer(q, c); try { scoreChip(); } catch (e) {} return r; }; wrap('home', decorateHome); wrap('setup', decorateSetup); wrap('wrong', decorateWrong); wrap('themes', decorateThemes);

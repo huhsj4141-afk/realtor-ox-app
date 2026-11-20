@@ -124,6 +124,8 @@ class WebActivity : Activity() {
         @JavascriptInterface fun openOxWith(mode: String, sleepMin: Int, busMin: Int) = runOnUiThread {
             startActivity(Intent(this@WebActivity, MainActivity::class.java).putExtra("mode", mode).putExtra("sleep", sleepMin).putExtra("bus", busMin)); @Suppress("DEPRECATION") overridePendingTransition(0, 0)
         }
+        /** 🧭 오늘 코스 듣기용: 매니저가 고른 문제 번호·약한 과목 {"refs":[…],"subs":[…]} */
+        @JavascriptInterface fun setToday(json: String) { this@WebActivity.getSharedPreferences("ox", android.content.Context.MODE_PRIVATE).edit().putString("today", json).apply() }
         @JavascriptInterface fun openOx() = runOnUiThread { startActivity(Intent(this@WebActivity, MainActivity::class.java)); @Suppress("DEPRECATION") overridePendingTransition(0, 0) }
 
         @JavascriptInterface fun gemini(id: String, model: String, body: String) {

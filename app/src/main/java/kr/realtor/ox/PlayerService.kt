@@ -198,10 +198,19 @@ class PlayerService : Service() {
             "wrong" -> Study.wrong(this).let { w -> all.filter { w.contains(it.ref) } }
             "review" -> Study.dueOf(this, reviewKeys()).let { d -> all.filter { d.contains(it.key) } }
             "mix" -> Study.mix(this, Store.tracks)
+            "today" -> {   // 🧭 오늘 코스: 매니저가 고른 문제(틀린·복습·약점)와 약한 과목부터, 그다음 골고루
+                val j = try { org.json.JSONObject(getSharedPreferences("ox", MODE_PRIVATE).getString("today", "{}")!!) } catch (e: Exception) { org.json.JSONObject() }
+                val refs = (0 until (j.optJSONArray("refs")?.length() ?: 0)).map { j.getJSONArray("refs").getString(it) }.toSet()
+                val subs = (0 until (j.optJSONArray("subs")?.length() ?: 0)).map { j.getJSONArray("subs").getInt(it) }
+                val first = all.filter { refs.contains(it.ref) }
+                val mix = Study.mix(this, Store.tracks, 200)
+                val weak = mix.filter { Store.tracks[it.ti].sub in subs }
+                (first + weak + mix).distinctBy { it.key }.take(60)
+            }
             else -> Store.tracks[trackIdx].items
         }
     }
-    val LIST_NAMES = kotlin.collections.mapOf("mix" to "🔀 골고루 섞기", "bm" to "★ 북마크", "wrong" to "❌ 틀린 문제", "review" to "🔁 오늘 복습")
+    val LIST_NAMES = kotlin.collections.mapOf("mix" to "🔀 골고루 섞기", "bm" to "★ 북마크", "wrong" to "❌ 틀린 문제", "review" to "🔁 오늘 복습", "today" to "🧭 오늘 코스")
 
     fun load(ti: Int, m: String, q: Int, play: Boolean) {
         trackIdx = ti.coerceIn(0, Store.tracks.size - 1); mode = m

@@ -343,7 +343,7 @@ class MainActivity : Activity() {
         AlertDialog.Builder(this).setTitle("⏱ 타이머").setItems(o.map { it.first }.toTypedArray()) { _, i -> o[i].second() }.setNegativeButton("닫기", null).show()
     }
     private var slowAt = 0L
-    private val LISTS = listOf("mix" to "🔀 골고루 섞기", "bm" to "★ 북마크", "wrong" to "❌ 틀린 문제", "review" to "🔁 복습하기")
+    private val LISTS = listOf("today" to "🧭 오늘 코스", "mix" to "🔀 골고루 섞기", "bm" to "★ 북마크", "wrong" to "❌ 틀린 문제", "review" to "🔁 복습하기")
     private fun mmss(sec: Int) = "%d:%02d".format(sec / 60, sec % 60)
     private fun refresh() {
         usageV?.text = Usage.summary(this)
