@@ -103,6 +103,7 @@
     .achpop{position:fixed;inset:0;z-index:9998;display:grid;place-items:center;background:rgba(0,0,0,.35);animation:apf .2s} .achpop>div{background:var(--card);color:var(--ink);border-radius:18px;padding:22px 24px;text-align:center;max-width:300px;display:flex;flex-direction:column;gap:8px;animation:app .35s cubic-bezier(.2,1.4,.4,1)} .achpop b{font-size:20px} .achpop span{color:var(--sub2,#9aa3b5);font-size:14px} .achpop button{margin-top:6px;padding:10px;border-radius:12px;border:0;background:var(--pri);color:#fff;font-weight:700}
     @keyframes apf{from{opacity:0}} @keyframes app{from{transform:scale(.6);opacity:0}}
     .qdock #qf,.qdock #qs{flex:1;font-size:17px}
+    .lgue{font-size:12.5px;margin-top:8px} .hero .lgue .hok{color:#bbf7d0} .hero .lgue .hno{color:#fecaca} #ftc{padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:700;font-size:13px}
     #pscore{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:2px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0;line-height:1.25}
     #pscore small{font-size:10.5px;color:var(--sub2,#9aa3b5)} #pscore span{font-size:13.5px;white-space:nowrap} #pscore b{font-size:16px} #pscore b.ok{color:#16a34a} #pscore b.no{color:#ef4444}
     #pscore i{font-style:normal;font-size:10.5px;margin-left:2px} #pscore i.up{color:#16a34a} #pscore i.dn{color:#ef4444}
@@ -636,6 +637,9 @@
     return `<div class="card" id="achc"><h2>🏆 나의 성취</h2>
       <div class="lvbig"><span class="lvn">Lv.${L.n}</span><div><b>${L.name}</b><i><em style="width:${Math.round(L.cur / L.need * 100)}%"></em></i><small>${x.toLocaleString()} XP · 다음 레벨까지 ${L.need - L.cur} XP</small></div></div>
       <div class="pred">${exm('1차', [0, 1])}${exm('2차', [2, 3, 4])}</div>
+      ${predChart()}
+      <div class="lgue">${leagueLine()}</div>
+      <div class="muted" style="font-size:12.5px;margin:6px 0 10px">🔥 연속 ${streak().n}일${streak().frozen ? ` (🧊 보호권 ${streak().frozen}번 씀)` : ''} · 한 주에 하루는 쉬어도 이어져요 · 🌳 집중 나무 ${trees()}그루</div>
       <div class="bdg">${BADGES.map(b => { const ok = b[4](a); return `<div class="${ok ? 'on' : ''}" title="${b[3]}"><b>${ok ? b[1] : '🔒'}</b><span>${b[2]}</span><small>${b[3]}</small></div>`; }).join('')}</div>
       <div class="muted" style="font-size:12px;margin-top:8px">맞히면 10 XP, 틀려도 풀면 3 XP예요. 틀린 문제를 다시 맞히면 '오답 정복'이 쌓여요.</div></div>`;
   }
@@ -672,10 +676,73 @@
         if (e1) e1.textContent = (f0[0] + (p.a1 - f0[0]) * ez).toFixed(1); if (e2) e2.textContent = (f0[1] + (p.a2 - f0[1]) * ez).toFixed(1);
         if (k < 1) requestAnimationFrame(tick); })(t0);
     }
-    PS0 = p;
+    PS0 = p; predLog(p);
   }
   window.scoreChip = scoreChip;
 
+
+  const dkey = d => { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };   // 일지 날짜 키 (YYYY-MM-DD)
+  /* ================= 동기부여 묶음 =================
+     🧊 스트릭 보호권 · 🏁 주간 리그(지난주의 나) · 📈 예상 점수 그래프 · 🌳 집중 타이머 · ⏰ D-30 실전 모드 */
+  // 🧊 연속 공부: 문제 풀기나 듣기 5분 이상 한 날. 한 주(월~일)에 하루는 빠져도 이어져요
+  function studyDays() {
+    const set = new Set();
+    try { for (const k in LJ.d) { const d = LJ.d[k]; if ((d.q || 0) > 0 || (d.lsec || 0) >= 300) set.add(k); } } catch (e) {}
+    for (const k in P) set.add(dkey(new Date(P[k][4])));
+    return set;
+  }
+  const _streak = window.streak;
+  window.streak = streak = function () {
+    try {
+      const set = studyDays(), used = new Set(); let d = new Date(); d.setHours(12, 0, 0, 0); let n = 0, fz = 0;
+      if (!set.has(dkey(d))) d.setDate(d.getDate() - 1);   // 오늘 아직 안 했으면 어제부터 셈
+      const wk = x => { const t = new Date(x); const dw = (t.getDay() + 6) % 7; t.setDate(t.getDate() - dw); return dkey(t); };
+      for (let k = 0; k < 1500; k++) {
+        if (set.has(dkey(d))) n++;
+        else if (!used.has(wk(d)) && n > 0) { used.add(wk(d)); fz++; }   // 그 주 보호권 사용
+        else break;
+        d.setDate(d.getDate() - 1);
+      }
+      return { n, frozen: fz };
+    } catch (e) { return _streak(); }
+  };
+  // 하루 경험치 (일지 기준): 맞힘 10 · 틀림 3 · 들은 지문 2 · 듣기 1분 1
+  function dayXP(d) { return d ? (d.ok || 0) * 10 + Math.max(0, (d.q || 0) - (d.ok || 0)) * 3 + (d.ox || 0) * 2 + Math.floor((d.lsec || 0) / 60) : 0; }
+  function weekXP(off) {   // off 0 = 이번 주(월~오늘), 1 = 지난주
+    const t = new Date(); t.setHours(12, 0, 0, 0); const dw = (t.getDay() + 6) % 7; t.setDate(t.getDate() - dw - off * 7);
+    let x = 0; const days = off ? 7 : dw + 1;
+    for (let i = 0; i < days; i++) { const k = dkey(t); try { x += dayXP(LJ.d[k]); } catch (e) {} t.setDate(t.getDate() + 1); }
+    return x;
+  }
+  function leagueLine() {
+    const a = weekXP(0), b = weekXP(1);
+    return b ? `🏁 이번 주 <b>${a}</b> XP · 지난주의 나 ${b} XP ${a >= b ? '<span class="hok">이기는 중 ▲' + (a - b) + '</span>' : '<span class="hno">' + (b - a) + ' 남음</span>'}`
+             : `🏁 이번 주 <b>${a}</b> XP · 다음 주부터 지난주의 나와 겨뤄요`;
+  }
+  // 📈 예상 점수 날마다 기록 → 그래프
+  function predLog(p) { try { const L = JSON.parse(localStorage.getItem('reb_pred') || '{}'); L[dkey()] = [p.a1, p.a2]; const ks = Object.keys(L).sort(); while (ks.length > 120) delete L[ks.shift()]; localStorage.setItem('reb_pred', JSON.stringify(L)); } catch (e) {} }
+  function predChart() {
+    let L = {}; try { L = JSON.parse(localStorage.getItem('reb_pred') || '{}'); } catch (e) {}
+    const ks = Object.keys(L).sort(); if (ks.length < 2) return '<div class="muted" style="font-size:12.5px">📈 이틀 이상 공부하면 예상 점수가 오르는 그래프가 그려져요</div>';
+    const W = 320, H = 120, P0 = 22, xs = i => P0 + i * (W - P0 - 6) / (ks.length - 1), ys = v => H - 14 - (Math.max(0, Math.min(100, v)) / 100) * (H - 24);
+    const line = (j, c) => `<polyline fill="none" stroke="${c}" stroke-width="2.5" points="${ks.map((k, i) => xs(i) + ',' + ys(L[k][j])).join(' ')}"/>`;
+    return `<div style="font-size:13px;font-weight:700;margin:4px 0">📈 예상 점수 변화</div><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">
+      <line x1="${P0}" x2="${W - 6}" y1="${ys(60)}" y2="${ys(60)}" stroke="#22c55e" stroke-dasharray="4 4"/><text x="0" y="${ys(60) + 4}" font-size="10" fill="#22c55e">60</text>
+      <text x="0" y="${ys(40) + 4}" font-size="10" fill="#ef4444">40</text><line x1="${P0}" x2="${W - 6}" y1="${ys(40)}" y2="${ys(40)}" stroke="#ef4444" stroke-dasharray="2 4" opacity=".6"/>
+      ${line(0, '#3b82f6')}${line(1, '#f59e0b')}<text x="${P0}" y="${H - 2}" font-size="10" fill="#9aa3b5">${ks[0].slice(5)}</text><text x="${W - 40}" y="${H - 2}" font-size="10" fill="#9aa3b5">${ks[ks.length - 1].slice(5)}</text></svg>
+      <div style="font-size:11.5px"><span style="color:#3b82f6">● 1차</span> <span style="color:#f59e0b">● 2차</span> · 초록 점선 = 합격선</div>`;
+  }
+  // 🌳 집중 타이머 25분: 다 채우면 나무 한 그루
+  const FT = { end: 0, t: null };
+  function trees() { try { return +localStorage.getItem('reb_trees') || 0; } catch (e) { return 0; } }
+  function focusStart(min = 25) {
+    FT.end = Date.now() + min * 60000; clearInterval(FT.t);
+    const chip = document.getElementById('ftc') || (() => { const c = document.createElement('button'); c.id = 'ftc'; c.onclick = () => { if (confirm('집중 타이머를 멈출까요? (나무는 안 자라요)')) { FT.end = 0; c.remove(); clearInterval(FT.t); } }; document.querySelector('header.top')?.appendChild(c); return c; })();
+    const tick = () => { const left = FT.end - Date.now(); if (left <= 0) { clearInterval(FT.t); chip.remove(); FT.end = 0; try { localStorage.setItem('reb_trees', trees() + 1); } catch (e) {} celebrate('🌳 집중 25분 완료!', `나무가 ${trees()}그루가 됐어요. 5분 쉬고 또 한 번?`); return; }
+      const m = Math.floor(left / 60000), s2 = Math.floor(left / 1000) % 60; chip.textContent = `🌱 ${m}:${String(s2).padStart(2, '0')}`; };
+    tick(); FT.t = setInterval(tick, 1000);
+  }
+  window.focusStart = focusStart;
   /* ================= 🚀 오늘 코스: '오늘 공부 시작' 하나로 합격까지 =================
      누르면 → 지금 상황에 맞는 방법 추천(보면서 풀기 / 듣기 / 10분만) → 단계별로 자동 진행
      단계: 🔁 복습 → 🎯 약점 훈련 → 🆕 오늘 진도 → 🧩 마무리. 한 단계 끝나면 다음 단계 안내.
@@ -704,8 +771,14 @@
       return qs.length ? [{ t: '⚡ 10분 집중', sub: '복습·약점 위주', qs }] : [{ t: '⚡ 10분 집중', ad: { qs: Q, n: 10 } }];
     }
     const st = [];
-    const r = take(due.concat(uns), 10); if (r.length) st.push({ t: '🔁 복습', sub: '잊기 직전 문제부터', qs: r });
+    // 최근에 틀린 문제는 다음 날 코스 첫 단계에 꼭 (맞힐 때까지 계속 나옴)
+    const wrongRecent = Object.keys(P).filter(k => P[k][1] === 0 && BYID[k] && Date.now() - P[k][4] > 6 * 3600000).sort((a, b) => P[b][4] - P[a][4]).map(k => BYID[k]);
+    const r = take(wrongRecent.concat(due, uns), 10); if (r.length) st.push({ t: '🔁 복습', sub: '틀린 문제·잊기 직전 문제부터', qs: r });
     const w = take(weak, 10); if (w.length) st.push({ t: '🎯 약점 훈련', sub: [...new Set(acts.filter(a => a.s != null).map(a => SUBS[a.s]))].slice(0, 2).join('·') || '매니저 처방', qs: w });
+    if (tp.dday != null && tp.dday <= 30) {   // ⏰ 시험 30일 전부터: 새 진도 대신 실전 감각
+      st.push({ t: '📝 실전 20문제', sub: `D-${tp.dday} · 전 과목 섞어서 시험처럼`, ad: { qs: Q, n: 20 } });
+      return st;
+    }
     const n = take(list, 12); if (n.length) st.push({ t: '🆕 오늘 진도', sub: '새 문제', qs: n }); else if (ad && ad.n) st.push({ t: '🆕 오늘 진도', sub: '실력에 맞춘 문제', ad });
     const m = take(list, 12); if (m.length) st.push({ t: '🧩 마무리', sub: '섞어서 한 번 더', qs: m });
     if (!st.length) st.push({ t: '🎯 맞춤 20문제', sub: '오늘 목표 끝! 더 하기', ad: { qs: Q, n: 20 } });
@@ -1268,11 +1341,13 @@
     document.body.insertAdjacentHTML('beforeend', `<div id="nzp" class="nzp"><div class="nzh"><b>집중 소음</b><button id="nzx" aria-label="닫기">✕</button></div>
       <div class="nzg">${Object.entries(NZT).map(([k, v]) => `<button data-n="${k}">${v}</button>`).join('')}</div>
       <div class="nzv"><span>소리 크기</span><input id="nzvol" type="range" min="0.05" max="1" step="0.05" value="${NZ.vol}"></div>
-      <button id="nzoff" class="nzoff">${NZ.type ? '끄기' : '켜기 (' + NZT[last] + ')'}</button></div>`);
+      <button id="nzoff" class="nzoff">${NZ.type ? '끄기' : '켜기 (' + NZT[last] + ')'}</button>
+      <button id="nzft" class="nzoff">🌳 집중 25분 시작 <small>(다 채우면 나무 한 그루 · 지금 ${trees()}그루)</small></button></div>`);
     p = document.getElementById('nzp');
     p.querySelector('#nzx').onclick = () => p.remove();
     p.querySelectorAll('[data-n]').forEach(x => x.onclick = () => { const k = x.dataset.n === NZ.type ? '' : x.dataset.n; if (k && !NZ.buf[k] && (k === 'cafe' || k === 'library')) { x.textContent = '만드는 중…'; setTimeout(() => { nzPlay(k); x.textContent = NZT[k]; p.querySelector('#nzoff').textContent = NZ.type ? '끄기' : '켜기'; }, 30); return; } nzPlay(k); p.querySelector('#nzoff').textContent = NZ.type ? '끄기' : '켜기'; });
     p.querySelector('#nzvol').oninput = e => { NZ.vol = +e.target.value; try { localStorage.setItem('reb_nzv', NZ.vol); } catch (er) {} if (NZ.gain) NZ.gain.gain.setTargetAtTime(nzLevel(), NZ.ctx.currentTime, .05); };
+    p.querySelector('#nzft').onclick = () => { p.remove(); if (!NZ.type) nzPlay(last); focusStart(25); };
     p.querySelector('#nzoff').onclick = () => { nzPlay(NZ.type ? '' : last); p.querySelector('#nzoff').textContent = NZ.type ? '끄기' : '켜기 (' + NZT[last] + ')'; };
     nzUi();
   }
@@ -1520,7 +1595,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
     if (cur === 'stats' && !document.getElementById('achc')) { const sg = document.getElementById('rseg'); if (sg) sg.insertAdjacentHTML('afterend', achCard()); }
     if (cur === 'home' && !document.getElementById('lvb')) {
       const go = document.querySelector('#view .hero .go');
-      if (go) { go.insertAdjacentHTML('afterend', lvBar()); document.getElementById('lvb').onclick = () => window.go('stats'); }
+      if (go) { go.insertAdjacentHTML('afterend', lvBar() + `<div id="lgh" class="lgue">${leagueLine()}</div>`); document.getElementById('lvb').onclick = () => window.go('stats'); }
     }
     if (cur === 'result' && !document.getElementById('xpg')) {
       const g = xpNow() - (window.__xp0 ?? xpNow()), v = document.getElementById('view');
