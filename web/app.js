@@ -102,6 +102,10 @@
     .bdg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px} .bdg>div{border:1px solid var(--line);border-radius:12px;padding:8px 6px;text-align:center;opacity:.45} .bdg>div.on{opacity:1;border-color:var(--pri)} .bdg b{display:block;font-size:24px} .bdg span{display:block;font-size:12.5px;font-weight:700} .bdg small{display:block;font-size:10.5px;color:var(--sub2,#9aa3b5);line-height:1.3;margin-top:2px}
     .achpop{position:fixed;inset:0;z-index:9998;display:grid;place-items:center;background:rgba(0,0,0,.35);animation:apf .2s} .achpop>div{background:var(--card);color:var(--ink);border-radius:18px;padding:22px 24px;text-align:center;max-width:300px;display:flex;flex-direction:column;gap:8px;animation:app .35s cubic-bezier(.2,1.4,.4,1)} .achpop b{font-size:20px} .achpop span{color:var(--sub2,#9aa3b5);font-size:14px} .achpop button{margin-top:6px;padding:10px;border-radius:12px;border:0;background:var(--pri);color:#fff;font-weight:700}
     @keyframes apf{from{opacity:0}} @keyframes app{from{transform:scale(.6);opacity:0}}
+    #pscore{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:2px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0;line-height:1.25}
+    #pscore small{font-size:10.5px;color:var(--sub2,#9aa3b5)} #pscore span{font-size:13.5px;white-space:nowrap} #pscore b{font-size:16px} #pscore b.ok{color:#16a34a} #pscore b.no{color:#ef4444}
+    #pscore i{font-style:normal;font-size:10.5px;margin-left:2px} #pscore i.up{color:#16a34a} #pscore i.dn{color:#ef4444}
+    #pscore.flash{animation:psf .9s} @keyframes psf{0%{transform:scale(1)}20%{transform:scale(1.08);box-shadow:0 0 0 4px rgba(34,197,94,.25)}100%{transform:scale(1)}}
     .fixl{display:flex;flex-direction:column;gap:6px;margin-top:8px} .fixl button{display:flex;align-items:center;gap:8px;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit;font-size:14px;line-height:1.45} .fixl button i{margin-left:auto;font-style:normal;color:var(--pri,#2563eb);font-weight:700}
     .sit button{text-align:left;padding:12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit}
     .sit b{display:block;font-size:15px} .sit span{font-size:12px;opacity:.7}
@@ -603,7 +607,7 @@
   /* 기록 → 점수 맨 위: 성취 카드 */
   function achCard() {
     const a = achStats(), x = xpNow(), L = lvOf(x);
-    const r = s => a.st[s].grad >= 10 ? a.st[s].rate * 100 : null;
+    const PD = predict(), r = s => PD.sub[s];   // 맨 위 예상 점수와 같은 계산
     const avg = ids => { const v = ids.map(r); return v.some(z => z == null) ? null : v.reduce((p, q) => p + q, 0) / v.length; };
     const fail = ids => ids.some(s => r(s) != null && r(s) < 40);
     const exm = (nm, ids) => { const v = avg(ids); return `<div class="pr"><b>${nm}</b>${v == null ? '<span class="muted">과목마다 10문제 이상 풀면 보여요</span>' : `<span class="${v >= 60 && !fail(ids) ? 'hok' : 'hno'}">예상 ${Math.round(v)}점</span><small>${v >= 60 && !fail(ids) ? '합격권이에요 👏' : fail(ids) ? '과락(40점 미만) 과목부터 채워요' : `합격선까지 +${Math.ceil(60 - v)}점`}</small>`}</div>`; };
@@ -613,6 +617,34 @@
       <div class="bdg">${BADGES.map(b => { const ok = b[4](a); return `<div class="${ok ? 'on' : ''}" title="${b[3]}"><b>${ok ? b[1] : '🔒'}</b><span>${b[2]}</span><small>${b[3]}</small></div>`; }).join('')}</div>
       <div class="muted" style="font-size:12px;margin-top:8px">맞히면 10 XP, 틀려도 풀면 3 XP예요. 틀린 문제를 다시 맞히면 '오답 정복'이 쌓여요.</div></div>`;
   }
+
+  /* 📈 실시간 예상 점수: 맨 위 제목 자리에 늘 보여 주고, 문제를 풀 때마다 바로 바뀜
+     과목 점수 = 최근 결과 기준 정답 수를 '아직 모름(30%)' 10문제로 보정한 값 → 적게 풀었을 땐 보수적으로 */
+  function predict() {
+    const st = subjStats(), k = 10, pr = .3;
+    const sub = st.map(x => Math.round(100 * (x.ok + k * pr) / (x.grad + k)));
+    const a1 = (sub[0] + sub[1]) / 2, a2 = (sub[2] + sub[3] + sub[4]) / 3;
+    const ok1 = a1 >= 60 && sub[0] >= 40 && sub[1] >= 40, ok2 = a2 >= 60 && sub.slice(2).every(v => v >= 40);
+    return { sub, a1: Math.round(a1 * 10) / 10, a2: Math.round(a2 * 10) / 10, ok1, ok2, n: st.reduce((a, x) => a + x.grad, 0) };
+  }
+  window.predict = predict;
+  let PS0 = null;
+  function scoreChip() {
+    const top = document.querySelector('header.top'); if (!top) return;
+    let c = document.getElementById('pscore');
+    if (!c) {
+      const h = top.querySelector('h1'); if (h) h.style.display = 'none';
+      c = document.createElement('button'); c.id = 'pscore'; c.title = '지금 실력으로 본 예상 점수 (누르면 자세히)';
+      c.onclick = () => window.go('stats'); top.insertBefore(c, top.firstChild);
+    }
+    const p = predict(), cls = ok => ok ? 'ok' : 'no';
+    const d = PS0 ? [p.a1 - PS0.a1, p.a2 - PS0.a2] : [0, 0];
+    const dt = v => Math.abs(v) >= .1 ? `<i class="${v > 0 ? 'up' : 'dn'}">${v > 0 ? '▲' : '▼'}${Math.abs(v).toFixed(1)}</i>` : '';
+    c.innerHTML = `<small>예상 점수${p.n < 30 ? ' (추정)' : ''}</small><span>1차 <b class="${cls(p.ok1)}">${Math.round(p.a1)}</b>${dt(d[0])} · 2차 <b class="${cls(p.ok2)}">${Math.round(p.a2)}</b>${dt(d[1])}</span>`;
+    if (PS0 && (Math.abs(d[0]) >= .1 || Math.abs(d[1]) >= .1)) { c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); }
+    PS0 = p;
+  }
+  window.scoreChip = scoreChip;
   function setPanel(v) {
     let p = document.getElementById('setp'); if (p) { p.remove(); return; }
     const nz = document.getElementById('nzp'); if (nz) nz.remove();
@@ -1485,7 +1517,8 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
     wrap('quiz', () => { decorateQuiz(); decorateChoices(); decorateElim(); quizScroll(); });
     const _sq = window.startQuiz; window.startQuiz = function () { window.__xp0 = xpNow(); return _sq.apply(this, arguments); };
     setTimeout(achCheck, 1500);
-    const _rec = window.record; window.record = function (q, c) { const r = _rec.apply(this, arguments); logAnswer(q, c); return r; }; wrap('home', decorateHome); wrap('setup', decorateSetup); wrap('wrong', decorateWrong); wrap('themes', decorateThemes);
+    setTimeout(scoreChip, 300);
+    const _rec = window.record; window.record = function (q, c) { const r = _rec.apply(this, arguments); logAnswer(q, c); try { scoreChip(); } catch (e) {} return r; }; wrap('home', decorateHome); wrap('setup', decorateSetup); wrap('wrong', decorateWrong); wrap('themes', decorateThemes);
     const v = document.querySelector('#tabs button.on')?.dataset.v;
     if (v === 'home') decorateHome();
   }, 50));
