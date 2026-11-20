@@ -51,6 +51,8 @@ class PlayerService : Service() {
     val isList get() = mode != "all"
     private var loadedQ = -1
     private var autoStopQ = -1
+    private var changingQueue = false
+    private var checkpointTicks = 0
 
     var continuous: Boolean
         get() = prefs.getBoolean("cont", false)
@@ -102,7 +104,7 @@ class PlayerService : Service() {
                 updateSession()
             }
             override fun onIsPlayingChanged(isPlaying: Boolean) {
-                if (isPlaying) { autoStopQ = -1; fg() }
+                if (isPlaying) { autoStopQ = -1; fg() } else savePosition()
                 updateSession()
             }
         })
@@ -126,7 +128,7 @@ class PlayerService : Service() {
         }
         createChannel()
         fg()
-        load(prefs.getInt("ti", 0), prefs.getString("mode", "all")!!, prefs.getInt("q", 0), false)
+        load(prefs.getInt("ti", 0), prefs.getString("mode", "all")!!, prefs.getInt("q", 0), false, resume = true)
         h.post(tick)
     }
 
@@ -147,7 +149,10 @@ class PlayerService : Service() {
             "L" -> act("stepBack"); "R" -> act("stepFwd"); "C" -> act("toggle")
             "PRESET" -> {   // 상황별 학습에서: 듣는 목록·잠자기 타이머를 정하고 바로 시작
                 fg()
-                load(trackIdx, intent.getStringExtra("mode") ?: "mix", 0, true)
+                val m = intent.getStringExtra("mode") ?: "mix"
+                if (mode == m && loadedQ in queue.indices) {
+                    if (autoStopQ >= 0) advance() else player.play()
+                } else load(trackIdx, m, 0, true, resume = true)
                 intent.getIntExtra("sleep", 0).let { if (it > 0) setSleep(it) }
                 intent.getIntExtra("bus", 0).let { if (it > 0) setBus(it) }
             }
@@ -163,6 +168,7 @@ class PlayerService : Service() {
     }
 
     override fun onDestroy() {
+        savePosition()
         inst = null
         h.removeCallbacksAndMessages(null)
         session.release(); player.release(); cue.release()
@@ -212,22 +218,63 @@ class PlayerService : Service() {
     }
     val LIST_NAMES = kotlin.collections.mapOf("mix" to "🔀 골고루 섞기", "bm" to "★ 북마크", "wrong" to "❌ 틀린 문제", "review" to "🔁 오늘 복습", "today" to "🧭 오늘 코스")
 
-    fun load(ti: Int, m: String, q: Int, play: Boolean) {
-        trackIdx = ti.coerceIn(0, Store.tracks.size - 1); mode = m
-        queue = itemsOf(m)
-        if (queue.isEmpty()) { if (m != "all") note("${LIST_NAMES[m]} 목록이 비어 있어요", 4000); mode = "all"; queue = Store.tracks[trackIdx].items }
-        prefs.edit().putInt("ti", trackIdx).putString("mode", mode).apply()
-        loadedQ = -1
-        go(q.coerceIn(0, queue.size - 1), 0, play)
+    // 목록마다 문항·구간·초를 보관. 섞기 목록도 같은 순서로 이어져요.
+    private fun resumeKey(ti: Int, m: String) = "resume_" + if (m == "all") "all_$ti" else m
+
+    private fun savePosition() {
+        if (changingQueue || loadedQ !in queue.indices || player.mediaItemCount == 0) return
+        val slot = player.currentMediaItemIndex.coerceIn(0, 3)
+        val j = org.json.JSONObject().put("item", queue[loadedQ].key)
+            .put("slot", slot).put("ms", player.currentPosition.coerceAtLeast(0L))
+            .put("finished", autoStopQ >= 0 || slot == 3)
+            .put("items", org.json.JSONArray(queue.map { it.key }))
+        prefs.edit().putString(resumeKey(trackIdx, mode), j.toString()).apply()
     }
 
-    /** q번 문항의 k칸으로 이동 */
-    fun go(q: Int, k: Int, play: Boolean = true) {
+    fun load(ti: Int, m: String, q: Int, play: Boolean, resume: Boolean = false) {
+        savePosition()
+        changingQueue = true
+        try {
+            trackIdx = ti.coerceIn(0, Store.tracks.size - 1); mode = m
+            val saved = if (resume) try {
+                prefs.getString(resumeKey(trackIdx, m), null)?.let { org.json.JSONObject(it) }
+            } catch (e: Exception) { null } else null
+            queue = itemsOf(m)
+            if (saved != null && m != "all") {
+                val byKey = Store.tracks.flatMap { it.items }.associateBy { it.key }
+                val keys = saved.optJSONArray("items")
+                val previous = (0 until (keys?.length() ?: 0)).mapNotNull { byKey[keys!!.optString(it)] }.distinctBy { it.key }
+                if (previous.any { it.key == saved.optString("item") }) queue = previous
+            }
+            if (queue.isEmpty()) { if (m != "all") note(LIST_NAMES[m] + " 목록이 비어 있어요", 4000); mode = "all"; queue = Store.tracks[trackIdx].items }
+            if (queue.isEmpty()) { loadedQ = -1; return }
+            prefs.edit().putInt("ti", trackIdx).putString("mode", mode).apply()
+            val index = if (mode == m) queue.indexOfFirst { it.key == saved?.optString("item") } else -1
+            val found = index >= 0
+            val slot = if (found) saved!!.optInt("slot", 0).coerceIn(0, 3) else 0
+            loadedQ = -1
+            go(if (found) index else q.coerceIn(0, queue.size - 1), slot, false,
+                if (found) saved!!.optLong("ms", 0).coerceAtLeast(0L) else 0L)
+            if (found && (saved!!.optBoolean("finished", false) || slot == 3)) autoStopQ = loadedQ
+        } finally { changingQueue = false }
+        savePosition()
+        if (play) { if (autoStopQ >= 0) advance() else player.play() }
+    }
+
+    /** q번 문항의 k칸으로 이동. 이어듣기일 때만 저장한 초를 넘겨요. */
+    fun go(q: Int, k: Int, play: Boolean = true, positionMs: Long = 0L) {
         if (q !in queue.indices) return
         autoStopQ = -1
-        if (loadedQ != q) { player.setMediaSources(slots(queue[q]), k, 0); player.prepare(); loadedQ = q }
-        else player.seekTo(k, 0)
-        prefs.edit().putInt("q", q).apply()
+        val wasChanging = changingQueue; changingQueue = true
+        try {
+            player.pause()
+            if (loadedQ != q) {
+                loadedQ = q
+                player.setMediaSources(slots(queue[q]), k, positionMs); player.prepare()
+            } else player.seekTo(k, positionMs)
+            prefs.edit().putInt("q", q).apply()
+        } finally { changingQueue = wasChanging }
+        savePosition()
         if (play) player.play()
         updateSession()
     }
@@ -365,6 +412,7 @@ class PlayerService : Service() {
     /** 1초마다: 듣기 시간 기록, 타이머 확인 */
     private val tick = object : Runnable { override fun run() {
         h.postDelayed(this, 1000)
+        if (player.isPlaying && ++checkpointTicks >= 5) { checkpointTicks = 0; savePosition() }
         if (player.isPlaying && ++secAcc >= 15) { Study.addSec(this@PlayerService, secAcc); secAcc = 0 }
         if (sleepEnd > 0) {
             val r = sleepEnd - SystemClock.elapsedRealtime()
