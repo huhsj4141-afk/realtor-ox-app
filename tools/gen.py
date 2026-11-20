@@ -192,8 +192,44 @@ def cloud_tts(text, raw):
     raise RuntimeError('클라우드 TTS 재시도 초과')
 
 
+PRON = [(re.compile(a), b) for a, b in json.load(open(os.path.join(ROOT, 'web', 'pron.json'), encoding='utf8'))['rules']] if os.path.exists(os.path.join(ROOT, 'web', 'pron.json')) else []
+
+
+def pron(t):
+    """사람이 읽는 발음으로 (보조점성과 → 보조쩜성꽈, 소유권 → 소유꿘 …)"""
+    for a, b in PRON: t = a.sub(b, t)
+    return t
+
+
+def pron_redo(tmp, limit=400):
+    """발음 규칙이 바뀐 지문·해설·상황 음성만 다시 만들기"""
+    if not GKEY or not PRON: return
+    a = os.path.join(GEN, 'a'); dp = os.path.join(GEN, 'pron_done.json')
+    done = json.load(open(dp, encoding='utf8')) if os.path.exists(dp) else {}
+    data = json.load(open(os.path.join(ROOT, 'data', 'ox.json'), encoding='utf8'))
+    ep = os.path.join(GEN, 'exp.json'); exp = json.load(open(ep, encoding='utf8')) if os.path.exists(ep) else {}
+    cp = os.path.join(GEN, 'ox_ctx.json'); ctx = json.load(open(cp, encoding='utf8')) if os.path.exists(cp) else {}
+    snd = sounds(); n = 0
+    for ti, t in enumerate(data):
+        for i, it in enumerate(t['items']):
+            k = f'{ti}_{i}'
+            for kind, text in (('s', clean(it['s'])), ('e', exp.get(k, '')), ('c', ('상황입니다. ' + clean(ctx[k])) if k in ctx else '')):
+                out = os.path.join(a, f't{k}_{kind}.ogg'); fk = f'{k}_{kind}'
+                if not text or not os.path.exists(out) or pron(text) == text or done.get(fk) == pron(text): continue
+                if n >= limit: break
+                try:
+                    w = os.path.join(tmp, 'p.wav'); say_wav('', '', text, w)
+                    parts = [snd['chime'], snd['gap'], w] if kind == 's' else [snd['ding' if it['o'] else 'ttaeng'], snd['gap'], w] if kind == 'e' else [w]
+                    encode(parts, out); done[fk] = pron(text); n += 1
+                except Exception as e:
+                    log('발음 다시 만들기 실패', fk, str(e)[:100])
+    json.dump(done, open(dp, 'w', encoding='utf8'), ensure_ascii=False)
+    if n: log('발음 고친 음성', n)
+
+
 def say_wav(model, voice, text, path):
     raw = path + '.raw.wav'
+    text = pron(text)
     if GKEY:
         cloud_tts(text, raw)
     else:
@@ -280,6 +316,7 @@ def main():
             if not os.path.exists(out):
                 w = os.path.join(tmp, 'c.wav'); say_wav('', '', t, w); encode([w], out); log('안내', k)
         ctx_audio(tmp)
+        pron_redo(tmp)
         return
     if mode == 'sounds':
         os.makedirs(GEN, exist_ok=True); print(sounds()); return

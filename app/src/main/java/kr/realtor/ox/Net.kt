@@ -73,10 +73,21 @@ object Net {
     }
 
     /** 글을 Achernar 음성 파일들로 (긴 글은 문장 단위로 나눔, 같은 글은 저장해 둔 걸 다시 씀) */
+    /** 사람이 읽는 발음으로 (보조점성과 → 보조쩜성꽈, 소유권 → 소유꿘, ㎡ → 제곱미터 …) — web/pron.json */
+    @Volatile private var pronRules: List<Pair<Regex, String>>? = null
+    fun pron(ctx: Context, text: String): String {
+        val r = pronRules ?: try {
+            val a = JSONObject(ctx.assets.open("web/pron.json").bufferedReader().readText()).getJSONArray("rules")
+            (0 until a.length()).mapNotNull { i -> try { val x = a.getJSONArray(i); Regex(x.getString(0)) to x.getString(1) } catch (e: Exception) { null } }
+        } catch (e: Exception) { emptyList() }.also { pronRules = it }
+        var t = text; r.forEach { (re, to) -> t = re.replace(t, java.util.regex.Matcher.quoteReplacement(to)) }
+        return t
+    }
+
     fun speech(ctx: Context, text: String): List<File> {
         val k = key(ctx, "tts"); if (k.isBlank()) throw RuntimeException("구글 클라우드 음성 키가 없어요")
         val dir = File(ctx.cacheDir, "speak").apply { mkdirs() }
-        return chunks(text).map { t ->
+        return chunks(pron(ctx, text)).map { t ->
             val f = File(dir, md5(t) + ".ogg")
             if (!f.exists()) {
                 val body = JSONObject()
