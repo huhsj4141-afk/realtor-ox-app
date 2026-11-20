@@ -47,6 +47,7 @@ def join_lines(x, cnt):
     x = re.sub(r'\s*(사\s*)?\d차\s*\d교시\s*[A-Z]형?-\d+-\d+\s*', '\n', x)
     x = re.sub(r'\s*제\s*\d\s*과목\s*:.*$', '', x)
     x = re.sub(r"[ \t]*제\s*\d+\s*회\s*공인중개사\s*\d\b[ \t]*", " ", x).rstrip()   # 쪽 아래 머리글(제28회 공인중개사 1)
+    x = re.sub(r"[ \t]*(?:\d{4}년\s*)?제\s*\d+\s*회\s*공인중개사(?:\s*\d\b)?[ \t]*(?=\n|$)", "", x).rstrip()   # 쪽 위 머리글(2018년 제29회 공인중개사)
     return x.strip()
 
 def main():

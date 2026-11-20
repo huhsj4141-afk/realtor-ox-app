@@ -514,7 +514,7 @@ home=function(){
   const lines=tp.items.filter(i=>i.mode!=='exam').map(i=>`<div><span>${esc(i.label.replace(/^.*? · /,''))}</span><span>${i.target?`${i.done}/${i.target}`:(i.qs?i.qs.length:'')}</span></div>`).join('');
   V.innerHTML=`<div class="card hero"><div class="row"><div class="grow"><div class="dd">D-${tp.dday}</div><div class="muted" style="font-size:13px">${examDate().replace(/-/g,'.')} 시험${PL.auto!==false&&!EXAM_CONFIRMED?' (예상)':''}</div></div>
     <div style="text-align:right"><div style="font-size:22px;font-weight:700">🔥 ${sk.n}일</div><div class="muted" style="font-size:12px">연속 공부</div></div></div>
-    <button class="go" id="hgo">${left?`▶ 오늘 공부 시작<small>${left}문제 남았어요${tgt?` · 오늘 ${dn}/${tgt}`:''}</small>`:`🎉 오늘 목표 완료!<small>더 하고 싶으면 눌러서 맞춤 20문제</small>`}</button>
+    <button class="go" id="hgo">${left?`▶ 오늘 공부 시작<small>오늘 ${left}문제${dn?` · ${dn}문제 풀었어요`:''}</small>`:`🎉 오늘 목표 완료!<small>더 하고 싶으면 눌러서 맞춤 20문제</small>`}</button>
 </div>
   ${ex.length?`<div class="card"><b>🎯 오늘은 실전 리허설 날</b><div class="bigl" style="margin-top:8px">${ex.map((it,i)=>`<button data-x="${i}"><b>⏱️</b><div>${esc(it.label.replace('🎯 실전 리허설 · ',''))}<span>${esc(it.sub)}</span></div></button>`).join('')}</div></div>`:''}
   <div class="big2"><button id="hdq"><b>☀️</b>오늘의 한 문제<span>${dqd?'✅ 풀었어요':esc(SUBS[dq.s]+' · '+dq.t)}</span></button><button id="hox"><b>🎧</b>귀로 듣기<span>화면 꺼져도 OX 듣기</span></button></div>`;

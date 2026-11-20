@@ -430,13 +430,13 @@
       } catch (e) {}
       return r;
     };
+    setTimeout(() => { try { if (cur === 'home') go('home'); } catch (e) {} }, 0);   // 처음 그린 첫 화면에도 처방 반영
   } catch (e) {}
 
   function managerCard() {
     const d = diagnose();
     return `<div class="card" id="mgr"><div class="row"><h2 class="grow">🧭 학습 매니저</h2><b style="color:${d.grade[1]}">${d.grade[0]}</b></div>
-      ${d.notes.length ? `<div class="fixl">${d.notes.slice(0, 3).map((n, i) => `<button data-f="${i}">${n}<i>${d.acts[i].k === 'listen' ? '🎧' : '▶'}</i></button>`).join('')}</div>
-      ${d.acts.some(a => a.k !== 'listen') ? `<button class="btn" id="fixall" style="width:100%;margin-top:8px">🩺 빈 곳 한 번에 채우기 (${fixSet(d.acts).length}문제)</button>` : ''}` : '<div style="margin-top:6px">빠진 곳 없이 골고루 하고 있어요 👍</div>'}
+      ${d.notes.length ? `<div class="fixl">${d.notes.slice(0, 3).map((n, i) => `<button data-f="${i}">${n}<i>${d.acts[i].k === 'listen' ? '🎧' : '▶'}</i></button>`).join('')}</div>` : '<div style="margin-top:6px">빠진 곳 없이 골고루 하고 있어요 👍</div>'}
       <details style="margin-top:10px"><summary style="font-weight:600">📍 상황별로 고르기 (잠·버스·도서관…)</summary>
       <div class="sit" style="margin-top:8px">${SITU.map(([k, i, t, sub]) => `<button data-s="${k}"><b>${i} ${t}</b><span>${sub}</span></button>`).join('')}</div></details></div></div>`;
   }
@@ -1062,6 +1062,7 @@ ${q.x}
       const f = document.createDocumentFragment(); let last = 0, t = n.nodeValue; GRE.lastIndex = 0; let m;
       while ((m = GRE.exec(t))) {
         if (seen.has(m[1])) continue;
+        if (m.index > 0 && /[가-힣A-Za-z]/.test(t[m.index - 1])) continue;   // 낱말 중간(해'악의')은 건너뜀
         seen.add(m[1]);
         if (m.index > last) f.appendChild(document.createTextNode(t.slice(last, m.index)));
         const sp = document.createElement('span'); sp.className = 'gl'; sp.dataset.k = m[1]; sp.textContent = m[1]; f.appendChild(sp); last = m.index + m[1].length;
