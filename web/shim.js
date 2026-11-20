@@ -94,6 +94,17 @@
       if (cur) tts.stop();
       const me = cur = { rate: (o && o.rate) || 1, stopped: false, wait: null };
       stateCbs.forEach(f => { try { f('speaking'); } catch (e) {} });
+      if (N.speakAll) {   // 앱이 끝까지 이어 읽기 (화면 꺼져도 안 멈춤)
+        const id = 'a' + (++seq);
+        const L = lines.map((l, i) => ({ i, t: String(l.text || '').trim() })).filter(x => x.t && !/^[.\s]*$/.test(x.t));
+        window.__nbl = (sid, i) => { if (sid === id && cur === me) lineCbs.forEach(f => { try { f({ line: +i, id: lines[+i] && lines[+i].id }); } catch (e) {} }); };
+        const ev = await new Promise(res => { me.wait = { id, res }; N.speakAll(id, JSON.stringify(L), me.rate); });
+        if (ev === 'error') throw Object.assign(new Error('읽기 실패'), { code: 'error' });
+        if (ev === 'stopped' || me.stopped) throw Object.assign(new Error('stopped'), { code: 'viewer_stopped' });
+        if (cur === me) cur = null;
+        stateCbs.forEach(f => { try { f('idle'); } catch (e) {} });
+        return;
+      }
       for (let i = 0; i < lines.length; i++) {
         if (me.stopped) throw Object.assign(new Error('stopped'), { code: 'viewer_stopped' });
         lineCbs.forEach(f => { try { f({ line: i, id: lines[i].id }); } catch (e) {} });

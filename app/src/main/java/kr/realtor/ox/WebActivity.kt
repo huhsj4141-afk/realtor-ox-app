@@ -20,6 +20,7 @@ class WebActivity : Activity() {
     private lateinit var voice: ExoPlayer
     private val io = Executors.newFixedThreadPool(2)
     private var speakId: String? = null
+    @Volatile private var allQueued = true
     private val ttsGen = java.util.concurrent.atomic.AtomicInteger(0)
     private var loaded = false
 
@@ -45,8 +46,13 @@ class WebActivity : Activity() {
         super.onCreate(b)
         if (java.io.File(filesDir, "crash.txt").exists()) startActivity(Intent(this, MainActivity::class.java))
         voice = ExoPlayer.Builder(this).build()
+        voice.setWakeMode(androidx.media3.common.C.WAKE_MODE_LOCAL)   // 화면이 꺼져도 계속 읽기
         voice.addListener(object : Player.Listener {
-            override fun onPlaybackStateChanged(s: Int) { if (s == Player.STATE_ENDED) done("done") }
+            override fun onPlaybackStateChanged(s: Int) { if (s == Player.STATE_ENDED && allQueued) done("done") }
+            override fun onMediaItemTransition(item: MediaItem?, reason: Int) {
+                val id = speakId ?: return; val i = item?.mediaId?.toIntOrNull() ?: return
+                js("window.__nbl&&__nbl('$id',$i)")   // 지금 읽는 줄 표시 (화면이 켜져 있을 때)
+            }
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) { done("error") }
         })
         web = WebView(this).apply {
@@ -132,11 +138,40 @@ class WebActivity : Activity() {
                     val files = Net.speech(this@WebActivity, text)
                     runOnUiThread {
                         if (g != ttsGen.get()) return@runOnUiThread      // 소리를 받는 동안 멈춤을 눌렀으면 틀지 않기
-                        speakId = id
+                        speakId = id; allQueued = true
                         voice.setMediaItems(files.map { MediaItem.fromUri(Uri.fromFile(it)) })
                         voice.setPlaybackSpeed(rate.toFloat().coerceIn(0.5f, 2f)); voice.prepare(); voice.play()
                     }
                 } catch (e: Exception) { runOnUiThread { speakId = id; done("error") } }
+            }
+        }
+        /** 여러 줄을 한 번에 받아 앱이 끝까지 이어 읽기 — 화면이 꺼져 웹이 멈춰도 계속 읽힘 */
+        @JavascriptInterface fun speakAll(id: String, linesJson: String, rate: Double) {
+            val g = ttsGen.get()
+            val arr = try { org.json.JSONArray(linesJson) } catch (e: Exception) { org.json.JSONArray() }
+            runOnUiThread { speakId = id; allQueued = false; voice.stop(); voice.clearMediaItems(); voice.setPlaybackSpeed(rate.toFloat().coerceIn(0.5f, 2f)) }
+            io.execute {
+                var any = false
+                for (k in 0 until arr.length()) {
+                    if (g != ttsGen.get()) return@execute
+                    val o = arr.optJSONObject(k) ?: continue
+                    val files = try { Net.speech(this@WebActivity, o.optString("t")) } catch (e: Exception) { continue }   // 한 줄 실패는 건너뜀
+                    val idx = o.optInt("i", k)
+                    runOnUiThread {
+                        if (g != ttsGen.get()) return@runOnUiThread
+                        val ended = voice.playbackState == Player.STATE_ENDED || voice.mediaItemCount == 0
+                        val from = voice.mediaItemCount
+                        voice.addMediaItems(files.map { MediaItem.Builder().setUri(Uri.fromFile(it)).setMediaId("$idx").build() })
+                        if (from == 0) { voice.prepare(); voice.play() }
+                        else if (ended) { voice.seekTo(from, 0); voice.prepare(); voice.play() }   // 앞줄을 다 읽고 기다리던 중
+                    }
+                    any = true
+                }
+                runOnUiThread {
+                    if (g != ttsGen.get()) return@runOnUiThread
+                    allQueued = true
+                    if (!any) done("error") else if (voice.playbackState == Player.STATE_ENDED || voice.mediaItemCount == 0) done("done")
+                }
             }
         }
         @JavascriptInterface fun ttsPause() = runOnUiThread { voice.pause() }
