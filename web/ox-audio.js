@@ -542,7 +542,7 @@ function easyView(){const W=Q.filter(q=>P[q.id]&&P[q.id][1]===0).length,due=dueL
     else if(a==='calc')startAdaptive(Q.filter(isCalc),20,{from:'setup',title:'🧮 계산 문제'});
     else go('photo')})}
 function bindSeg(id){const el=document.getElementById(id);if(!el)return;el.onclick=e=>{const b=e.target.closest('button');if(!b)return;const v=b.dataset.v;
-  if(id==='pseg'){PT=v;go(v==='easy'||v==='pick'?'setup':v)}else{RT=v;go(v==='plan'?'plan':v==='stats'?'stats':v==='journal'?'journal':'wrong')}}}
+  if(id==='pseg'){PT=v;go(v==='easy'||v==='pick'?'setup':v)}else{RT=v;go(v==='plan'?'plan':v==='stats'?'stats':v==='journal'?'journal':v==='hist'?'hist':'wrong')}}}
 setup=function(a){PT='pick';_setup(a);V.insertAdjacentHTML('afterbegin',seg(PSEG,'pick','pseg'));bindSeg('pseg')};
 themes=function(a){PT='themes';_themes(a);V.insertAdjacentHTML('afterbegin',seg(PSEG,'themes','pseg'));bindSeg('pseg')};
 exam=function(a){PT='exam';_exam(a);V.insertAdjacentHTML('afterbegin',seg(PSEG,'exam','pseg'));bindSeg('pseg')};
@@ -551,7 +551,7 @@ exam=function(a){PT='exam';_exam(a);V.insertAdjacentHTML('afterbegin',seg(PSEG,'
 ox=function(a){_ox(a);if(cur==='ox')dropBack()};
 
 /* ---- 기록 ---- */
-const RSEG=[['journal','달력'],['wrong','오답'],['stats','점수'],['plan','계획']];
+const RSEG=[['hist','최근'],['journal','달력'],['wrong','오답'],['stats','점수'],['plan','계획']];
 wrong=function(a){RT='wrong';_wrong(a);V.insertAdjacentHTML('afterbegin',seg(RSEG,'wrong','rseg'));bindSeg('rseg')};
 plan=function(a){RT='plan';_plan(a);V.insertAdjacentHTML('afterbegin',seg(RSEG,'plan','rseg'));bindSeg('rseg')};
 function stats(){RT='stats';const s=subjStats();const sc=s.map(x=>x.rate==null?null:Math.round(x.rate*100));
@@ -566,6 +566,20 @@ function stats(){RT='stats';const s=subjStats();const sc=s.map(x=>x.rate==null?n
 window.stats=stats;TABOF.stats='wrong';TABOF.journal='wrong';window.seg=seg;window.bindSeg=bindSeg;window.RSEG=RSEG;
 const _goJ=go;go=function(v,arg){if(v==='journal'){if(cur==='listen'&&typeof stopSpeak==='function')stopSpeak();cur='journal';window.scrollTo(0,0);if(window.journalView)journalView();nav.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v==='wrong'));return}return _goJ(v,arg)};
 const _go2=go;go=function(v,arg){if(v==='stats'){if(cur==='listen'&&typeof stopSpeak==='function')stopSpeak();cur='stats';window.scrollTo(0,0);stats();nav.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v==='wrong'));return}_go2(v,arg)};
+/* ---- 🕘 최근 푼 문제 (히스토리) ---- */
+function histView(){RT='hist';const t0=today0().getTime(),DAYMS=86400000;
+  const L=Object.keys(P).filter(k=>BYID[k]&&P[k][4]).sort((a,b)=>P[b][4]-P[a][4]).slice(0,300).map(k=>BYID[k]);
+  const day=ts=>ts>=t0?'오늘':ts>=t0-DAYMS?'어제':(d=>`${d.getMonth()+1}월 ${d.getDate()}일`)(new Date(ts));
+  const hm=ts=>{const d=new Date(ts);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+  let last='',rows='';
+  L.forEach((q,i)=>{const p=P[q.id],dl=day(p[4]);if(dl!==last){last=dl;rows+=`<div class="hday">${dl}</div>`}
+    const r=p[1]===1?'<b class="hok">O</b>':p[1]===0?'<b class="hno">X</b>':'<b class="hun">·</b>';
+    rows+=`<button class="hrow" data-i="${i}">${r}<span><b>${q.n}회 ${CT[q.ct]||''} ${q.no}번</b><small>${esc(SUB[q.s]||'')} · ${esc(q.t||q.u||'')}</small></span><i>${hm(p[4])}</i></button>`});
+  V.innerHTML=seg(RSEG,'hist','rseg')+`<div class="card"><h2>🕘 최근 푼 문제</h2><div class="muted" style="font-size:13px;margin-bottom:6px">누르면 그 문제부터 다시 볼 수 있어요</div>${L.length?rows:'<div class="muted">아직 푼 문제가 없어요</div>'}</div>`;
+  bindSeg('rseg');
+  V.querySelectorAll('.hrow').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;startQuiz(L.slice(i,i+30),{from:'wrong',title:'🕘 최근 푼 문제'})})}
+window.histView=histView;TABOF.hist='wrong';
+const _goH=go;go=function(v,arg){if(v==='hist'){if(cur==='listen'&&typeof stopSpeak==='function')stopSpeak();cur='hist';window.scrollTo(0,0);histView();nav.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v==='wrong'));return}_goH(v,arg)};
 // 처음 화면 다시 그리기
 go(cur==='home'?'home':cur);
 })();

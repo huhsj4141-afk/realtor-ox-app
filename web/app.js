@@ -92,6 +92,7 @@
     .conf button{padding:7px 4px;font-size:13.5px}
     #more{margin-top:10px}
     .sit{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .hday{font-size:12.5px;font-weight:700;color:var(--sub2,#9aa3b5);margin:12px 0 4px} .hrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 4px;border:0;border-bottom:1px solid var(--line);background:transparent;color:inherit;font:inherit} .hrow span{flex:1;min-width:0;display:flex;flex-direction:column} .hrow small{color:var(--sub2,#9aa3b5);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .hrow i{font-style:normal;font-size:12px;color:var(--sub2,#9aa3b5)} .hrow>b{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:13px;flex:none} .hok{background:#16a34a22;color:#16a34a} .hno{background:#ef444422;color:#ef4444} .hun{background:var(--line)}
     .fixl{display:flex;flex-direction:column;gap:6px;margin-top:8px} .fixl button{display:flex;align-items:center;gap:8px;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit;font-size:14px;line-height:1.45} .fixl button i{margin-left:auto;font-style:normal;color:var(--pri,#2563eb);font-weight:700}
     .sit button{text-align:left;padding:12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit}
     .sit b{display:block;font-size:15px} .sit span{font-size:12px;opacity:.7}
