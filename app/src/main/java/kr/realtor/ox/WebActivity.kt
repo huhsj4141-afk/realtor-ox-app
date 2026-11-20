@@ -104,6 +104,9 @@ class WebActivity : Activity() {
     inner class Bridge {
         @JavascriptInterface fun key(name: String): String = Net.key(this@WebActivity, name)
         @JavascriptInterface fun setTheme(json: String) { this@WebActivity.getSharedPreferences("ox", android.content.Context.MODE_PRIVATE).edit().putString("wtheme", json).apply() }
+        @JavascriptInterface fun tap(strong: Boolean) = Haptic.tap(this@WebActivity, strong)
+        @JavascriptInterface fun hapticOn(): Boolean = Haptic.on(this@WebActivity)
+        @JavascriptInterface fun setHaptic(v: Boolean) = Haptic.set(this@WebActivity, v)
         @JavascriptInterface fun appVersion(): Long = Updater.version(this@WebActivity)
         @JavascriptInterface fun latestVersion(): Long = Updater.latestKnown(this@WebActivity)
         @JavascriptInterface fun update() = runOnUiThread { Updater.install(this@WebActivity) }

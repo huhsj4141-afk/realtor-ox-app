@@ -515,6 +515,19 @@
     el.onclick = () => setPanel(v);
     try { const pv = +localStorage.getItem('reb_ver') || 0; if (pv && pv < v && window.__toast) window.__toast('✅ v' + v + '로 업데이트됐어요'); localStorage.setItem('reb_ver', v); } catch (e) {}
   }
+  /* 📳 버튼을 누르면 짧은 진동 + 살짝 눌리는 모양 (눌렸는지 확실히) */
+  (function haptic() {
+    const nb = window.NativeBridge;
+    const ok = () => { try { return !nb || !nb.hapticOn || nb.hapticOn(); } catch (e) { return true; } };
+    const sel = 'button, .choices button, [data-a], [data-s], [data-f], .hrow, .tabseg button, summary, a[href], .chip, label';
+    document.addEventListener('pointerdown', e => {
+      const b = e.target.closest(sel); if (!b || b.disabled || e.target.closest('#padc')) return;
+      if (ok()) { try { if (nb && nb.tap) nb.tap(!!b.closest('.choices, .btn.pri, #go, .go, .hero button')); else if (navigator.vibrate) navigator.vibrate(12); } catch (x) {} }
+    }, { passive: true, capture: true });
+    const st = document.createElement('style');
+    st.textContent = 'button,.hrow,summary,[data-a],[data-s]{transition:transform .08s,filter .08s} button:active:not(:disabled),.hrow:active,summary:active,[data-a]:active,[data-s]:active{transform:scale(.96);filter:brightness(.92)}';
+    document.head.appendChild(st);
+  })();
   function setPanel(v) {
     let p = document.getElementById('setp'); if (p) { p.remove(); return; }
     const nz = document.getElementById('nzp'); if (nz) nz.remove();
@@ -526,10 +539,12 @@
     const nv = LATEST && LATEST > v;
     document.body.insertAdjacentHTML('beforeend', `<div id="setp" class="nzp"><div class="nzh"><b>🎨 화면 색</b><button id="spx" aria-label="닫기">✕</button></div>
       <div class="thg">${sw}</div>
+      <button id="sph" class="nzoff">📳 터치 진동 ${(() => { try { return !window.NativeBridge || !NativeBridge.hapticOn || NativeBridge.hapticOn(); } catch (e) { return true; } })() ? '켬' : '끔'}</button>
       <button id="spu" class="nzoff">${nv ? '⬇ 새 버전 v' + LATEST + ' 받기' : '지금 v' + v + ' · 업데이트 확인'}</button></div>`);
     p = document.getElementById('setp');
     p.querySelector('#spx').onclick = () => p.remove();
     p.querySelectorAll('.thm').forEach(b => b.onclick = () => { applyTheme(b.dataset.t); p.querySelectorAll('.thm').forEach(x => x.classList.toggle('on', x === b)); });
+    p.querySelector('#sph').onclick = e => { try { const nb = NativeBridge, v = !nb.hapticOn(); nb.setHaptic(v); e.target.textContent = '📳 터치 진동 ' + (v ? '켬' : '끔'); if (v) nb.tap(false); } catch (x) {} };
     p.querySelector('#spu').onclick = () => { try { if (nv) NB.update(); else { if (window.__toast) window.__toast('새 버전 확인 중…'); NB.checkUpdate(); } } catch (e) {} p.remove(); };
   }
   function updBanner() {

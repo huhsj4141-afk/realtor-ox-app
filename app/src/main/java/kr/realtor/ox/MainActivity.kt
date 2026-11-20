@@ -106,7 +106,7 @@ class MainActivity : Activity() {
         setTextColor(if (primary) Color.WHITE else Color.parseColor(TXT))
         background = round(if (primary) Color.parseColor(w("pri") ?: "#2563EB") else c("#EEF1F5", "#262B35"), 12)
         layoutParams = LinearLayout.LayoutParams(0, dp(56), 1f).apply { setMargins(dp(4), dp(4), dp(4), dp(4)) }
-        setOnClickListener { f() }
+        setOnClickListener { Haptic.tap(this@MainActivity, primary); f() }
     }
     private fun row(vararg v: View) = LinearLayout(this).apply { v.forEach { addView(it) } }
     private fun wide(b: Button) = b.apply { layoutParams = LinearLayout.LayoutParams(-1, dp(52)).apply { setMargins(dp(4), dp(6), dp(4), dp(4)) } }
@@ -142,7 +142,7 @@ class MainActivity : Activity() {
         }
         val flag = Button(this).apply {
             text = "🚩"; textSize = 15f; background = null; minWidth = 0; minimumWidth = 0; setPadding(dp(8), 0, dp(4), 0)
-            layoutParams = LinearLayout.LayoutParams(-2, dp(44)); setOnClickListener { reportItem() }
+            layoutParams = LinearLayout.LayoutParams(-2, dp(44)); setOnClickListener { Haptic.tap(this@MainActivity); reportItem() }
         }
         spinner.layoutParams = LinearLayout.LayoutParams(0, -2, 1f)
         val top = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; addView(spinner); addView(flag) }
@@ -232,7 +232,7 @@ class MainActivity : Activity() {
         listOf(Triple("🏠", "오늘", "home"), Triple("✏️", "문제", "setup"), Triple("🎧", "듣기", ""), Triple("📊", "기록", "wrong")).forEach { (ic, n, v) ->
             val on = v.isEmpty()
             val cell = FrameLayout(this).apply { layoutParams = LinearLayout.LayoutParams(0, -1, 1f).apply { width = 0 }
-                setOnClickListener { if (!on) { startActivity(Intent(this@MainActivity, WebActivity::class.java).putExtra("tab", v).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)); finish() } } }
+                setOnClickListener { Haptic.tap(this@MainActivity); if (!on) { startActivity(Intent(this@MainActivity, WebActivity::class.java).putExtra("tab", v).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)); finish() } } }
             val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; setPadding(0, iconTop - line, 0, 0)
                 layoutParams = FrameLayout.LayoutParams(-1, -1) }
             col.addView(TextView(this).apply { text = ic; setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, iconFs.toFloat()); includeFontPadding = false; gravity = Gravity.CENTER
