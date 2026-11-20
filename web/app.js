@@ -891,6 +891,12 @@
     PAD.strokes.concat(PAD.cur ? [PAD.cur] : []).forEach(st => {
       const k = st.k || 'pen', pts = st.p.map(q => [X(q[0]), Y(q[1])]);
       g.save();
+      if (k === 'text') {   // 풀이 도식의 글자
+        const fs = st.w * V.s; g.fillStyle = st.c === 'ink' ? ink : st.c; g.font = `${st.b ? '700 ' : ''}${fs}px sans-serif`;
+        g.textAlign = st.al || 'left'; g.textBaseline = 'middle';
+        const L = String(st.t || '').split('\n'); L.forEach((ln, i) => g.fillText(ln, pts[0][0], pts[0][1] + (i - (L.length - 1) / 2) * fs * 1.25));
+        g.restore(); return;
+      }
       g.globalCompositeOperation = st.e ? 'destination-out' : 'source-over';   // 예전 지우개 획
       g.strokeStyle = g.fillStyle = st.c === 'ink' || st.c === '#e8ebf1' ? ink : st.c;
       g.lineWidth = (st.e ? 22 : k === 'hl' ? st.w * 4 + 6 : st.w) * V.s;
@@ -1209,6 +1215,63 @@ ${q.x}
   }
 
   /* ---------- 해설 묶음: [📖 해설 | 🔍 더 자세히 | 🐣 기초부터] 탭 하나로, 도구 버튼은 맨 아래 한 줄 ---------- */
+
+  /* 🧭 풀이 도식: AI가 관계도·순서를 만들어 필기장에 그려 줌 (그 위에 바로 메모) */
+  async function makeDiagram(q, btn) {
+    const key = 'reb_dia_' + q.id; let d = null;
+    try { d = JSON.parse(localStorage.getItem(key)); } catch (e) {}
+    const old = btn ? btn.innerHTML : '';
+    if (!d) {
+      if (btn) { btn.disabled = true; btn.innerHTML = '<span class="ic">⏳</span>만드는 중…'; }
+      try {
+        const ex = expOf(q);
+        const prompt = `공인중개사 기출 문제를 한눈에 이해하게 하는 '풀이 도식'을 만들어. JSON만 출력.
+형식: {"title":"12자 이내 제목","nodes":[{"id":"a","label":"甲\\n매도인","x":15,"y":20}],"edges":[{"from":"a","to":"b","label":"매매계약"}],"steps":["① …","② …","→ 정답 ③ …"]}
+규칙:
+- nodes 2~7개. x·y는 0~100, 서로 25 이상 떨어지게 넓게 배치. label은 한 줄 9자 이내, 최대 두 줄(\\n).
+- edges는 관계·흐름·계산 방향. label은 8자 이내.
+- 사람(甲·乙)·물건·권리·금액 관계가 있으면 그 관계도. 계산 문제면 값 → 계산 → 결과 흐름. 개념 문제면 핵심 개념을 분류 트리로.
+- steps 3~6줄, 한 줄 28자 이내. 계산 문제는 계산식을 숫자 그대로. 마지막 줄은 정답과 이유.
+문제: ${q.x}
+정답: ${q.a}
+${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
+        const raw = await window.__gem(prompt, {}, true);
+        d = JSON.parse(String(raw).replace(/^```(json)?|```$/g, '').trim());
+        if (!d || !Array.isArray(d.nodes)) throw new Error('도식을 못 만들었어요. 다시 눌러 주세요');
+        try { localStorage.setItem(key, JSON.stringify(d)); } catch (e) {}
+      } catch (e) { window.__toast && __toast(e.message || '도식을 못 만들었어요'); if (btn) { btn.disabled = false; btn.innerHTML = old; } return; }
+      if (btn) { btn.disabled = false; btn.innerHTML = old; }
+    }
+    padOpen(true); padTab('draw');
+    await new Promise(r => setTimeout(r, 350));
+    const cv = document.getElementById('padc'); if (!cv) return;
+    const R = cv.getBoundingClientRect(), W = R.width || 360, H = R.height || 500;
+    const out = [], NF = 14, LF = 12;
+    const T = (x, y, t, o = {}) => out.push({ k: 'text', g: 'dia', c: o.c || 'ink', w: o.f || NF, b: o.b ? 1 : 0, al: o.al || 'center', t, p: [[x, y]] });
+    if (d.title) T(.05, .05, '🧭 ' + d.title, { al: 'left', f: 16, b: 1, c: '#f59e0b' });
+    const nodes = {}; (d.nodes || []).slice(0, 8).forEach(n => {
+      const lines = String(n.label || n.id).split('\n').slice(0, 2), wpx = Math.max(...lines.map(l => l.length)) * NF * .95 + 18, hpx = lines.length * NF * 1.25 + 12;
+      const x = .1 + Math.min(100, Math.max(0, +n.x || 50)) / 100 * .8, y = .14 + Math.min(100, Math.max(0, +n.y || 50)) / 100 * .44;
+      const hw = wpx / 2 / W, hh = hpx / 2 / H; nodes[n.id] = { x, y, hw, hh };
+      out.push({ k: 'pen', g: 'dia', c: 'ink', w: 2, p: [[x - hw, y - hh], [x + hw, y - hh], [x + hw, y + hh], [x - hw, y + hh], [x - hw, y - hh]], s: 'rect' });
+      T(x, y, lines.join('\n'), { b: 1 });
+    });
+    const clip = (a, b) => {   // a 상자 가장자리에서 b 쪽으로 나가는 점
+      const dx = b.x - a.x, dy = b.y - a.y; const t = Math.min(Math.abs(dx) > 1e-6 ? a.hw / Math.abs(dx) : 9, Math.abs(dy) > 1e-6 ? a.hh / Math.abs(dy) : 9);
+      return [a.x + dx * t * 1.08, a.y + dy * t * 1.08];
+    };
+    (d.edges || []).slice(0, 10).forEach(e => {
+      const a = nodes[e.from], b = nodes[e.to]; if (!a || !b) return;
+      const p1 = clip(a, b), p2 = clip(b, a);
+      out.push({ k: 'arrow', g: 'dia', c: '#3b82f6', w: 2, p: [p1, p2], s: 'line' });
+      if (e.label) T((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2 - 10 / H, e.label, { c: '#3b82f6', f: LF, b: 1 });
+    });
+    (d.steps || []).slice(0, 7).forEach((t, i) => T(.05, .66 + i * 24 / H, String(t), { al: 'left', f: 13 }));
+    PAD.hist.push(JSON.stringify(PAD.strokes)); PAD.redo = [];
+    PAD.strokes = PAD.strokes.filter(st => st.g !== 'dia').concat(out);
+    padFit(); padDraw(); padSave(); if (PAD.paint) PAD.paint();
+  }
+  window.makeDiagram = makeDiagram;
   function decorateTabs() {
     const q = (typeof S !== 'undefined' && S && S.list) ? S.list[S.i] : null;
     if (cur !== 'quiz' || !q || !S.ans[q.id] || (S.exam && !S.done)) return;
@@ -1227,6 +1290,7 @@ ${q.x}
       pnl.append(ab, mb, bb);
       [qa, more, beg].forEach(b => b.classList.add('xhid'));
       if (qv) { qv.className = 'btn'; qv.innerHTML = '<span class="ic">🔁</span>숫자 바꾸기'; tb.insertBefore(qv, tb.lastElementChild); tb.classList.add('q5'); }
+      if (!document.getElementById('qdia')) { tb.insertAdjacentHTML('afterbegin', '<button class="btn" id="qdia"><span class="ic">🧭</span>풀이 도식</button>'); document.getElementById('qdia').onclick = e => makeDiagram(q, e.currentTarget); }
       pnl.after(tb);                                      // 도구 줄은 해설 아래 맨 끝
       tabs.querySelectorAll('button').forEach(b => b.onclick = () => xshow(b.dataset.x, true));
       // 저장된 해설이 있으면 바로 펼쳐 보여 주기(인터넷 필요 없음)
