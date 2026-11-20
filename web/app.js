@@ -111,6 +111,7 @@
     .qdock .qdi .ic{margin:0;font-size:19px;line-height:1} .qdock #qn{flex:1;font-size:17px}
     .qdock .qmore{display:none;width:100%;max-width:640px;margin:0 auto 8px} .qdock.open .qmore{display:block} .qdock .qmore .qtb{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:0}
     body.qdocked #view{padding-bottom:84px}
+    .fbk{display:block;width:100%;margin-top:8px;font-size:14px} .xmore small{font-weight:400;opacity:.7;font-size:12px}
     .fixl{display:flex;flex-direction:column;gap:6px;margin-top:8px} .fixl button{display:flex;align-items:center;gap:8px;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit;font-size:14px;line-height:1.45} .fixl button i{margin-left:auto;font-style:normal;color:var(--pri,#2563eb);font-weight:700}
     .sit button{text-align:left;padding:12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit}
     .sit b{display:block;font-size:15px} .sit span{font-size:12px;opacity:.7}
@@ -1359,10 +1360,10 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
     const lbl = (ic, t, ok) => `${ic} ${t}${ok ? ' <i class="xs">✓</i>' : ''}`;
     if (!tabs) {
       const conf = card.querySelector('.conf'), fb = card.querySelector('.fb');
-      (conf || fb || card.querySelector('.choices')).insertAdjacentHTML('afterend', `<div class="xtabs"><button data-x="ai"></button><button data-x="more"></button><button data-x="beg"></button></div><div class="xpanel"></div>`);
+      (conf || fb || card.querySelector('.choices')).insertAdjacentHTML('afterend', `<div class="xtabs"><button data-x="ai"></button><button data-x="beg"></button></div><div class="xpanel"></div>`);
       tabs = card.querySelector('.xtabs'); const pnl = card.querySelector('.xpanel');
-      pnl.append(ab, mb, bb);
-      [qa, more, beg].forEach(b => b.classList.add('xhid'));
+      pnl.append(ab, more, mb, bb);                      // 더 자세히는 해설 바로 아래 이어서
+      [qa, beg].forEach(b => b.classList.add('xhid')); more.classList.add('full', 'xmore');
       if (qv) { qv.className = 'btn'; qv.innerHTML = '<span class="ic">🔁</span>숫자 바꾸기'; tb.insertBefore(qv, tb.lastElementChild); tb.classList.add('q5'); }
       if (!document.getElementById('qdia')) { tb.insertAdjacentHTML('afterbegin', '<button class="btn" id="qdia"><span class="ic">🧭</span>풀이 도식</button>'); document.getElementById('qdia').onclick = e => makeDiagram(q, e.currentTarget); }
       if (!tb.closest('.qdock')) pnl.after(tb);          // (아래 고정 줄에 들어가 있으면 그대로)
@@ -1372,15 +1373,28 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
     }
     const isCalc = /계산/.test(qa.textContent);
     tabs.children[0].innerHTML = lbl('📖', isCalc ? '계산 풀이' : '해설', !!expOf(q));
-    tabs.children[1].innerHTML = lbl('🔍', '더 자세히', saved('reb_more_' + q.id));
-    tabs.children[2].innerHTML = lbl('🐣', '기초부터', saved('reb_beg_' + q.id));
-    tabs.children[2].classList.toggle('warn', beg.classList.contains('begon'));
+    tabs.children[1].innerHTML = lbl('🐣', '기초부터', saved('reb_beg_' + q.id));
+    tabs.children[1].classList.toggle('warn', beg.classList.contains('begon'));
+    // 틀렸거나 헷갈렸으면: 그 테마 핵심 카드로 바로 (개념을 다시 잡을 때)
+    const okA = String(q.a).split(',').map(Number).includes(+S.ans[q.id]);
+    const fbx = card.querySelector('.fb'), uns = (() => { try { const v = conf()[q.id]; return !!v && v !== 'sure'; } catch (e) { return false; } })();
+    if (fbx && (!okA || uns) && !document.getElementById('fbk') && document.getElementById('qk')) {
+      fbx.insertAdjacentHTML('beforeend', '<button class="btn fbk" id="fbk">📇 이 테마 핵심 카드로 개념 잡기</button>');
+      document.getElementById('fbk').onclick = () => document.getElementById('qk')?.click();
+    }
+    // 더 자세히: 내용이 펼쳐지면 버튼은 숨김
+    const mOpen = mb.textContent.trim().length > 20;
+    if (!more.dataset.lbl) { more.dataset.lbl = 1; }
+    more.style.display = (tabs.querySelector('.on')?.dataset.x === 'beg' || mOpen) ? 'none' : '';
+    if (!mOpen && !more.disabled && !/더 자세히 보기/.test(more.textContent)) more.innerHTML = '🔍 더 자세히 보기 <small>(예시·비교·함정)</small>' + (saved('reb_more_' + q.id) ? ' <span class="svd">✓ 저장됨</span>' : '');
   }
   function xshow(k, load) {
     const card = document.querySelector('#view .card'); if (!card) return;
-    const map = { ai: ['qa', 'aibox'], more: ['more', 'moreBox'], beg: ['beg', 'begBox'] };
+    if (k === 'more') k = 'ai';
+    const map = { ai: ['qa', 'aibox'], beg: ['beg', 'begBox'] };
     card.querySelectorAll('.xtabs button').forEach(b => b.classList.toggle('on', b.dataset.x === k));
     Object.entries(map).forEach(([kk, [, box]]) => { const el = document.getElementById(box); if (el) el.style.display = kk === k ? '' : 'none'; });
+    ['more', 'moreBox'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = k === 'ai' ? '' : 'none'; });
     const [btn, box] = map[k]; const el = document.getElementById(box);
     if (load && el && el.textContent.trim().length < 20) { const b = document.getElementById(btn); if (b && !b.disabled) b.click(); }
   }

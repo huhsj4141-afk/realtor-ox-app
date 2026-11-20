@@ -69,6 +69,8 @@
         last = e; const msg = String(e.message || '');
         if (/HTTP 429/.test(msg)) { localStorage.setItem(skipKey(m), today()); continue; }
         if (/HTTP (404|500|503)|TIMEOUT/.test(msg)) continue;
+        if (/resolve host|UnknownHost|Failed to connect|Network|ENOTFOUND|timeout|No address|connection/i.test(msg))
+          throw Object.assign(new Error('📶 인터넷에 연결되어 있지 않아요. 와이파이나 데이터를 켜고 다시 눌러 주세요. (저장된 해설은 인터넷 없이도 보여요)'), { code: 'offline' });
         throw e;   // 키 오류 등은 바로 알려 주기
       }
     }
