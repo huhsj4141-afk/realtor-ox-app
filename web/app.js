@@ -91,6 +91,7 @@
     .conf button{padding:7px 4px;font-size:13.5px}
     #more{margin-top:10px}
     .sit{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .fixl{display:flex;flex-direction:column;gap:6px;margin-top:8px} .fixl button{display:flex;align-items:center;gap:8px;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit;font-size:14px;line-height:1.45} .fixl button i{margin-left:auto;font-style:normal;color:var(--pri,#2563eb);font-weight:700}
     .sit button{text-align:left;padding:12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit}
     .sit b{display:block;font-size:15px} .sit span{font-size:12px;opacity:.7}
   </style>`);
@@ -248,6 +249,9 @@
     if (hero && !$('#mgr')) {
       hero.insertAdjacentHTML('afterend', managerCard());
       $('#mgr .sit').onclick = e => { const b = e.target.closest('[data-s]'); if (b) runSitu(b.dataset.s); };
+      const dg = diagnose();
+      $('#mgr').querySelectorAll('[data-f]').forEach(b => b.onclick = () => runFix(dg.acts[+b.dataset.f]));
+      const fa = $('#fixall'); if (fa) fa.onclick = () => runFix({ k: 'all' });
     }
     // 진도·과목별 수준은 기록 → 점수 탭에 있으니 첫 화면에선 뺌
     [...document.querySelectorAll('#view .card')].forEach(c => { const h = c.querySelector('h2,h3'); if (h && /회독 진도|과목별 수준|내용 업데이트/.test(h.textContent)) c.remove(); });
@@ -324,22 +328,23 @@
   /* ---------- 학습 매니저: 지금 잘하고 있는지, 빠진 곳은 어딘지 ---------- */
   function diagnose() {
     const rec = recentBySub(7), rate = rateBySub(), W = WEIGHT.reduce((a, b) => a + b, 0), tot = rec.reduce((a, b) => a + b, 0);
-    const sub = SUBS, notes = [];
+    const sub = SUBS, notes = [], acts = [];
+    const push = (h, a) => { notes.push(h); acts.push(a); };
     const t14 = recentBySub(14);
     const ever = recentBySub(3650);
-    sub.forEach((n, s) => { if (!t14[s]) notes.push(ever[s] ? `<b>${n}</b> 2주째 안 풀었어요` : `<b>${n}</b> 아직 시작 안 했어요`); });
-    if (tot >= 20) sub.forEach((n, s) => { const share = rec[s] / tot, want = WEIGHT[s] / W; if (t14[s] && share < want * .5) notes.push(`<b>${n}</b> 이번 주 비중이 적어요 (${Math.round(share * 100)}% · 권장 ${Math.round(want * 100)}%)`); });
-    rate.forEach((r, s) => { if (r != null && r < .4) notes.push(`<b>${sub[s]}</b> 정답률 ${Math.round(r * 100)}% · 과락 위험`); });
-    const un = unsureIds().length; if (un) notes.push(`헷갈렸던 문제 <b>${un}개</b>가 복습을 기다려요`);
+    sub.forEach((n, s) => { if (!t14[s]) push(ever[s] ? `<b>${n}</b> 2주째 안 풀었어요` : `<b>${n}</b> 아직 시작 안 했어요`, { k: 'sub', s }); });
+    if (tot >= 20) sub.forEach((n, s) => { const share = rec[s] / tot, want = WEIGHT[s] / W; if (t14[s] && share < want * .5) push(`<b>${n}</b> 이번 주 비중이 적어요 (${Math.round(share * 100)}% · 권장 ${Math.round(want * 100)}%)`, { k: 'sub', s }); });
+    rate.forEach((r, s) => { if (r != null && r < .4) push(`<b>${sub[s]}</b> 정답률 ${Math.round(r * 100)}% · 과락 위험`, { k: 'weak', s }); });
+    const un = unsureIds().length; if (un) push(`헷갈렸던 문제 <b>${un}개</b>가 복습을 기다려요`, { k: 'unsure' });
     let due = 0; try { due = dueList().length; } catch (e) {}
-    if (due) notes.push(`오늘 복습할 문제 <b>${due}개</b>`);
+    if (due) push(`오늘 복습할 문제 <b>${due}개</b>`, { k: 'due' });
     let lsec = 0; try { const d = LJ.d; const t = Date.now(); for (const k in d) if (t - new Date(k) < 7 * DAY) lsec += d[k].lsec || 0; } catch (e) {}
-    if (lsec < 600) notes.push('이번 주 듣기가 10분도 안 돼요 — 이동할 때 🎧 귀로 듣기를 써 보세요');
+    if (lsec < 600) push('이번 주 듣기가 10분도 안 돼요 — 이동할 때 🎧 귀로 듣기를 써 보세요', { k: 'listen' });
     const days = (() => { const s7 = new Set(); for (const k in P) { const r = P[k]; if (Date.now() - r[4] < 7 * DAY) s7.add(new Date(r[4]).toDateString()); } return s7.size; })();
     const grade = notes.length === 0 && days >= 5 ? ['😊 잘하고 있어요', '#16a34a'] : notes.length <= 2 && days >= 3 ? ['🙂 괜찮아요, 빈 곳만 채워요', '#2563eb'] : ['💪 다시 리듬을 잡아요', '#ea580c'];
     const bars = sub.map((n, s) => { const share = tot ? rec[s] / tot : 0, want = WEIGHT[s] / W;
       return `<span>${n}</span><div class="b" style="position:relative"><i style="width:${Math.min(100, share * 100 * 2.5)}%;background:${share < want * .5 ? '#f59e0b' : '#3b82f6'}"></i><em style="position:absolute;left:${want * 250}%;top:-2px;bottom:-2px;width:2px;background:#111;opacity:.35"></em></div><span class="muted">${Math.round(share * 100)}%</span>`; }).join('');
-    return { grade, notes, bars, days, tot };
+    return { grade, notes, acts, bars, days, tot };
   }
 
   const SITU = [
@@ -381,10 +386,57 @@
     if (N && N.openOxWith) N.openOxWith(mode, sleep, bus); else go('ox');
   }
 
+  /* 매니저가 짚은 빈 곳을 바로 메우는 문제 묶음 */
+  function subPick(s, n, weak) {
+    const L = Q.filter(q => q.s === s && graded(q) && !q.ocr), seen = new Set(), out = [];
+    const add = q => { if (q && !seen.has(q.id) && out.length < n) { seen.add(q.id); out.push(q); } };
+    if (weak) shuffle(L.filter(q => P[q.id] && P[q.id][1] === 0)).forEach(add);
+    shuffle(L.filter(q => !P[q.id])).forEach(add);
+    L.slice().sort((a, b) => (P[a.id] || [0, 0, 0, 0, 0])[4] - (P[b.id] || [0, 0, 0, 0, 0])[4]).forEach(add);
+    return out;
+  }
+  function fixSet(acts, n = 20) {
+    const seen = new Set(), out = [], add = q => { if (q && !q.ocr && !seen.has(q.id) && out.length < n) { seen.add(q.id); out.push(q); } };
+    acts.filter(a => a.k === 'due').forEach(() => { try { dueList().slice(0, 6).forEach(add); } catch (e) {} });
+    acts.filter(a => a.k === 'unsure').forEach(() => unsureIds().slice(0, 4).forEach(k => add(BYID[k])));
+    const subs = acts.filter(a => a.k === 'sub' || a.k === 'weak');
+    if (subs.length) { const each = Math.max(3, Math.ceil((n - out.length) / subs.length)); subs.forEach(a => subPick(a.s, each, a.k === 'weak').forEach(add)); }
+    return out;
+  }
+  function runFix(a) {
+    if (a.k === 'listen') return openListen();
+    const l = a.k === 'all' ? fixSet(diagnose().acts) : a.k === 'due' ? (() => { try { return dueList(); } catch (e) { return []; } })()
+      : a.k === 'unsure' ? unsureIds().map(k => BYID[k]).filter(Boolean) : subPick(a.s, 15, a.k === 'weak');
+    if (!l.length) return window.__toast && __toast('지금 풀 문제가 없어요');
+    const t = a.k === 'all' ? '🩺 빈 곳 채우기' : a.k === 'due' ? '🔁 오늘 복습' : a.k === 'unsure' ? '🤔 헷갈렸던 문제' : (a.k === 'weak' ? '🎯 ' : '📘 ') + SUBS[a.s];
+    startQuiz(l, { from: 'home', title: t });
+  }
+  window.fixSet = fixSet;
+  // ▶ 오늘 공부 시작에도 매니저 처방을 넣음 (복습 다음 순서)
+  try {
+    const _tp = todayPlan;
+    todayPlan = function () {
+      const r = _tp.apply(this, arguments);
+      try {
+        if (r && r.items && r.ph) {
+          const acts = diagnose().acts.filter(a => a.k === 'sub' || a.k === 'weak' || a.k === 'unsure');
+          const qs = acts.length ? fixSet(acts, 15) : [];
+          if (qs.length) {
+            const nm = [...new Set(acts.filter(a => a.s != null).map(a => SUBS[a.s]))].slice(0, 2).join('·');
+            const at = r.items.findIndex(it => /오늘 복습/.test(it.label)) + 1;
+            r.items.splice(at, 0, { label: `🩺 매니저 처방 ${qs.length}문제`, sub: (nm ? nm + ' 채우기' : '') + (acts.some(a => a.k === 'unsure') ? (nm ? ' + ' : '') + '헷갈렸던 문제' : ''), qs, mode: 'list' });
+          }
+        }
+      } catch (e) {}
+      return r;
+    };
+  } catch (e) {}
+
   function managerCard() {
     const d = diagnose();
     return `<div class="card" id="mgr"><div class="row"><h2 class="grow">🧭 학습 매니저</h2><b style="color:${d.grade[1]}">${d.grade[0]}</b></div>
-      ${d.notes.length ? `<ul style="margin:6px 0 0;padding-left:18px;font-size:14px;line-height:1.6">${d.notes.slice(0, 2).map(n => `<li>${n}</li>`).join('')}</ul>` : '<div style="margin-top:6px">빠진 곳 없이 골고루 하고 있어요 👍</div>'}
+      ${d.notes.length ? `<div class="fixl">${d.notes.slice(0, 3).map((n, i) => `<button data-f="${i}">${n}<i>${d.acts[i].k === 'listen' ? '🎧' : '▶'}</i></button>`).join('')}</div>
+      ${d.acts.some(a => a.k !== 'listen') ? `<button class="btn" id="fixall" style="width:100%;margin-top:8px">🩺 빈 곳 한 번에 채우기 (${fixSet(d.acts).length}문제)</button>` : ''}` : '<div style="margin-top:6px">빠진 곳 없이 골고루 하고 있어요 👍</div>'}
       <details style="margin-top:10px"><summary style="font-weight:600">📍 상황별로 고르기 (잠·버스·도서관…)</summary>
       <div class="sit" style="margin-top:8px">${SITU.map(([k, i, t, sub]) => `<button data-s="${k}"><b>${i} ${t}</b><span>${sub}</span></button>`).join('')}</div></details></div></div>`;
   }
