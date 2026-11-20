@@ -106,6 +106,11 @@
     #pscore small{font-size:10.5px;color:var(--sub2,#9aa3b5)} #pscore span{font-size:13.5px;white-space:nowrap} #pscore b{font-size:16px} #pscore b.ok{color:#16a34a} #pscore b.no{color:#ef4444}
     #pscore i{font-style:normal;font-size:10.5px;margin-left:2px} #pscore i.up{color:#16a34a} #pscore i.dn{color:#ef4444}
     #pscore.flash{animation:psf .9s} @keyframes psf{0%{transform:scale(1)}20%{transform:scale(1.08);box-shadow:0 0 0 4px rgba(34,197,94,.25)}100%{transform:scale(1)}}
+    .qdock{display:flex;flex-direction:column-reverse;position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:30;padding:8px 10px;background:var(--bg);border-top:1px solid var(--line)}
+    .qdock .qd{display:flex;gap:8px;width:100%;max-width:640px;margin:0 auto} .qdock .qd .btn{margin:0;height:48px} .qdock .qdi{flex:none;width:52px;padding:0;font-size:19px}
+    .qdock .qdi .ic{margin:0} .qdock #qb,.qdock #qdia{font-size:0} .qdock #qb .ic,.qdock #qdia .ic{font-size:19px} .qdock #qn{flex:1;font-size:17px}
+    .qdock .qmore{display:none;width:100%;max-width:640px;margin:0 auto 8px} .qdock.open .qmore{display:block} .qdock .qmore .qtb{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:0}
+    body.qdocked #view{padding-bottom:84px}
     .fixl{display:flex;flex-direction:column;gap:6px;margin-top:8px} .fixl button{display:flex;align-items:center;gap:8px;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit;font-size:14px;line-height:1.45} .fixl button i{margin-left:auto;font-style:normal;color:var(--pri,#2563eb);font-weight:700}
     .sit button{text-align:left;padding:12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit}
     .sit b{display:block;font-size:15px} .sit span{font-size:12px;opacity:.7}
@@ -1208,10 +1213,10 @@ ${q.x}
     const ex0 = document.getElementById('beg'), mb = document.getElementById('moreBox');
     if (ex0 && mb && mb.nextElementSibling !== ex0 && !document.querySelector('#view .xtabs')) { const bx = document.getElementById('begBox'); mb.after(ex0); if (bx) ex0.after(bx); }
     if (cur !== 'quiz' || !q || !S.ans[q.id] || (S.exam && !S.done) || ex0) return;
-    const tb = document.querySelector('#view .qtb'); if (!tb) return;
+    const tb = document.querySelector('.qtb'); if (!tb) return;
     const K = 'reb_beg_' + q.id, saved = (() => { try { return localStorage.getItem(K); } catch (e) { return null; } })();
     const ok = String(q.a).split(',').map(Number).includes(+S.ans[q.id]), unsure = (() => { const v = conf()[q.id]; return !!v && v !== 'sure'; })();
-    (document.getElementById('moreBox') || tb).insertAdjacentHTML('afterend', `<button class="btn full ${ok && !unsure ? '' : 'begon'}" id="beg">🐣 처음부터 알려줘 ${saved ? '<span class="svd">✓ 저장됨</span>' : '<span class="svd no">인터넷</span>'}</button><div id="begBox"></div>`);
+    (document.getElementById('moreBox') || document.getElementById('aibox') || tb).insertAdjacentHTML('afterend', `<button class="btn full ${ok && !unsure ? '' : 'begon'}" id="beg">🐣 처음부터 알려줘 ${saved ? '<span class="svd">✓ 저장됨</span>' : '<span class="svd no">인터넷</span>'}</button><div id="begBox"></div>`);
     const btn = document.getElementById('beg'), box = document.getElementById('begBox');
     const show = t => {
       box.innerHTML = `<div class="begc">${begRender(t)}<button class="btn full" id="begSay">🔊 이 설명 읽기</button></div>`;
@@ -1312,13 +1317,42 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
     padFit(); padDraw(); padSave(); if (PAD.paint) PAD.paint();
   }
   window.makeDiagram = makeDiagram;
+
+  /* 📌 문제 화면 버튼은 늘 같은 자리: 화면 아래 고정 줄 [← | ☆ | 🧭 | ⋯ | 다음 →]
+     ⋯ 를 누르면 원본·핵심 카드·신고·숫자 바꾸기 */
+  function dockQuiz() {
+    if (cur !== 'quiz') { document.querySelector('.qdock')?.remove(); document.body.classList.remove('qdocked'); return; }
+    const qn = document.getElementById('qn'), qp = document.getElementById('qp'); if (!qn || !qp) return;
+    let dk = document.querySelector('.qdock');
+    if (!dk || !dk.contains(qn)) {
+      dk?.remove();
+      const row = qn.parentElement;
+      dk = document.createElement('div'); dk.className = 'qdock';
+      dk.innerHTML = '<div class="qd"></div><div class="qmore"></div>';
+      const bar = dk.firstChild, more = dk.lastChild;
+      qp.innerHTML = '←'; qp.classList.add('qdi'); qp.setAttribute('aria-label', '이전 문제');
+      const mk = document.createElement('button'); mk.className = 'btn qdi'; mk.id = 'qmk'; mk.innerHTML = '⋯'; mk.setAttribute('aria-label', '더 보기');
+      mk.onclick = () => dk.classList.toggle('open');
+      bar.append(qp, mk, qn);
+      const tb = document.querySelector('#view .qtb'); if (tb) more.appendChild(tb);
+      document.body.appendChild(dk); document.body.classList.add('qdocked');
+      if (row && !row.children.length) row.remove();
+      more.addEventListener('click', e => { if (e.target.closest('button,a')) setTimeout(() => dk.classList.remove('open'), 150); });
+    }
+    // ☆ 북마크와 🧭 풀이 도식은 바로 누를 수 있게 아래 줄로 (생기면 그때 옮김)
+    const bar = dk.querySelector('.qd'), mk = document.getElementById('qmk');
+    ['qb', 'qdia'].forEach(id => { const b = document.getElementById(id); if (b && b.parentElement !== bar) { b.classList.add('qdi'); bar.insertBefore(b, mk); } });
+    const t = document.querySelector('.qtb'); if (t && !t.closest('.qdock')) dk.querySelector('.qmore').appendChild(t);
+    mk.style.display = dk.querySelector('.qmore .qtb')?.children.length ? '' : 'none';
+  }
+  setInterval(dockQuiz, 300);
   function decorateTabs() {
     const q = (typeof S !== 'undefined' && S && S.list) ? S.list[S.i] : null;
     if (cur !== 'quiz' || !q || !S.ans[q.id] || (S.exam && !S.done)) return;
     const card = document.querySelector('#view .card'); if (!card) return;
     const qa = document.getElementById('qa'), more = document.getElementById('more'), beg = document.getElementById('beg');
     const ab = document.getElementById('aibox'), mb = document.getElementById('moreBox'), bb = document.getElementById('begBox');
-    const tb = card.querySelector('.qtb'), qv = document.getElementById('qv');
+    const tb = document.querySelector('.qtb'), qv = document.getElementById('qv');
     if (!qa || !ab || !more || !mb || !beg || !bb || !tb) return;
     let tabs = card.querySelector('.xtabs');
     const saved = k => { try { return !!localStorage.getItem(k); } catch (e) { return false; } };
@@ -1331,7 +1365,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
       [qa, more, beg].forEach(b => b.classList.add('xhid'));
       if (qv) { qv.className = 'btn'; qv.innerHTML = '<span class="ic">🔁</span>숫자 바꾸기'; tb.insertBefore(qv, tb.lastElementChild); tb.classList.add('q5'); }
       if (!document.getElementById('qdia')) { tb.insertAdjacentHTML('afterbegin', '<button class="btn" id="qdia"><span class="ic">🧭</span>풀이 도식</button>'); document.getElementById('qdia').onclick = e => makeDiagram(q, e.currentTarget); }
-      pnl.after(tb);                                      // 도구 줄은 해설 아래 맨 끝
+      if (!tb.closest('.qdock')) pnl.after(tb);          // (아래 고정 줄에 들어가 있으면 그대로)
       tabs.querySelectorAll('button').forEach(b => b.onclick = () => xshow(b.dataset.x, true));
       // 저장된 해설이 있으면 바로 펼쳐 보여 주기(인터넷 필요 없음)
       xshow('ai', !!expOf(q) || ab.textContent.trim().length > 20);
@@ -1522,7 +1556,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
     w.textContent = `⏳ ${Math.round((Date.now() - aiT0) / 1000)}초째 · 인터넷으로 만드는 중이라 보통 10~40초 걸려요`;
   }, 1000);
   window.addEventListener('load', () => setTimeout(() => {
-    wrap('quiz', () => { decorateQuiz(); decorateChoices(); decorateElim(); quizScroll(); });
+    wrap('quiz', () => { decorateQuiz(); decorateChoices(); decorateElim(); quizScroll(); dockQuiz(); });
     const _sq = window.startQuiz; window.startQuiz = function () { window.__xp0 = xpNow(); return _sq.apply(this, arguments); };
     setTimeout(achCheck, 1500);
     setTimeout(scoreChip, 300);
