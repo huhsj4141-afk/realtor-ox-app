@@ -50,6 +50,20 @@ def join_lines(x, cnt):
     x = re.sub(r"[ \t]*(?:\d{4}년\s*)?제\s*\d+\s*회\s*공인중개사(?:\s*\d\b)?[ \t]*(?=\n|$)", "", x).rstrip()   # 쪽 위 머리글(2018년 제29회 공인중개사)
     return x.strip()
 
+STANDALONE = set('수 것 등 중 및 때 후 전 시 내 외 간 상 하 안 더 또 각 약 총 단 제 줄 바 데 뿐 만 원 명 개 년 월 일 층 호 동 번 항 조 회 점 장 곳 쪽 차 배 분 초 세 채 필 평 건 권 법 위 앞 뒤 옆 말 달 주 해 날 그 이 저 및 즉 곧 또는 매 각 본 당 해당 갑 을 병 정 무'.split())
+
+
+def fix_spacing(x, cnt):
+    """띄어쓰기 고치기: 「…법률」 에 → 법률」에, 면 적 → 면적, 신청인에 게 → 신청인에게 (낱말 사전에 붙인 꼴이 있을 때만)"""
+    x = re.sub(r'(법|률|규칙|령|조례|법률」|법」|규칙」|령」)[ \t]+(에서|에게|에|의|을|를|은|는|으로|로|과|와|이|가|상)(?=[\s,.)」]|$)', r'\1\2', x)
+    def j(m):
+        a, b = m.group(1), m.group(2)
+        if b in STANDALONE or len(b) > 1: return m.group(0)
+        w = a + b
+        return w if cnt.get(w, 0) >= 2 and cnt.get(w, 0) >= cnt.get(b, 0) * 0 else m.group(0)
+    return re.sub(r'([가-힣]+)[ \t]([가-힣])(?![가-힣])', j, x)
+
+
 def main():
     s, i, j, _ = load()
     raw = json.load(open(os.path.join(ROOT, 'data', 'raw.json'), encoding='utf8'))
@@ -68,7 +82,7 @@ def main():
             r[8] = re.sub(r'[ \t]*([①-⑤])', r'\n\1', fix[idd]).strip()
             if len(r) > 12: r[12] = 0
         else:
-            r[8] = join_lines(r[8], cnt)
+            r[8] = fix_spacing(join_lines(r[8], cnt), cnt)
         if r[8] != old: changed.append(idd)
         keep.append(r)
     s = s[:i + 10] + json.dumps(keep, ensure_ascii=False, separators=(',', ':')) + s[j + 1:]

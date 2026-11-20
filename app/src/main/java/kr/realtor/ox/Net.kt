@@ -80,7 +80,7 @@ object Net {
             val a = JSONObject(ctx.assets.open("web/pron.json").bufferedReader().readText()).getJSONArray("rules")
             (0 until a.length()).mapNotNull { i -> try { val x = a.getJSONArray(i); Regex(x.getString(0)) to x.getString(1) } catch (e: Exception) { null } }
         } catch (e: Exception) { emptyList() }.also { pronRules = it }
-        var t = text; r.forEach { (re, to) -> t = re.replace(t, java.util.regex.Matcher.quoteReplacement(to)) }
+        var t = text; r.forEach { (re, to) -> t = try { re.replace(t, to) } catch (e: Exception) { t } }   // to 안의 \$1 = 묶음 1
         return t
     }
 

@@ -202,7 +202,7 @@ def cloud_tts(text, raw):
     raise RuntimeError('클라우드 TTS 재시도 초과')
 
 
-PRON = [(re.compile(a), b) for a, b in json.load(open(os.path.join(ROOT, 'web', 'pron.json'), encoding='utf8'))['rules']] if os.path.exists(os.path.join(ROOT, 'web', 'pron.json')) else []
+PRON = [(re.compile(a), re.sub(r'\$(\d)', r'\\\1', b)) for a, b in json.load(open(os.path.join(ROOT, 'web', 'pron.json'), encoding='utf8'))['rules']] if os.path.exists(os.path.join(ROOT, 'web', 'pron.json')) else []
 
 
 def pron(t):
