@@ -112,6 +112,10 @@
     .qdock .qmore{display:none;width:100%;max-width:640px;margin:0 auto 8px} .qdock.open .qmore{display:block} .qdock .qmore .qtb{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:0}
     body.qdocked #view{padding-bottom:84px}
     .fbk{display:block;width:100%;margin-top:8px;font-size:14px} .xmore small{font-weight:400;opacity:.7;font-size:12px}
+    .hero .lvb{border-color:rgba(255,255,255,.3)} .hero .lvt small{color:rgba(255,255,255,.8)} .hero .lvt i{background:rgba(255,255,255,.25)} .hero .lvn{background:#fff;color:var(--pri)}
+    #mgr.inhero{margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.25)} #mgr .mgh{font-weight:700;font-size:14px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px} #mgr .mgh small{flex-basis:100%;font-weight:400;font-size:11.5px;opacity:.8}
+    #mgr.inhero .fixl button{border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:inherit;font-size:13.5px;padding:8px 10px} #mgr.inhero .fixl button i{color:inherit}
+    #mgr.inhero details summary{font-size:13px;opacity:.9} #mgr.inhero .sit button{background:rgba(255,255,255,.12);color:inherit;border-color:rgba(255,255,255,.3)}
     .fixl{display:flex;flex-direction:column;gap:6px;margin-top:8px} .fixl button{display:flex;align-items:center;gap:8px;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit;font-size:14px;line-height:1.45} .fixl button i{margin-left:auto;font-style:normal;color:var(--pri,#2563eb);font-weight:700}
     .sit button{text-align:left;padding:12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit}
     .sit b{display:block;font-size:15px} .sit span{font-size:12px;opacity:.7}
@@ -268,7 +272,7 @@
     const hero = document.querySelector('#view .card');
     if (hero && !document.querySelector('.wk')) hero.insertAdjacentHTML('beforeend', weekStrip());
     if (hero && !$('#mgr')) {
-      hero.insertAdjacentHTML('afterend', managerCard());
+      hero.insertAdjacentHTML('beforeend', managerCard());   // 오늘 공부 시작 카드 안으로 합침
       $('#mgr .sit').onclick = e => { const b = e.target.closest('[data-s]'); if (b) runSitu(b.dataset.s); };
       const dg = diagnose();
       $('#mgr').querySelectorAll('[data-f]').forEach(b => b.onclick = () => runFix(dg.acts[+b.dataset.f]));
@@ -456,7 +460,7 @@
 
   function managerCard() {
     const d = diagnose();
-    return `<div class="card" id="mgr"><div class="row"><h2 class="grow">🧭 학습 매니저</h2><b style="color:${d.grade[1]}">${d.grade[0]}</b></div>
+    return `<div id="mgr" class="inhero"><div class="mgh">🧭 매니저 처방 <b>${d.grade[0]}</b><small>시작 버튼에 들어 있어요 · 하나만 하려면 누르기</small></div>
       ${d.notes.length ? `<div class="fixl">${d.notes.slice(0, 3).map((n, i) => `<button data-f="${i}">${n}<i>${d.acts[i].k === 'listen' ? '🎧' : '▶'}</i></button>`).join('')}</div>` : '<div style="margin-top:6px">빠진 곳 없이 골고루 하고 있어요 👍</div>'}
       <details style="margin-top:10px"><summary style="font-weight:600">📍 상황별로 고르기 (잠·버스·도서관…)</summary>
       <div class="sit" style="margin-top:8px">${SITU.map(([k, i, t, sub]) => `<button data-s="${k}"><b>${i} ${t}</b><span>${sub}</span></button>`).join('')}</div></details></div></div>`;
