@@ -93,6 +93,15 @@
     #more{margin-top:10px}
     .sit{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     .hday{font-size:12.5px;font-weight:700;color:var(--sub2,#9aa3b5);margin:12px 0 4px} .hrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 4px;border:0;border-bottom:1px solid var(--line);background:transparent;color:inherit;font:inherit} .hrow span{flex:1;min-width:0;display:flex;flex-direction:column} .hrow small{color:var(--sub2,#9aa3b5);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .hrow i{font-style:normal;font-size:12px;color:var(--sub2,#9aa3b5)} .hrow>b{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:13px;flex:none} .hok{background:#16a34a22;color:#16a34a} .hno{background:#ef444422;color:#ef4444} .hun{background:var(--line)}
+    .lvb{display:flex;align-items:center;gap:10px;width:100%;margin-top:10px;padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:transparent;color:inherit;text-align:left}
+    .lvn{flex:none;font-weight:800;font-size:13px;padding:4px 8px;border-radius:999px;background:var(--pri);color:#fff}
+    .lvt{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0} .lvt b{font-size:13px} .lvt small,.lvbig small{font-size:11.5px;color:var(--sub2,#9aa3b5)} .lvg{font-size:18px}
+    .lvt i,.lvbig i{display:block;height:6px;border-radius:3px;background:var(--line);overflow:hidden} .lvt em,.lvbig em{display:block;height:100%;background:linear-gradient(90deg,var(--pri),#22c55e);border-radius:3px}
+    .lvbig{display:flex;align-items:center;gap:12px;margin:6px 0 12px} .lvbig .lvn{font-size:16px;padding:8px 12px} .lvbig>div{flex:1;display:flex;flex-direction:column;gap:4px}
+    .pred{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px} .pr{border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:2px} .pr .hok,.pr .hno{font-weight:800;font-size:18px;background:none} .pr small{font-size:12px;color:var(--sub2,#9aa3b5)}
+    .bdg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px} .bdg>div{border:1px solid var(--line);border-radius:12px;padding:8px 6px;text-align:center;opacity:.45} .bdg>div.on{opacity:1;border-color:var(--pri)} .bdg b{display:block;font-size:24px} .bdg span{display:block;font-size:12.5px;font-weight:700} .bdg small{display:block;font-size:10.5px;color:var(--sub2,#9aa3b5);line-height:1.3;margin-top:2px}
+    .achpop{position:fixed;inset:0;z-index:9998;display:grid;place-items:center;background:rgba(0,0,0,.35);animation:apf .2s} .achpop>div{background:var(--card);color:var(--ink);border-radius:18px;padding:22px 24px;text-align:center;max-width:300px;display:flex;flex-direction:column;gap:8px;animation:app .35s cubic-bezier(.2,1.4,.4,1)} .achpop b{font-size:20px} .achpop span{color:var(--sub2,#9aa3b5);font-size:14px} .achpop button{margin-top:6px;padding:10px;border-radius:12px;border:0;background:var(--pri);color:#fff;font-weight:700}
+    @keyframes apf{from{opacity:0}} @keyframes app{from{transform:scale(.6);opacity:0}}
     .fixl{display:flex;flex-direction:column;gap:6px;margin-top:8px} .fixl button{display:flex;align-items:center;gap:8px;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit;font-size:14px;line-height:1.45} .fixl button i{margin-left:auto;font-style:normal;color:var(--pri,#2563eb);font-weight:700}
     .sit button{text-align:left;padding:12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit}
     .sit b{display:block;font-size:15px} .sit span{font-size:12px;opacity:.7}
@@ -528,6 +537,82 @@
     st.textContent = 'button,.hrow,summary,[data-a],[data-s]{transition:transform .08s,filter .08s} button:active:not(:disabled),.hrow:active,summary:active,[data-a]:active,[data-s]:active{transform:scale(.96);filter:brightness(.92)}';
     document.head.appendChild(st);
   })();
+
+  /* ================= 🏆 성취: 경험치·레벨·배지·축하 ================= */
+  const LVN = ['입문', '새싹', '수험생', '꾸준러', '실력자', '고수', '합격권', '달인', '마스터', '전설'];
+  function xpNow() { let x = 0; for (const k in P) { const r = P[k], a = r[2] || 1, w = r[3] || 0; x += a * 3 + Math.max(0, a - w) * 7; } return x; }
+  function lvOf(x) { let n = 1, need = 100, acc = 0; while (x >= acc + need) { acc += need; n++; need = 100 + (n - 1) * 60; } return { n, name: LVN[Math.min(LVN.length - 1, Math.floor((n - 1) / 3))], cur: x - acc, need }; }
+  function achStats() {
+    const ks = Object.keys(P), st = subjStats();
+    let lsec = 0; try { for (const k in LJ.d) lsec += LJ.d[k].lsec || 0; } catch (e) {}
+    const days = new Set(ks.map(k => new Date(P[k][4]).toDateString())).size;
+    return { solved: ks.length, streak: (() => { try { return streak().n; } catch (e) { return 0; } })(), days, lsec,
+      conquer: ks.filter(k => P[k][3] > 0 && P[k][1] === 1).length, st, exams: (EX || []).length, pass: (EX || []).some(e => e.pass) };
+  }
+  const BADGES = [
+    ['first', '🌱', '첫걸음', '첫 문제 풀기', a => a.solved >= 1],
+    ['s100', '💯', '100문제', '100문제 풀기', a => a.solved >= 100],
+    ['s500', '📚', '500문제', '500문제 풀기', a => a.solved >= 500],
+    ['s1000', '🏔️', '1000문제', '1000문제 풀기', a => a.solved >= 1000],
+    ['sall', '👑', '기출 정복', '모든 기출 한 번씩', a => a.solved >= Q.filter(q => !q.ocr).length * .98],
+    ['k3', '🔥', '3일 연속', '3일 연속 공부', a => a.streak >= 3],
+    ['k7', '⚡', '일주일 연속', '7일 연속 공부', a => a.streak >= 7],
+    ['k30', '🏅', '한 달 연속', '30일 연속 공부', a => a.streak >= 30],
+    ['d50', '🗓️', '50일 공부', '공부한 날 50일', a => a.days >= 50],
+    ['c10', '🩹', '오답 정복 10', '틀린 문제 10개 다시 맞히기', a => a.conquer >= 10],
+    ['c100', '🛡️', '오답 정복 100', '틀린 문제 100개 다시 맞히기', a => a.conquer >= 100],
+    ['fl', '🚧', '과락 탈출', '다섯 과목 모두 정답률 40% 넘기 (과목당 20문제 이상)', a => a.st.every(x => x.grad >= 20 && x.rate >= .4)],
+    ['p60', '🎯', '합격선', '다섯 과목 모두 정답률 60% 넘기', a => a.st.every(x => x.grad >= 20 && x.rate >= .6)],
+    ['top', '🌟', '한 과목 80%', '한 과목 정답률 80% (50문제 이상)', a => a.st.some(x => x.grad >= 50 && x.rate >= .8)],
+    ['ex1', '⏱️', '첫 모의고사', '모의고사 한 회 끝까지', a => a.exams >= 1],
+    ['exp', '🏆', '모의고사 합격', '모의고사 합격 점수', a => a.pass],
+    ['l60', '🎧', '귀로 1시간', '듣기 공부 누적 1시간', a => a.lsec >= 3600],
+    ['l600', '🎼', '귀로 10시간', '듣기 공부 누적 10시간', a => a.lsec >= 36000],
+  ];
+  function achLoad() { try { return JSON.parse(localStorage.getItem('reb_ach') || '{}'); } catch (e) { return {}; } }
+  function achSave(o) { try { localStorage.setItem('reb_ach', JSON.stringify(o)); } catch (e) {} }
+  function confetti() {
+    const c = document.createElement('canvas'); c.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9999';
+    document.body.appendChild(c); const d = devicePixelRatio || 1; c.width = innerWidth * d; c.height = innerHeight * d;
+    const g = c.getContext('2d'); g.scale(d, d); const C = ['#f59e0b', '#ef4444', '#3b82f6', '#22c55e', '#a855f7', '#ec4899'];
+    const ps = Array.from({ length: 110 }, () => ({ x: innerWidth / 2 + (Math.random() - .5) * 80, y: innerHeight * .35, vx: (Math.random() - .5) * 11, vy: -Math.random() * 12 - 4, r: Math.random() * 6 + 4, c: C[Math.random() * C.length | 0], a: Math.random() * 6 }));
+    let t = 0; (function f() { g.clearRect(0, 0, innerWidth, innerHeight); ps.forEach(p => { p.vy += .35; p.x += p.vx; p.y += p.vy; p.a += .2; g.save(); g.translate(p.x, p.y); g.rotate(p.a); g.fillStyle = p.c; g.globalAlpha = Math.max(0, 1 - t / 90); g.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2); g.restore(); });
+      if (++t < 95) requestAnimationFrame(f); else c.remove(); })();
+  }
+  function celebrate(title, sub) {
+    confetti(); try { window.NativeBridge && NativeBridge.tap && NativeBridge.tap(true); } catch (e) {}
+    const o = document.createElement('div'); o.className = 'achpop';
+    o.innerHTML = `<div><b>${title}</b><span>${sub}</span><button>좋아요</button></div>`;
+    o.onclick = () => o.remove(); document.body.appendChild(o); setTimeout(() => o.remove(), 4500);
+  }
+  /* 새로 얻은 배지·레벨업이 있으면 축하 (처음 한 번은 조용히 기록만) */
+  function achCheck() {
+    const a = achStats(), o = achLoad(), got = BADGES.filter(b => b[4](a)).map(b => b[0]), L = lvOf(xpNow());
+    if (!o.init) { achSave({ init: 1, got, lv: L.n }); return; }
+    const nb = got.filter(k => !o.got.includes(k));
+    const up = L.n > (o.lv || 1);
+    achSave({ init: 1, got, lv: L.n });
+    if (nb.length) { const b = BADGES.find(x => x[0] === nb[0]); celebrate(`${b[1]} 새 배지: ${b[2]}`, b[3] + (nb.length > 1 ? ` 외 ${nb.length - 1}개` : '')); }
+    else if (up) celebrate(`⬆️ 레벨 업! Lv.${L.n} ${L.name}`, `지금까지 ${xpNow().toLocaleString()} XP`);
+  }
+  window.achCheck = achCheck;
+  function lvBar() {
+    const x = xpNow(), L = lvOf(x), got = BADGES.filter(b => b[4](achStats())).length;
+    return `<button class="lvb" id="lvb"><span class="lvn">Lv.${L.n}</span><span class="lvt"><b>${L.name}</b><i><em style="width:${Math.round(L.cur / L.need * 100)}%"></em></i><small>다음 레벨까지 ${L.need - L.cur} XP · 배지 ${got}/${BADGES.length}</small></span><span class="lvg">🏆</span></button>`;
+  }
+  /* 기록 → 점수 맨 위: 성취 카드 */
+  function achCard() {
+    const a = achStats(), x = xpNow(), L = lvOf(x);
+    const r = s => a.st[s].grad >= 10 ? a.st[s].rate * 100 : null;
+    const avg = ids => { const v = ids.map(r); return v.some(z => z == null) ? null : v.reduce((p, q) => p + q, 0) / v.length; };
+    const fail = ids => ids.some(s => r(s) != null && r(s) < 40);
+    const exm = (nm, ids) => { const v = avg(ids); return `<div class="pr"><b>${nm}</b>${v == null ? '<span class="muted">과목마다 10문제 이상 풀면 보여요</span>' : `<span class="${v >= 60 && !fail(ids) ? 'hok' : 'hno'}">예상 ${Math.round(v)}점</span><small>${v >= 60 && !fail(ids) ? '합격권이에요 👏' : fail(ids) ? '과락(40점 미만) 과목부터 채워요' : `합격선까지 +${Math.ceil(60 - v)}점`}</small>`}</div>`; };
+    return `<div class="card" id="achc"><h2>🏆 나의 성취</h2>
+      <div class="lvbig"><span class="lvn">Lv.${L.n}</span><div><b>${L.name}</b><i><em style="width:${Math.round(L.cur / L.need * 100)}%"></em></i><small>${x.toLocaleString()} XP · 다음 레벨까지 ${L.need - L.cur} XP</small></div></div>
+      <div class="pred">${exm('1차', [0, 1])}${exm('2차', [2, 3, 4])}</div>
+      <div class="bdg">${BADGES.map(b => { const ok = b[4](a); return `<div class="${ok ? 'on' : ''}" title="${b[3]}"><b>${ok ? b[1] : '🔒'}</b><span>${b[2]}</span><small>${b[3]}</small></div>`; }).join('')}</div>
+      <div class="muted" style="font-size:12px;margin-top:8px">맞히면 10 XP, 틀려도 풀면 3 XP예요. 틀린 문제를 다시 맞히면 '오답 정복'이 쌓여요.</div></div>`;
+  }
   function setPanel(v) {
     let p = document.getElementById('setp'); if (p) { p.remove(); return; }
     const nz = document.getElementById('nzp'); if (nz) nz.remove();
@@ -1173,6 +1258,16 @@ ${q.x}
     const h = c.querySelector('h2,h3'); if (h && c.firstElementChild === h) h.style.display = 'none';
   }
   function tidy() {
+    if (cur === 'stats' && !document.getElementById('achc')) { const sg = document.getElementById('rseg'); if (sg) sg.insertAdjacentHTML('afterend', achCard()); }
+    if (cur === 'home' && !document.getElementById('lvb')) {
+      const go = document.querySelector('#view .hero .go');
+      if (go) { go.insertAdjacentHTML('afterend', lvBar()); document.getElementById('lvb').onclick = () => window.go('stats'); }
+    }
+    if (cur === 'result' && !document.getElementById('xpg')) {
+      const g = xpNow() - (window.__xp0 ?? xpNow()), v = document.getElementById('view');
+      if (v && g > 0) { v.insertAdjacentHTML('afterbegin', `<div class="card" id="xpg" style="text-align:center"><b style="font-size:20px">+${g} XP</b><div class="muted" style="font-size:13px">${lvOf(xpNow()).name} · Lv.${lvOf(xpNow()).n}</div></div>`); }
+      achCheck();
+    }
     if (cur === 'home') {
       [...document.querySelectorAll('#view .card')].forEach(c => { if (/내용 업데이트/.test(c.textContent.slice(0, 40))) c.style.display = 'none'; });
       document.querySelectorAll('#view > .muted, #view > p.muted, #view .foot').forEach(e => { if (/사용량|요금/.test(e.textContent)) e.style.display = 'none'; });
@@ -1324,6 +1419,8 @@ ${q.x}
   }, 1000);
   window.addEventListener('load', () => setTimeout(() => {
     wrap('quiz', () => { decorateQuiz(); decorateChoices(); decorateElim(); quizScroll(); });
+    const _sq = window.startQuiz; window.startQuiz = function () { window.__xp0 = xpNow(); return _sq.apply(this, arguments); };
+    setTimeout(achCheck, 1500);
     const _rec = window.record; window.record = function (q, c) { const r = _rec.apply(this, arguments); logAnswer(q, c); return r; }; wrap('home', decorateHome); wrap('setup', decorateSetup); wrap('wrong', decorateWrong); wrap('themes', decorateThemes);
     const v = document.querySelector('#tabs button.on')?.dataset.v;
     if (v === 'home') decorateHome();
