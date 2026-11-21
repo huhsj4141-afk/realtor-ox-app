@@ -34,7 +34,7 @@ object Net {
         c.outputStream.use { it.write(body.toByteArray()) }
         val code = c.responseCode
         val text = (if (code in 200..299) c.inputStream else c.errorStream)?.bufferedReader()?.readText() ?: ""
-        if (code !in 200..299) throw RuntimeException("HTTP $code ${text.take(200)}")
+        if (code !in 200..299) throw RuntimeException("HTTP $code ${text.take(1500)}")
         return text
     }
 

@@ -56,7 +56,9 @@
     const body = { contents: [{ parts: [{ text: String(prompt) }] }], generationConfig: { temperature: 0.4 } };
     if (asJson) body.generationConfig.responseMimeType = 'application/json';
     const tier = (opts && opts.modelTier) === 'quick' ? 'quick' : 'default';
-    let last = null; const t0 = Date.now();
+    let last = null, busy = false; const t0 = Date.now();
+    for (let pass = 0; pass < 2; pass++) {   // 서버가 잠깐 붐벼서(503 등) 실패하면 2.5초 뒤 한 번 더 자동으로
+    if (pass) { if (!busy) break; busy = false; await new Promise(r => setTimeout(r, 4000)); }
     for (const m of CHAIN[tier]) {
       if (localStorage.getItem(skipKey(m)) === today()) continue;
       if (Date.now() - t0 > 100000) break;             // 전체로 너무 오래 걸리면 그만(무한 대기 방지)
@@ -67,14 +69,16 @@
         return (((r.candidates || [])[0] || {}).content || { parts: [] }).parts.map(p => p.text || '').join('');
       } catch (e) {
         last = e; const msg = String(e.message || '');
-        if (/HTTP 429/.test(msg)) { localStorage.setItem(skipKey(m), today()); continue; }
-        if (/HTTP (404|500|503)|TIMEOUT/.test(msg)) continue;
+        if (/HTTP 429/.test(msg)) { if (/PerDay|per ?day|daily/i.test(msg)) localStorage.setItem(skipKey(m), today()); else busy = true; continue; }   // 분당 한도(잠깐 몰림)는 다시 시도, 하루 한도만 오늘 건너뜀
+        if (/HTTP (500|502|503|504)|TIMEOUT/.test(msg)) { busy = true; continue; }
+        if (/HTTP 404/.test(msg)) continue;
         if (/resolve host|UnknownHost|Failed to connect|Network|ENOTFOUND|timeout|No address|connection/i.test(msg))
           throw Object.assign(new Error('📶 인터넷에 연결되어 있지 않아요. 와이파이나 데이터를 켜고 다시 눌러 주세요. (저장된 해설은 인터넷 없이도 보여요)'), { code: 'offline' });
         throw e;   // 키 오류 등은 바로 알려 주기
       }
     }
-    if (last && /TIMEOUT/.test(String(last.message)) || Date.now() - t0 > 100000)
+    }
+    if (busy || last && /TIMEOUT|HTTP 5\d\d/.test(String(last.message)) || Date.now() - t0 > 100000)
       throw Object.assign(new Error('지금 AI가 붐벼서 답이 늦어요. 조금 뒤 다시 눌러 주세요. (해설이 없는 문제는 매일 저녁 자동으로 채워져요)'), { code: 'quota', cause: last });
     throw Object.assign(new Error('오늘 무료 AI 사용량을 다 썼어요. 오후 5시 이후에 다시 쓸 수 있어요. (해설이 없는 문제는 매일 저녁 자동으로 채워져요)'), { code: 'quota', cause: last });
   }
