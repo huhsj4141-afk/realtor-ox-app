@@ -1649,8 +1649,10 @@ ${q.x}
   /* ---------- 해설 묶음: [📖 해설 | 🔍 더 자세히 | 🐣 기초부터] 탭 하나로, 도구 버튼은 맨 아래 한 줄 ---------- */
 
   /* 🧭 풀이 도식: AI가 관계도·순서를 만들어 필기장에 그려 줌 (그 위에 바로 메모) */
-  async function makeDiagram(q, btn) {
-    const key = 'reb_dia_' + q.id; let d = null;
+  async function makeDiagram(q, btn, pre) {
+    const solved = !!document.querySelector('#view .fb');
+    pre = pre && !solved;   // 아직 안 풀었으면 정답 없이
+    const key = 'reb_dia_' + (pre ? 'p_' : '') + q.id; let d = null;
     try { d = JSON.parse(localStorage.getItem(key)); } catch (e) {}
     const old = btn ? btn.innerHTML : '';
     if (!d) {
@@ -1663,10 +1665,11 @@ ${q.x}
 - nodes 2~7개. x·y는 0~100, 서로 25 이상 떨어지게 넓게 배치. label은 한 줄 9자 이내, 최대 두 줄(\\n).
 - edges는 관계·흐름·계산 방향. label은 8자 이내.
 - 사람(甲·乙)·물건·권리·금액 관계가 있으면 그 관계도. 계산 문제면 값 → 계산 → 결과 흐름. 개념 문제면 핵심 개념을 분류 트리로.
-- steps 3~6줄, 한 줄 28자 이내. 계산 문제는 계산식을 숫자 그대로. 마지막 줄은 정답과 이유.
+${pre ? `- steps 3~5줄, 한 줄 28자 이내. 문제를 푸는 순서만 안내하고 정답 번호와 결론은 절대 쓰지 말 것.
+문제: ${q.x}` : `- steps 3~6줄, 한 줄 28자 이내. 계산 문제는 계산식을 숫자 그대로. 마지막 줄은 정답과 이유.
 문제: ${q.x}
 정답: ${q.a}
-${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
+${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
         const raw = await window.__gem(prompt, {}, true);
         d = JSON.parse(String(raw).replace(/^```(json)?|```$/g, '').trim());
         if (!d || !Array.isArray(d.nodes)) throw new Error('도식을 못 만들었어요. 다시 눌러 주세요');
@@ -2069,6 +2072,18 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
       T.speak(lines.map(l => ({ text: l.text })), {}).catch(e => { if (e && e.code !== 'viewer_stopped' && window.__toast) __toast(e.message); });
     }
     window.memoListen = memoListen;
+    // ── 🔗 관계도 버튼: 당사자가 여럿이거나 계산 문제면 문제 바로 아래에 ──
+    const RELX = /[甲乙丙丁戊]|계산|산출|금액|얼마|합계|세액|과세표준|중개보수|평가액|수익률|비율|㎡/;
+    setInterval(() => {
+      try {
+        if (cur !== 'quiz' || typeof S === 'undefined' || !S || !S.list) return; const q = S.list[S.i]; if (!q) return;
+        const qt = document.querySelector('#view .qtext'); if (!qt || qt.dataset.rel === q.id) return;
+        qt.dataset.rel = q.id; document.querySelectorAll('#view .qrel').forEach(e => e.remove());
+        if (!RELX.test(q.x + ' ' + (q.o || []).map(o => o.t || o).join(' '))) return;
+        qt.insertAdjacentHTML('afterend', `<button class="btn qrel" style="width:100%;margin:6px 0 10px">🔗 관계도로 보기</button>`);
+        const b = document.querySelector('#view .qrel'); b.onclick = () => window.makeDiagram(q, b, true);
+      } catch (e) {}
+    }, 400);
     // 아래 탭 3개
     function navA() {
       const nav = document.getElementById('tabs'); if (!nav) return;
