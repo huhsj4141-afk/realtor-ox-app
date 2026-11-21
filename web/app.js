@@ -119,7 +119,7 @@
     .abar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:8px 0 14px} .abar em{display:block;height:100%;background:linear-gradient(90deg,var(--pri),#22c55e);border-radius:4px}
     .agp{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:20px;padding:18px} .agp small{font-size:13px;font-weight:400;opacity:.85}
     .arow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px} .arow .btn{margin:0} .atd{font-size:12.5px;color:var(--sub2,#9aa3b5);margin-top:10px;text-align:center} .ahow{font-size:12.5px;text-align:center;margin:4px 12px}
-    .padsay{position:absolute;left:12px;right:12px;top:56px;z-index:5;background:#111d;color:#fff;padding:10px 14px;border-radius:12px;font-size:15px} #padmic{touch-action:none;user-select:none;-webkit-user-select:none} #padmic.on{background:#ef4444;color:#fff} u.khint{text-decoration:underline wavy #f59e0b 2px;text-underline-offset:4px;background:#f59e0b22;border-radius:3px} #sync{display:none} .moreh{font-weight:700;font-size:15px;margin:18px 0 6px;padding-top:12px;border-top:1px dashed var(--line,#e3e7ef)} .morec{white-space:pre-wrap;line-height:1.75;font-size:15px} .diawait{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);background:#111e;color:#fff;padding:14px 20px;border-radius:14px;z-index:300;font-size:15px} #view .qtext,#view .qtext *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none} .ahero .agp{background:var(--pri);color:#fff;border:0} .ahero .agp small{color:#ffffffcc} #wrev,#view .wbtns .btn{white-space:nowrap;font-size:15px} .sbg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px} .sbig{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px 14px} .sbig small{display:block;font-size:12.5px;color:var(--sub)} .sbig b{font-size:30px;line-height:1.2} .sbig b i{font-size:14px;font-style:normal;margin-left:2px} .sbig span{display:block;font-size:12.5px;color:var(--sub)} .ssub{margin-top:10px} .sr{display:grid;grid-template-columns:7.2em 1fr 2.2em 4.4em;align-items:center;gap:8px;padding:7px 0;font-size:14px} .sr em{height:8px;border-radius:5px;background:var(--line);overflow:hidden} .sr em i{display:block;height:100%} .sr b{text-align:right} .sr small{text-align:right;color:var(--sub);font-size:12px} .sach summary{cursor:pointer;font-weight:600} #pad.p2row .ph{display:none} #pad.p2row.pmemo .ph{display:flex} #pad.p2row .pt{flex-wrap:nowrap;gap:4px;padding:6px 8px 2px} #pad.p2row .pt button{min-width:0;flex:0 0 auto;width:36px;height:36px;padding:0;font-size:16px!important;border-radius:10px} #pad.p2row .pt .sp{flex:1} #pad.p2row #padw{max-width:90px;min-width:50px} .pcb i{display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid #fff8;vertical-align:middle} .ppal{position:absolute;left:8px;top:6px;z-index:6;display:none;gap:8px;padding:8px;border-radius:14px;background:var(--card);border:1px solid var(--line)} .ppal.on{display:flex} .ppal .pc{width:32px;height:32px} #padmic.on{background:#ef4444!important;color:#fff} .a1c{margin:10px 0;padding:12px 14px;border-radius:12px;background:var(--bg);color:var(--ink);border:1.5px solid var(--warn,#f59e0b)} .a1c small,.a1q small{display:block;font-size:12px;color:var(--sub)} .a1c b{display:block;font-size:16px;margin:6px 0 2px;line-height:1.5} .a1q{text-align:center} .a1f{font-size:20px;font-weight:700;margin:18px 0 10px;line-height:1.5} .a1b{font-size:17px;color:var(--pri,#2563eb);min-height:26px;margin-bottom:12px;line-height:1.5}
+    .padsay{position:absolute;left:12px;right:12px;top:56px;z-index:5;background:#111d;color:#fff;padding:10px 14px;border-radius:12px;font-size:15px} #padmic{touch-action:none;user-select:none;-webkit-user-select:none} #padmic.on{background:#ef4444;color:#fff} u.khint{text-decoration:underline wavy #f59e0b 2px;text-underline-offset:4px;background:#f59e0b22;border-radius:3px} #sync{display:none} .moreh{font-weight:700;font-size:15px;margin:18px 0 6px;padding-top:12px;border-top:1px dashed var(--line,#e3e7ef)} .morec{white-space:pre-wrap;line-height:1.75;font-size:15px} .diawait{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);background:#111e;color:#fff;padding:14px 20px;border-radius:14px;z-index:300;font-size:15px} #view .qtext,#view .qtext *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none} .ahero .agp{background:var(--pri);color:#fff;border:0} .ahero .agp small{color:#ffffffcc} #wrev,#view .wbtns .btn{white-space:nowrap;font-size:15px} .sbg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px} .sbig{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px 14px} .sbig small{display:block;font-size:12.5px;color:var(--sub)} .sbig b{font-size:30px;line-height:1.2} .sbig b i{font-size:14px;font-style:normal;margin-left:2px} .sbig span{display:block;font-size:12.5px;color:var(--sub)} .ssub{margin-top:10px} .sr{display:grid;grid-template-columns:7.2em 1fr 2.2em 4.4em;align-items:center;gap:8px;padding:7px 0;font-size:14px} .sr em{height:8px;border-radius:5px;background:var(--line);overflow:hidden} .sr em i{display:block;height:100%} .sr b{text-align:right} .sr small{text-align:right;color:var(--sub);font-size:12px} .sach summary{cursor:pointer;font-weight:600} #pad.p2row .ph{display:none} #pad.p2row.pmemo .ph{display:flex} #pad.p2row .pt{flex-wrap:nowrap;gap:4px;padding:6px 8px 2px} #pad.p2row .pt button{min-width:0;flex:0 0 auto;width:36px;height:36px;padding:0;font-size:16px!important;border-radius:10px} #pad.p2row .pt .sp{flex:1} #pad.p2row #padw{max-width:90px;min-width:40px;flex:1 1 40px} #pad.p2row #padwv{display:none} .pcb i{display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid #fff8;vertical-align:middle} .ppal{position:absolute;left:8px;top:6px;z-index:6;display:none;gap:8px;padding:8px;border-radius:14px;background:var(--card);border:1px solid var(--line)} .ppal.on{display:flex} .ppal .pc{width:32px;height:32px} #padmic.on{background:#ef4444!important;color:#fff} .a1c{margin:10px 0;padding:12px 14px;border-radius:12px;background:var(--bg);color:var(--ink);border:1.5px solid var(--warn,#f59e0b)} .a1c small,.a1q small{display:block;font-size:12px;color:var(--sub)} .a1c b{display:block;font-size:16px;margin:6px 0 2px;line-height:1.5} .a1q{text-align:center} .a1f{font-size:20px;font-weight:700;margin:18px 0 10px;line-height:1.5} .a1b{font-size:17px;color:var(--pri,#2563eb);min-height:26px;margin-bottom:12px;line-height:1.5}
     #pscore{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:2px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0;line-height:1.25}
     #pscore small{font-size:10.5px;color:var(--sub2,#9aa3b5)} #pscore span{font-size:13.5px;white-space:nowrap} #pscore b{font-size:16px} #pscore b.ok{color:#16a34a} #pscore b.no{color:#ef4444}
     #pscore i{font-style:normal;font-size:10.5px;margin-left:2px} #pscore i.up{color:#16a34a} #pscore i.dn{color:#ef4444}
@@ -1306,6 +1306,15 @@
     PAD.v = { s: ns, ox: wx - cx / ns, oy: wy - cy / ns }; padDraw();
   }
   window.padZoom = padZoom;
+  // ▦ 모눈 맞춤: 점을 가장 가까운 모눈 교차점으로 (모눈 간격 = 확대 100%에서 24px)
+  function gsnap(q) { const cv = document.getElementById('padc'); if (!PAD.grid || !cv) return q; const r = cv.getBoundingClientRect(), gx = 24 / (r.width || 360), gy = 24 / (r.height || 500); return [Math.round(Math.round(q[0] / gx) * gx * 10000) / 10000, Math.round(Math.round(q[1] / gy) * gy * 10000) / 10000]; }
+  function gsnapStroke(st) {
+    if (!PAD.grid || !st || !st.p || !st.p.length) return;
+    if (st.k === 'text') { st.p = [gsnap(st.p[0])]; return; }
+    if (st.s === 'line' || st.k === 'arrow' && st.p.length === 2) { st.p = [gsnap(st.p[0]), gsnap(st.p[st.p.length - 1])]; return; }
+    if (st.s === 'rect') { const xs = st.p.map(q => q[0]), ys = st.p.map(q => q[1]); const a = gsnap([Math.min(...xs), Math.min(...ys)]), b = gsnap([Math.max(...xs), Math.max(...ys)]); st.p = [[a[0], a[1]], [b[0], a[1]], [b[0], b[1]], [a[0], b[1]], [a[0], a[1]]]; return; }
+    if (st.s === 'oval') { const xs = st.p.map(q => q[0]), ys = st.p.map(q => q[1]); const a = gsnap([Math.min(...xs), Math.min(...ys)]), b = gsnap([Math.max(...xs), Math.max(...ys)]); const cx = (a[0] + b[0]) / 2, cy = (a[1] + b[1]) / 2, rx = (b[0] - a[0]) / 2, ry = (b[1] - a[1]) / 2; const o = []; for (let i = 0; i <= 48; i++) { const t = i / 48 * Math.PI * 2; o.push([Math.round((cx + Math.cos(t) * rx) * 1e4) / 1e4, Math.round((cy + Math.sin(t) * ry) * 1e4) / 1e4]); } st.p = o; }
+  }
   function padDraw() {
     const cv = document.getElementById('padc'); if (!cv) return;
     const r = cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
@@ -1374,7 +1383,7 @@
           <div class="pt" style="flex-wrap:nowrap">
           <button class="pc" data-c="ink" style="--c:var(--ink)"></button><button class="pc" data-c="#ef4444" style="--c:#ef4444"></button><button class="pc" data-c="#3b82f6" style="--c:#3b82f6"></button><button class="pc" data-c="#22c55e" style="--c:#22c55e"></button><button class="pc" data-c="#f59e0b" style="--c:#f59e0b"></button>
           <input id="padw" type="range" min="1" max="14" step="1" title="굵기"><i id="padwv"></i>
-          <button id="pads" title="그린 선을 곧은 선·네모·동그라미로 맞춰요. 끝에서 펜을 잠깐 멈춰도 맞춰져요">📐</button><button id="padp" title="손바닥이 닿아도 선이 안 그어져요">✋</button></div>
+          <button id="pads" title="그린 선을 곧은 선·네모·동그라미로 맞춰요. 끝에서 펜을 잠깐 멈춰도 맞춰져요">📐</button><button id="padg" title="모눈 맞춤: 곧은 선·네모·동그라미·화살표·글자가 모눈 칸에 딱 맞춰져요">▦</button><button id="padp" title="손바닥이 닿아도 선이 안 그어져요">✋</button></div>
           <div class="pcw"><canvas id="padc"></canvas><div class="pzm"><button id="padzo" aria-label="축소">－</button><button id="padzl" title="100%로">100%</button><button id="padzi" aria-label="확대">＋</button></div></div></div>
         <textarea id="padt" placeholder="풀이 메모를 적어 두세요. 문제마다 따로 저장돼요."></textarea></div>`);
       p = document.getElementById('pad');
@@ -1386,7 +1395,7 @@
         let at = null;
         const put = t => {
           t = String(t || '').trim(); if (!t) return;
-          if (at && PAD.tab !== 'memo') { PAD.hist.push(JSON.stringify(PAD.strokes)); PAD.redo = []; PAD.strokes.push({ k: 'text', c: PAD.color || 'ink', w: 15, b: 0, al: 'left', t, p: [at] }); at = null; padDraw(); padSave(); if (PAD.paint) PAD.paint(); return; }
+          if (at && PAD.tab !== 'memo') { PAD.hist.push(JSON.stringify(PAD.strokes)); PAD.redo = []; PAD.strokes.push({ k: 'text', c: PAD.color || 'ink', w: 15, b: 0, al: 'left', t, p: [gsnap(at)] }); at = null; padDraw(); padSave(); if (PAD.paint) PAD.paint(); return; }
           if (PAD.tab === 'memo') { const ta = p.querySelector('#padt'); ta.value = (ta.value ? ta.value.replace(/\s*$/, '\n') : '') + t; ta.dispatchEvent(new Event('input')); return; }
           const b = padBox(), V = PAD.v, y = Math.min(V.oy + 1 / V.s - .05, (b ? b[3] : V.oy) + .06);
           PAD.hist.push(JSON.stringify(PAD.strokes)); PAD.redo = []; PAD.strokes.push({ k: 'text', c: PAD.color || 'ink', w: 15, b: 0, al: 'left', t, p: [[V.ox + .04 / V.s, Math.max(V.oy + .05, y)]] });
@@ -1429,19 +1438,20 @@
       // 설정 기억: 도구·색·굵기·도형 보정·손바닥 무시
       const LS = (k, d) => { try { const v = localStorage.getItem('reb_pad_' + k); return v == null ? d : v; } catch (e) { return d; } };
       const SS = (k, v) => { try { localStorage.setItem('reb_pad_' + k, v); } catch (e) {} };
-      PAD.tool = LS('tool', 'pen'); PAD.color = LS('color', 'ink'); PAD.w = +LS('w', 3); PAD.snap = LS('snap', '1') === '1';
+      PAD.tool = LS('tool', 'pen'); PAD.color = LS('color', 'ink'); PAD.w = +LS('w', 3); PAD.snap = LS('snap', '1') === '1'; PAD.grid = LS('grid', '0') === '1';
       try { PAD.palm = localStorage.getItem('reb_palm') !== '0'; } catch (e) { PAD.palm = true; }
       const paint = () => {
         p.querySelectorAll('.pk').forEach(b => b.classList.toggle('on', b.dataset.k === PAD.tool));
         p.querySelectorAll('.pc').forEach(b => b.classList.toggle('on', b.dataset.c === PAD.color));
         p.querySelector('#padw').value = PAD.w; p.querySelector('#padwv').textContent = PAD.w;
-        p.querySelector('#pads').classList.toggle('on', PAD.snap); p.querySelector('#padp').classList.toggle('on', PAD.palm);
+        p.querySelector('#pads').classList.toggle('on', PAD.snap); p.querySelector('#padg').classList.toggle('on', PAD.grid); p.querySelector('#padp').classList.toggle('on', PAD.palm);
         p.querySelector('#padu').disabled = !PAD.hist.length; p.querySelector('#padr').disabled = !PAD.redo.length;
       };
       PAD.paint = paint; PAD.hist = []; PAD.redo = [];
       p.querySelectorAll('.pk').forEach(b => b.onclick = () => { PAD.tool = b.dataset.k; SS('tool', PAD.tool); paint(); });
       p.querySelectorAll('.pc').forEach(b => b.onclick = () => { PAD.color = b.dataset.c; if (PAD.tool === 'erase') PAD.tool = 'pen'; SS('color', PAD.color); SS('tool', PAD.tool); paint(); });
       p.querySelector('#padw').oninput = e => { PAD.w = +e.target.value; SS('w', PAD.w); paint(); };
+      p.querySelector('#padg').onclick = () => { PAD.grid = !PAD.grid; SS('grid', PAD.grid ? '1' : '0'); paint(); window.__toast && __toast(PAD.grid ? '▦ 모눈 맞춤 켬' : '모눈 맞춤 끔'); };
       p.querySelector('#pads').onclick = () => { PAD.snap = !PAD.snap; SS('snap', PAD.snap ? '1' : '0'); paint(); };
       p.querySelector('#padp').onclick = () => { PAD.palm = !PAD.palm; try { localStorage.setItem('reb_palm', PAD.palm ? '1' : '0'); } catch (x) {} paint(); window.__toast && __toast(PAD.palm ? '✋ 손바닥 무시 켬' : '✋ 손바닥 무시 끔'); };
       const snapshot = () => { PAD.hist.push(JSON.stringify(PAD.strokes)); if (PAD.hist.length > 40) PAD.hist.shift(); PAD.redo = []; };
@@ -1517,7 +1527,7 @@
         if (PAD.erasing) return eraseAt(pos(e));
         if (!PAD.cur) return;
         const pt = pos(e), c = PAD.cur;
-        if (c.fixed) { if (c.s === 'line') { c.p[1] = pt.map(R4); padDraw(); } return; }   // 곧게 맞춘 뒤엔 끝점만 따라감
+        if (c.fixed) { if (c.s === 'line') { c.p[1] = PAD.grid ? gsnap(pt) : pt.map(R4); if (PAD.grid) c.p[0] = gsnap(c.p[0]); padDraw(); } return; }   // 곧게 맞춘 뒤엔 끝점만 따라감
         const l = c.p[c.p.length - 1];
         if (Math.abs(pt[0] - l[0]) + Math.abs(pt[1] - l[1]) > .002) {
           c.p.push(pt.map(R4)); padDraw();
@@ -1532,12 +1542,16 @@
         clearTimeout(hold);
         if (PAD.vdown) { PAD.vdown = 0; PAD.sttAt && PAD.sttAt(null, false); return; }
         if (PAD.pan) { PAD.pan = null; return; }
-        if (PAD.mv) { PAD.mv = null; padSave(); paint(); return; }
+        if (PAD.mv) {
+          if (PAD.grid) { const S2 = PAD.strokes, ids = [...PAD.mv.set], main = S2[ids[0]], q0 = main.s === 'rect' ? [Math.min(...main.p.map(q => q[0])), Math.min(...main.p.map(q => q[1]))] : main.p[0], q1 = gsnap(q0), dx = q1[0] - q0[0], dy = q1[1] - q0[1];
+            ids.forEach(i => S2[i].p = S2[i].p.map(q => [R4(q[0] + dx), R4(q[1] + dy)])); PAD.mv.att.forEach(([i, j]) => { const q = S2[i].p[j]; S2[i].p[j] = [R4(q[0] + dx), R4(q[1] + dy)]; }); padDraw(); }
+          PAD.mv = null; padSave(); paint(); return; }
         if (PAD.tool === 'move') return;
         if (PAD.erasing) { PAD.erasing = false; padSave(); paint(); return; }
         if (!PAD.cur) return;
         const c = PAD.cur; PAD.cur = null;
         if (!c.fixed && (PAD.snap || c.k === 'arrow')) padShape(c, cv, c.k === 'arrow');
+        if (c.s || c.k === 'arrow') gsnapStroke(c);
         delete c.fixed; snapshot(); PAD.strokes.push(c);
         padDraw(); padSave(); paint();
       };
