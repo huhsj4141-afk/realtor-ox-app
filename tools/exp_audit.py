@@ -9,7 +9,22 @@ from oxvar import call, ROOT
 import jline
 A = os.path.join(ROOT, 'gen', 'exp_audit.json'); R = os.path.join(ROOT, 'gen', 'exp_redo.json')
 DEADLINE = time.time() + int(os.environ.get('MINUTES', '20')) * 60
-MODELS = ['gemini-3.5-flash', 'gemini-3.1-flash', 'gemini-2.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite']
+def models():
+    """쓸 수 있는 모델을 직접 물어봄: 일반 Flash(정확) 먼저, 그다음 Flash-Lite"""
+    import urllib.request
+    from oxvar import KEY
+    try:
+        with urllib.request.urlopen(f'https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key={KEY}', timeout=30) as r:
+            names = [m['name'].split('/', 1)[1] for m in json.load(r).get('models', []) if 'generateContent' in m.get('supportedGenerationMethods', [])]
+    except Exception:
+        names = []
+    ver = lambda n: [float(x) for x in re.findall(r'\d+(?:\.\d+)?', n)[:1]] or [0]
+    fx = sorted([n for n in names if re.fullmatch(r'gemini-\d+(\.\d+)?-flash', n)], key=ver, reverse=True)
+    fl = sorted([n for n in names if re.fullmatch(r'gemini-\d+(\.\d+)?-flash-lite', n)], key=ver, reverse=True)
+    return (fx[:2] + fl[:2]) or ['gemini-3.5-flash', 'gemini-3.5-flash-lite']
+
+
+MODELS = models()
 PROMPT = '''너는 공인중개사 시험 출제·검수 위원이야. 아래 기출문제의 해설이 맞는지 검수해.
 공식 정답은 반드시 맞다고 보고, 해설이 그 정답과 법령·판례에 맞는지만 봐.
 확인할 것: (1) 정답 이유가 맞나 (2) 보기별 O/X 판정과 이유가 맞나 (3) 법 조문 숫자(기간·금액·면적·비율)가 맞나 (4) 출제 뒤 법이 바뀐 걸 '지금 기준'으로만 써서 틀리게 만들지 않았나.
