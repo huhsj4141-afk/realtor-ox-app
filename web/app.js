@@ -119,6 +119,7 @@
     .abar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:8px 0 14px} .abar em{display:block;height:100%;background:linear-gradient(90deg,var(--pri),#22c55e);border-radius:4px}
     .agp{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:20px;padding:18px} .agp small{font-size:13px;font-weight:400;opacity:.85}
     .arow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px} .arow .btn{margin:0} .atd{font-size:12.5px;color:var(--sub2,#9aa3b5);margin-top:10px;text-align:center} .ahow{font-size:12.5px;text-align:center;margin:4px 12px}
+    .a1c{margin:10px 0;padding:12px 14px;border-radius:12px;background:var(--card2,#f4f6fb);border:1px solid var(--line,#e3e7ef)} .a1c small,.a1q small{display:block;font-size:12px;color:var(--sub2,#9aa3b5)} .a1c b{display:block;font-size:16px;margin:6px 0 2px;line-height:1.5} .a1q{text-align:center} .a1f{font-size:20px;font-weight:700;margin:18px 0 10px;line-height:1.5} .a1b{font-size:17px;color:var(--pri,#2563eb);min-height:26px;margin-bottom:12px;line-height:1.5}
     #pscore{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:2px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0;line-height:1.25}
     #pscore small{font-size:10.5px;color:var(--sub2,#9aa3b5)} #pscore span{font-size:13.5px;white-space:nowrap} #pscore b{font-size:16px} #pscore b.ok{color:#16a34a} #pscore b.no{color:#ef4444}
     #pscore i{font-style:normal;font-size:10.5px;margin-left:2px} #pscore i.up{color:#16a34a} #pscore i.dn{color:#ef4444}
@@ -1994,18 +1995,80 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
         <div class="row"><div class="grow"><b class="add">${dd != null ? 'D-' + dd : '공인중개사'}</b></div><div class="ask">🔥 ${sk.n}일</div></div>
         <div class="arnd"><b>${R.r}회독째</b> · ${Math.round(R.pct * 100)}% <small>(${R.done.toLocaleString()} / ${R.total.toLocaleString()}문제)</small></div>
         <div class="abar"><em style="width:${Math.round(R.pct * 100)}%"></em></div>
-        <button class="go agp" id="ago">▶ 문제 풀기<small>${S0.rev.length ? `틀린 ${S0.rev.length} + ` : ''}새 기출 ${S0.fresh.length}</small></button>
-        <div class="arow"><button class="btn" id="alis">🎧 듣기</button><button class="btn" id="aexm">⏱ 모의고사</button></div>
+        <button class="go agp" id="ago">▶ 문제 풀기<small>${(() => { const n = againDue().length; return n ? `카드 ${n} + ` : ''; })()}${S0.rev.length ? `틀린 ${S0.rev.length} + ` : ''}새 기출 ${S0.fresh.length}</small></button>
+        <div class="arow"><button class="btn" id="alis">🎧 암기 듣기</button><button class="btn" id="aexm">⏱ 모의고사</button></div>
         <div class="atd">오늘 ${t.q || 0}문제 풀었어요${t.ox ? ` · 🎧 ${t.ox}지문` : ''}</div></div>
-        <div class="muted ahow">틀린 문제는 1일·3일·7일 뒤에 저절로 다시 나와요. 버튼 하나만 누르면 돼요.</div>`;
+        <div class="muted ahow">틀린 문제는 1일·3일·7일 뒤에 다시 나와요. 밖에서는 🎧 암기 듣기로 공식만 외워요.</div>`;
       document.getElementById('ago').onclick = () => {
         const L = sessionList(); if (!L.list.length) return window.__toast && __toast('오늘 몫을 다 했어요 👏');
-        startQuiz(L.list, { from: 'home', title: `${L.r}회독 · 오늘 ${L.list.length}문제` });
+        const run = () => startQuiz(L.list, { from: 'home', title: `${L.r}회독 · 오늘 ${L.list.length}문제` });
+        const due = againDue(); due.length ? quickCards(due.slice(0, 10), run) : run();
       };
-      document.getElementById('alis').onclick = () => { try { pushToday(); } catch (e) {} openListen('today', 0, 0); };
+      document.getElementById('alis').onclick = () => memoListen();
       document.getElementById('aexm').onclick = () => go('exam');
       try { updBanner(); } catch (e) {}
     };
+    // ── 틀리면 그 자리 1장 + 다음 날 다시 보기 ──
+    const AG = () => LSJ('reb_again', {});           // { cardId: 다시 볼 시각 }
+    let SRC = null;
+    function cardFor(q) {
+      try { cnBuild(); if (!SRC) { SRC = {}; Object.values(CN.cards).forEach(c => { if (c.src && !c.gl && (c.kind === 'both' || c.kind === 'cloze') && !SRC[c.src]) SRC[c.src] = c; }); } return SRC[q.id] || null; } catch (e) { return null; }
+    }
+    const cardLine = c => c.kind === 'cloze' ? c.full : c.f + ' : ' + c.b;
+    function againDue() { const A = AG(), now = Date.now(); cnBuild(); return Object.keys(A).filter(id => A[id] <= now && CN.cards[id]); }
+    function setAgain(id, on) { const A = AG(); if (on) A[id] = todayStart() + DAYMS + 4 * 3600000; else delete A[id]; LSS('reb_again', A); }
+    function todayStart() { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); }
+    const _rec2 = window.record;
+    window.record = function (q, c) {
+      const r = _rec2.apply(this, arguments);
+      try {
+        if (!String(q.a).split(',').includes(String(c))) {
+          const cd = cardFor(q);
+          if (cd) setTimeout(() => {
+            const fb = document.querySelector('#view .fb.no'), ch = document.querySelector('#view .choices'); if (!fb || document.getElementById('a1c')) return;
+            (ch || fb).insertAdjacentHTML(ch ? 'beforebegin' : 'afterend', `<div class="a1c" id="a1c"><small>✕ 핵심 1줄</small><b>${esc(cardLine(cd))}</b><div class="arow"><button class="btn" data-k="0">외웠어요</button><button class="btn" data-k="1">다시 볼래요</button></div></div>`);
+            const box = document.getElementById('a1c');
+            box.querySelectorAll('button').forEach(b => b.onclick = () => { setAgain(cd.id, b.dataset.k === '1'); box.innerHTML = `<small>${b.dataset.k === '1' ? '내일 세션 시작에 다시 나와요' : '좋아요 👍'}</small><b>${esc(cardLine(cd))}</b>`; try { haptic && haptic(); } catch (e) {} });
+          }, 80);
+        }
+      } catch (e) {}
+      return r;
+    };
+    function quickCards(ids, then) {
+      let i = 0; const V = document.getElementById('view'); cur = 'cards';
+      const step = show => {
+        const c = CN.cards[ids[i]]; if (!c) return then();
+        const front = c.kind === 'cloze' ? c.f : c.f, back = c.kind === 'cloze' ? c.full : c.b;
+        V.innerHTML = `<div class="card a1q"><small>어제 다시 보기로 한 개념 ${i + 1}/${ids.length}</small><div class="a1f">${esc(front)}</div>${show ? `<div class="a1b">${esc(back)}</div><div class="arow"><button class="btn" data-k="0">외웠어요</button><button class="btn" data-k="1">또 볼래요</button></div>` : `<button class="go" id="a1s">정답 보기</button>`}<button class="btn sm" id="a1x" style="margin-top:10px">건너뛰고 문제 풀기</button></div>`;
+        if (!show) document.getElementById('a1s').onclick = () => step(true);
+        else V.querySelectorAll('[data-k]').forEach(b => b.onclick = () => { setAgain(c.id, b.dataset.k === '1'); i++; i < ids.length ? step(false) : then(); });
+        document.getElementById('a1x').onclick = then;
+      };
+      step(false);
+    }
+    // ── 🎧 야외 암기 듣기: 묻고 → 쉬고 → 답 두 번 ──
+    let MEMO = null;
+    try { fetch('memo.json').then(r => r.json()).then(m => { MEMO = m; }).catch(() => {}); } catch (e) {}
+    function memoItems() {
+      cnBuild(); const out = [];
+      Object.keys(AG()).forEach(id => { const c = CN.cards[id]; if (!c) return; if (c.kind === 'cloze') out.push([SUBS[c.th ? CN.byTheme[c.th].s : 0], c.f.replace('［　？　］', '무엇') + '?', c.b]); else if (c.f.length <= 40 && c.b.length <= 70) out.push([SUBS[CN.byTheme[c.th].s], c.f + '?', c.b]); });
+      const W = new Set(Object.keys(P).filter(k => P[k][1] === 0).map(k => BYID[k] && BYID[k].s));
+      const base = (MEMO || []).slice().sort((a, b) => (W.has(SUBS.indexOf(b[0])) ? 1 : 0) - (W.has(SUBS.indexOf(a[0])) ? 1 : 0));
+      return out.concat(base).slice(0, 60);
+    }
+    function memoListen() {
+      const T = window.__tts, items = memoItems(), V = document.getElementById('view');
+      if (!items.length) return window.__toast && __toast('암기 목록을 불러오는 중이에요. 잠시 후 다시 눌러 주세요');
+      cur = 'memo'; window.scrollTo(0, 0); navA();
+      const lines = []; items.forEach(([, q, a], k) => { lines.push({ text: q + ' [pause long] [pause long]', k }); lines.push({ text: a + '.', k }); lines.push({ text: a + '.', k }); });
+      V.innerHTML = `<div class="card a1q"><small>🎧 암기 듣기 · ${items.length}개 · 묻고 3초 쉬고 답</small><div class="a1f" id="mq">${esc(items[0][1])}</div><div class="a1b" id="ma"></div><div class="muted" id="mn" style="font-size:12px">1 / ${items.length}</div><button class="btn" id="mst" style="width:100%">■ 그만</button><div class="muted" style="font-size:12px;margin-top:8px">화면을 꺼도 계속 읽어요.</div></div>`;
+      document.getElementById('mst').onclick = () => { try { T && T.stop(); } catch (e) {} home(); };
+      if (!T) return;
+      T.onLine(({ line }) => { if (cur !== 'memo') return; const L = lines[line]; if (!L) return; const it = items[L.k]; const q = document.getElementById('mq'), a = document.getElementById('ma'), n = document.getElementById('mn'); if (!q) return; q.textContent = it[1]; a.textContent = line % 3 ? it[2] : ''; n.textContent = (L.k + 1) + ' / ' + items.length; });
+      try { const lg = LSJ('reb_memolog', {}); lg[dkey()] = (lg[dkey()] || 0) + items.length; LSS('reb_memolog', lg); } catch (e) {}
+      T.speak(lines.map(l => ({ text: l.text })), {}).catch(e => { if (e && e.code !== 'viewer_stopped' && window.__toast) __toast(e.message); });
+    }
+    window.memoListen = memoListen;
     // 아래 탭 3개
     function navA() {
       const nav = document.getElementById('tabs'); if (!nav) return;

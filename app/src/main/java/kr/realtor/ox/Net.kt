@@ -93,8 +93,8 @@ object Net {
                 // 또박또박: 쉼표 뒤 잠깐 쉬기([pause short]) + 조금 천천히(0.92). 지원 안 되면 한 단계씩 빼고 다시
                 val tries = listOf(
                     JSONObject().put("markup", t.replace(Regex(",\\s*"), ", [pause short] ")) to 0.92,
-                    JSONObject().put("text", t) to 0.92,
-                    JSONObject().put("text", t) to 0.0)
+                    JSONObject().put("text", t.replace(Regex("\\[pause[^\\]]*\\]"), " ")) to 0.92,
+                    JSONObject().put("text", t.replace(Regex("\\[pause[^\\]]*\\]"), " ")) to 0.0)
                 var r: JSONObject? = null; var err: Exception? = null
                 for ((inp, rate) in tries) {
                     val ac = JSONObject().put("audioEncoding", "OGG_OPUS"); if (rate > 0) ac.put("speakingRate", rate)
