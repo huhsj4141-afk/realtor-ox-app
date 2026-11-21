@@ -9,7 +9,7 @@ const termText=x=>clean(x).replace(/\([^)]*\)/g,'').replace(/^['"‘“]|['"’�
 const norm=s=>clean(s).replace(/\s+/g,'').replace(/[.。]$/,'');
 function fieldValue(q,e,field){let v=field==='question'?q.x:e;for(const k of field==='question'?[]:field.split('.'))v=v?.[k];return Array.isArray(v)?v.join(' | '):clean(v);}
 function build(mc,ex,ox,oxex,vars,blocked={},reviewed=[],audits={}){
- const cards=[],questions={},dedup=new Map(),protectedKeys=new Set(),coverage={method:'semantic-quality-v3',questions:mc.length,withExplanation:0,covered:0,cards:0,reviewed:0,pendingReview:0,skippedOCR:0,types:{},rejected:0};
+ const cards=[],questions={},dedup=new Map(),protectedKeys=new Set(),coverage={method:'semantic-quality-v4',questions:mc.length,withExplanation:0,covered:0,cards:0,reviewed:0,pendingReview:0,skippedOCR:0,types:{},rejected:0};
  const byId=new Map(mc.map(q=>[q.id,q]));const bad=q=>![0,'0',false,null,undefined,''].includes(q.ocr);
  for(const q of mc)questions[q.id]={question:q.x,correct:q.a,label:'제'+q.n+'회 '+['학개론','민법','중개사법','공법','공시법','세법'][q.s]+' '+q.no+'번',year:q.y,topic:q.t};
  function add(q,field,term,relation,front,back,options={}){
@@ -26,7 +26,7 @@ function build(mc,ex,ox,oxex,vars,blocked={},reviewed=[],audits={}){
   const id='mem-'+hash('qa-v2:'+q.id+':'+field+':'+relation+':'+norm(term));
   const c={id,title:term,kind:relation==='공식'?'공식 카드':'개념 카드',subject:q.s,prompt:front,answer:back,
    cloze:options.cloze||null,blankAnswer:options.blank||null,
-   why:clean(options.explanation||''),reviewed:!!options.reviewed,sources:[source]};
+   why:clean(options.explanation||''),reviewed:!!options.reviewed,sources:[source],context:{topic:q.t,question:q.x,correct:q.a,year:q.y}};
   dedup.set(key,c);cards.push(c);
  }
  // 직접 대조한 핵심 카드를 먼저 배치. 원문 근거가 달라지면 누락/검토 대상으로 남김.
@@ -66,9 +66,9 @@ function build(mc,ex,ox,oxex,vars,blocked={},reviewed=[],audits={}){
  for(const c of candidates){
   const reasons=inspect(c);let accepted=null;
   if(c.reviewed&&!reasons.length)accepted=c;else if(!c.reviewed)accepted=acceptAudit(c,audits[c.id]);
-  if(accepted)accepted.revision=hash('quality-v3:'+JSON.stringify(accepted));
+  if(accepted)accepted.revision=hash('quality-v4:'+JSON.stringify(accepted));
   if(blocked[c.id]?.revision===c.revision||blocked[c.id]?.answer===c.answer||accepted&&(blocked[c.id]?.revision===accepted.revision||blocked[c.id]?.answer===accepted.answer))accepted=null;
-  const status=accepted?'active':c.reviewed?'needs-fix':audits[c.id]?.sourceRevision===c.revision&&audits[c.id]?.valid===false?'rejected':'pending-semantic';
+  const status=accepted?'active':c.reviewed?'needs-fix':audits[c.id]?.policy===4&&audits[c.id]?.sourceRevision===c.revision&&audits[c.id]?.valid===false?'rejected':'pending-semantic';
   audit.push({id:c.id,status,reasons,sourceRevision:c.revision});
   if(accepted)active.push(accepted);
  }
