@@ -17,13 +17,24 @@ PROMPT='''공인중개사 기출 학습의 암기 카드 편집자다. 입력은
 def request(endpoint,body=None):
     url='https://generativelanguage.googleapis.com/v1beta/'+endpoint
     r=urllib.request.Request(url,data=None if body is None else json.dumps(body).encode(),headers={'Content-Type':'application/json','x-goog-api-key':KEY})
-    with urllib.request.urlopen(r,timeout=45) as f:return json.load(f)
+    for attempt in range(2):
+        try:
+            with urllib.request.urlopen(r,timeout=45) as f:return json.load(f)
+        except urllib.error.HTTPError as error:
+            if error.code != 429 or attempt:raise
+            details=error.read().decode('utf8','replace')
+            if re.search(r'per.?day|daily|PerDay',details,re.I):raise
+            retry=re.search(r'"retryDelay"\s*:\s*"(\d+)',details)
+            time.sleep(max(15,int(retry.group(1))+2 if retry else 60))
 def main():
     if not KEY:print('암기 의미 검사: 키 없음, 기존 검토 결과 유지');return
     subprocess.run(['node',str(ROOT/'tools/memory-build.cjs')],check=True,cwd=ROOT)
     candidates=json.loads((ROOT/'gen/memory-candidates.json').read_text(encoding='utf8'))
     out=ROOT/'gen/memory-audit.json';ledger=json.loads(out.read_text(encoding='utf8')) if out.exists() else {}
     pending=[c for c in candidates if not c.get('reviewed') and not (ledger.get(c['id'],{}).get('policy')==3 and ledger[c['id']].get('sourceRevision')==c['revision'])]
+    # 각 과목을 번갈아 검토해 한 과목만 앞서 검토하지 않아요.
+    groups={subject:[c for c in pending if c.get('subject')==subject] for subject in range(6)}
+    pending=[groups[subject][i] for i in range(max((len(v) for v in groups.values()),default=0)) for subject in range(6) if i<len(groups[subject])]
     limit=int(os.environ.get('MEMORY_MAX','16'));stop=time.time()+int(os.environ.get('MEMORY_SECONDS','150'));done=0
     try:
         models=request('models?pageSize=200').get('models',[])
@@ -54,7 +65,7 @@ def main():
             temporary.parent.mkdir(parents=True,exist_ok=True)
             temporary.write_text(json.dumps(ledger,ensure_ascii=False,indent=2),encoding='utf8')
             temporary.replace(out)
-            if i+8<min(len(pending),limit):time.sleep(4)
+            if i+8<min(len(pending),limit):time.sleep(15)
     except urllib.error.HTTPError as e:print('암기 의미 검사: HTTP',e.code,'다음 실행에서 이어서')
     except Exception as e:print('암기 의미 검사:',type(e).__name__,'다음 실행에서 이어서')
     print('암기 의미 검사 저장:',done,'개')

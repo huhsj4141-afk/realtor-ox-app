@@ -48,7 +48,7 @@ jobs:
         run: |
           rm -rf gen/tmp
           git config user.name "ox-bot"; git config user.email "ox-bot@users.noreply.github.com"
-          git add -A gen 2>/dev/null || true
+          git add -A gen web/memory-data.js 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git commit -m "음성 생성 진행 [skip ci]"
             for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done

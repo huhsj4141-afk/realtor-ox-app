@@ -20,6 +20,8 @@ def main(body_path, pdf_dir):
     qid = m.group(1)
     memory = re.search(r'암기 카드:\s*(mem-[a-f0-9]{16})', body)
     if memory:
+        subprocess.run(['node', os.path.join(ROOT, 'tools', 'memory-build.cjs')], cwd=ROOT, check=True)
+        subprocess.run(['git', 'add', 'web/memory-data.js', 'gen/memory-candidates.json', 'gen/memory-audit-report.json'], cwd=ROOT, check=True)
         # 신고 내용은 자동 정답으로 채택하지 않음. 현재 카드·출처·버전이 맞는 신고만 격리.
         vp = re.search(r'암기 버전:\s*([a-f0-9]{16})', body)
         data_path = os.path.join(ROOT, 'web', 'memory-data.js')
