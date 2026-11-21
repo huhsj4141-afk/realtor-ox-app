@@ -119,7 +119,7 @@
     .abar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:8px 0 14px} .abar em{display:block;height:100%;background:linear-gradient(90deg,var(--pri),#22c55e);border-radius:4px}
     .agp{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:20px;padding:18px} .agp small{font-size:13px;font-weight:400;opacity:.85}
     .arow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px} .arow .btn{margin:0} .atd{font-size:12.5px;color:var(--sub2,#9aa3b5);margin-top:10px;text-align:center} .ahow{font-size:12.5px;text-align:center;margin:4px 12px}
-    .padsay{position:absolute;left:12px;right:12px;top:56px;z-index:5;background:#111d;color:#fff;padding:10px 14px;border-radius:12px;font-size:15px} #padmic{touch-action:none;user-select:none;-webkit-user-select:none} #padmic.on{background:#ef4444;color:#fff} u.khint{text-decoration:underline wavy #f59e0b 2px;text-underline-offset:4px;background:#f59e0b22;border-radius:3px} #sync{display:none} .moreh{font-weight:700;font-size:15px;margin:18px 0 6px;padding-top:12px;border-top:1px dashed var(--line,#e3e7ef)} .morec{white-space:pre-wrap;line-height:1.75;font-size:15px} .diawait{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);background:#111e;color:#fff;padding:14px 20px;border-radius:14px;z-index:300;font-size:15px} .a1c{margin:10px 0;padding:12px 14px;border-radius:12px;background:var(--bg);color:var(--ink);border:1.5px solid var(--warn,#f59e0b)} .a1c small,.a1q small{display:block;font-size:12px;color:var(--sub)} .a1c b{display:block;font-size:16px;margin:6px 0 2px;line-height:1.5} .a1q{text-align:center} .a1f{font-size:20px;font-weight:700;margin:18px 0 10px;line-height:1.5} .a1b{font-size:17px;color:var(--pri,#2563eb);min-height:26px;margin-bottom:12px;line-height:1.5}
+    .padsay{position:absolute;left:12px;right:12px;top:56px;z-index:5;background:#111d;color:#fff;padding:10px 14px;border-radius:12px;font-size:15px} #padmic{touch-action:none;user-select:none;-webkit-user-select:none} #padmic.on{background:#ef4444;color:#fff} u.khint{text-decoration:underline wavy #f59e0b 2px;text-underline-offset:4px;background:#f59e0b22;border-radius:3px} #sync{display:none} .moreh{font-weight:700;font-size:15px;margin:18px 0 6px;padding-top:12px;border-top:1px dashed var(--line,#e3e7ef)} .morec{white-space:pre-wrap;line-height:1.75;font-size:15px} .diawait{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);background:#111e;color:#fff;padding:14px 20px;border-radius:14px;z-index:300;font-size:15px} #view .qtext .qstem,#view .qtext .elc{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none} .a1c{margin:10px 0;padding:12px 14px;border-radius:12px;background:var(--bg);color:var(--ink);border:1.5px solid var(--warn,#f59e0b)} .a1c small,.a1q small{display:block;font-size:12px;color:var(--sub)} .a1c b{display:block;font-size:16px;margin:6px 0 2px;line-height:1.5} .a1q{text-align:center} .a1f{font-size:20px;font-weight:700;margin:18px 0 10px;line-height:1.5} .a1b{font-size:17px;color:var(--pri,#2563eb);min-height:26px;margin-bottom:12px;line-height:1.5}
     #pscore{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:2px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0;line-height:1.25}
     #pscore small{font-size:10.5px;color:var(--sub2,#9aa3b5)} #pscore span{font-size:13.5px;white-space:nowrap} #pscore b{font-size:16px} #pscore b.ok{color:#16a34a} #pscore b.no{color:#ef4444}
     #pscore i{font-style:normal;font-size:10.5px;margin-left:2px} #pscore i.up{color:#16a34a} #pscore i.dn{color:#ef4444}
@@ -1717,9 +1717,9 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     NL.sort((a, b) => a.y - b.y || a.x - b.x);
     const rows = []; NL.forEach(o => { const r = rows[rows.length - 1]; if (r && Math.abs(r[0].y - o.y) < 18 && r.length < 3) r.push(o); else rows.push([o]); });
     rows.forEach(r => r.sort((a, b) => a.x - b.x));
-    const nodes = {}; let yTop = 48;
+    const nodes = {}; let yTop = 66;
     rows.forEach(r => {
-      const slot = W / r.length, maxw = Math.min(140, slot - 44);
+      const slot = W / r.length, maxw = Math.min(140, slot - (r.length > 2 ? 34 : 44));
       const boxes = r.map(o => { const lines = wrap(o.n.label || o.n.id, maxw - 14); return { o, lines, wpx: Math.min(maxw, Math.max(...lines.map(tw)) + 18), hpx: lines.length * NF2 * 1.3 + 12 }; });
       const rh = Math.max(...boxes.map(b => b.hpx));
       boxes.forEach((b, i) => {
@@ -1742,7 +1742,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
       if (e.label) {   // 선 옆(수직 방향)으로 살짝 띄워 글자와 안 겹치게
         const mx = (p1[0] + p2[0]) / 2 * W, my = (p1[1] + p2[1]) / 2 * H, dx = (p2[0] - p1[0]) * W, dy = (p2[1] - p1[1]) * H, L2 = Math.hypot(dx, dy) || 1;
         let nx = -dy / L2, ny = dx / L2; if (ny > 0) { nx = -nx; ny = -ny; }
-        const off = Math.abs(dy) < 8 && L2 < 70 ? 22 : 15; T((mx + nx * off) / W, (my + ny * off) / H, String(e.label).slice(0, 10), { c: '#3b82f6', f: LF, b: 1 });
+        const off = Math.abs(dy) < 8 ? Math.max(a.hh, b.hh) * H + 10 : 15; T((mx + nx * off) / W, (my + ny * off) / H, String(e.label).slice(0, 10), { c: '#3b82f6', f: LF, b: 1 });
       }
     });
     (d.steps || []).slice(0, 7).forEach((t, i) => T(.05, stepY + i * 24 / H, String(t), { al: 'left', f: 13 }));
