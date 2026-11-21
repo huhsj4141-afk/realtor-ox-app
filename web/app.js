@@ -119,7 +119,7 @@
     .abar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:8px 0 14px} .abar em{display:block;height:100%;background:linear-gradient(90deg,var(--pri),#22c55e);border-radius:4px}
     .agp{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:20px;padding:18px} .agp small{font-size:13px;font-weight:400;opacity:.85}
     .arow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px} .arow .btn{margin:0} .atd{font-size:12.5px;color:var(--sub2,#9aa3b5);margin-top:10px;text-align:center} .ahow{font-size:12.5px;text-align:center;margin:4px 12px}
-    .padsay{position:absolute;left:12px;right:12px;top:56px;z-index:5;background:#111d;color:#fff;padding:10px 14px;border-radius:12px;font-size:15px} #padmic{touch-action:none;user-select:none;-webkit-user-select:none} #padmic.on{background:#ef4444;color:#fff} u.khint{text-decoration:underline wavy #f59e0b 2px;text-underline-offset:4px;background:#f59e0b22;border-radius:3px} #sync{display:none} .moreh{font-weight:700;font-size:15px;margin:18px 0 6px;padding-top:12px;border-top:1px dashed var(--line,#e3e7ef)} .morec{white-space:pre-wrap;line-height:1.75;font-size:15px} .diawait{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);background:#111e;color:#fff;padding:14px 20px;border-radius:14px;z-index:300;font-size:15px} #view .qtext .qstem,#view .qtext .elc{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none} .a1c{margin:10px 0;padding:12px 14px;border-radius:12px;background:var(--bg);color:var(--ink);border:1.5px solid var(--warn,#f59e0b)} .a1c small,.a1q small{display:block;font-size:12px;color:var(--sub)} .a1c b{display:block;font-size:16px;margin:6px 0 2px;line-height:1.5} .a1q{text-align:center} .a1f{font-size:20px;font-weight:700;margin:18px 0 10px;line-height:1.5} .a1b{font-size:17px;color:var(--pri,#2563eb);min-height:26px;margin-bottom:12px;line-height:1.5}
+    .padsay{position:absolute;left:12px;right:12px;top:56px;z-index:5;background:#111d;color:#fff;padding:10px 14px;border-radius:12px;font-size:15px} #padmic{touch-action:none;user-select:none;-webkit-user-select:none} #padmic.on{background:#ef4444;color:#fff} u.khint{text-decoration:underline wavy #f59e0b 2px;text-underline-offset:4px;background:#f59e0b22;border-radius:3px} #sync{display:none} .moreh{font-weight:700;font-size:15px;margin:18px 0 6px;padding-top:12px;border-top:1px dashed var(--line,#e3e7ef)} .morec{white-space:pre-wrap;line-height:1.75;font-size:15px} .diawait{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);background:#111e;color:#fff;padding:14px 20px;border-radius:14px;z-index:300;font-size:15px} #view .qtext,#view .qtext *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none} .ahero .agp{background:var(--pri);color:#fff;border:0} .ahero .agp small{color:#ffffffcc} #wrev,#view .wbtns .btn{white-space:nowrap;font-size:15px} .a1c{margin:10px 0;padding:12px 14px;border-radius:12px;background:var(--bg);color:var(--ink);border:1.5px solid var(--warn,#f59e0b)} .a1c small,.a1q small{display:block;font-size:12px;color:var(--sub)} .a1c b{display:block;font-size:16px;margin:6px 0 2px;line-height:1.5} .a1q{text-align:center} .a1f{font-size:20px;font-weight:700;margin:18px 0 10px;line-height:1.5} .a1b{font-size:17px;color:var(--pri,#2563eb);min-height:26px;margin-bottom:12px;line-height:1.5}
     #pscore{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:2px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0;line-height:1.25}
     #pscore small{font-size:10.5px;color:var(--sub2,#9aa3b5)} #pscore span{font-size:13.5px;white-space:nowrap} #pscore b{font-size:16px} #pscore b.ok{color:#16a34a} #pscore b.no{color:#ef4444}
     #pscore i{font-style:normal;font-size:10.5px;margin-left:2px} #pscore i.up{color:#16a34a} #pscore i.dn{color:#ef4444}
@@ -335,7 +335,7 @@
     const rw = document.getElementById('wa');
     if (rw && !$('#wrev') && typeof window.revList === 'function') {
       const n = window.revList().length;
-      rw.insertAdjacentHTML("beforebegin", `<button class="btn pri grow" id="wrev">🔁 복습하기 ${n}문제</button>`);
+      rw.insertAdjacentHTML("beforebegin", `<button class="btn pri grow" id="wrev">🔁 복습 ${n}문제</button>`);
       rw.style.display = 'none';
       $('#wrev').onclick = () => { const l = window.revList(); if (l.length) startQuiz(l, { from: 'wrong', title: '🔁 복습하기' }); };
     }
@@ -1442,7 +1442,7 @@
         if (e.pointerType === 'touch' && !palmy(e)) {
           T.set(e.pointerId, [e.clientX, e.clientY]);
           // 두 번째 손가락이 바로(획이 짧을 때) 닿으면 확대·이동, 아니면 손바닥으로 보고 무시
-          if (T.size === 2 && (!PAD.cur || PAD.cur.p.length < 6) && !PAD.erasing) { PAD.cur = null; PAD.pid = null; clearTimeout(hold); pinchStart(); padDraw(); return; }
+          if (T.size === 2 && !PAD.palm && (!PAD.cur || PAD.cur.p.length < 6) && !PAD.erasing) {   /* 손바닥 무시(✋)가 켜져 있으면 두 손가락 배율 조절 끔: 손바닥이 닿아 배율이 저절로 바뀌는 것 방지 */ PAD.cur = null; PAD.pid = null; clearTimeout(hold); pinchStart(); padDraw(); return; }
         }
         if (pinch) return;
         if (palmy(e) || (PAD.cur && PAD.pid !== e.pointerId)) return;
@@ -2165,9 +2165,9 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     setInterval(() => {
       try {
         if (cur !== 'quiz' || typeof S === 'undefined' || !S || !S.list) return; const q = S.list[S.i]; if (!q) return;
-        document.querySelectorAll('#view .qtext .elc:not([data-lp]), #view .qtext .qstem:not([data-lp]), #view .choices button:not([data-lp])').forEach(b => {
+        document.querySelectorAll('#view .qtext .elc:not([data-lp]), #view .qtext .qstem:not([data-lp]), #view .qtext:not(:has(.qstem)):not([data-lp]), #view .choices button:not([data-lp])').forEach(b => {
           b.dataset.lp = 1; let t = null, x0 = 0, y0 = 0, fired = false;
-          const act = () => { const q2 = S.list[S.i]; if (b.classList.contains('qstem')) window.makeDiagram(q2, null, true); else keyHint(q2); };   // 문제 길게 → 관계도·계산 과정, 보기 길게 → 힌트 밑줄
+          const act = () => { const q2 = S.list[S.i]; if (b.classList.contains('qstem') || b.classList.contains('qtext')) window.makeDiagram(q2, null, true); else keyHint(q2); };   // 문제 길게 → 관계도·계산 과정, 보기 길게 → 힌트 밑줄
           b.addEventListener('pointerdown', e => { fired = false; x0 = e.clientX; y0 = e.clientY; clearTimeout(t); t = setTimeout(() => { fired = true; act(); }, 550); });
           b.addEventListener('pointermove', e => { if (Math.abs(e.clientX - x0) + Math.abs(e.clientY - y0) > 12) clearTimeout(t); });
           ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => b.addEventListener(ev, () => clearTimeout(t)));
