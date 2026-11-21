@@ -6,6 +6,10 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.webkit.JavascriptInterface
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.content.pm.PackageManager
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import androidx.media3.common.MediaItem
@@ -89,7 +93,7 @@ class WebActivity : Activity() {
         if (loaded) js("window.__fixTab&&__fixTab()")
     }
 
-    override fun onDestroy() { voice.release(); io.shutdown(); web.destroy(); super.onDestroy() }
+    override fun onDestroy() { try { stt?.destroy() } catch (e: Exception) {}; voice.release(); io.shutdown(); web.destroy(); super.onDestroy() }
 
     @Deprecated("back")
     override fun onBackPressed() {
@@ -101,7 +105,39 @@ class WebActivity : Activity() {
     private fun js(code: String) = runOnUiThread { web.evaluateJavascript(code, null) }
     private fun done(ev: String) { val id = speakId ?: return; speakId = null; js("__nbt('$id','$ev')") }
 
+    /* 누르고 있는 동안 음성 인식 → 떼면 글자로 */
+    private var stt: SpeechRecognizer? = null
+    private var sttText = ""
+    private fun q(t: String) = JSONObject.quote(t)
+    private fun sttBegin() {
+        if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO), 77); js("window.__stt&&__stt('',2)"); return
+        }
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) { js("window.__stt&&__stt('',3)"); return }
+        stt?.destroy(); sttText = ""
+        val r = SpeechRecognizer.createSpeechRecognizer(this); stt = r
+        r.setRecognitionListener(object : RecognitionListener {
+            override fun onReadyForSpeech(p: Bundle?) {}
+            override fun onBeginningOfSpeech() {}
+            override fun onRmsChanged(v: Float) {}
+            override fun onBufferReceived(b: ByteArray?) {}
+            override fun onEndOfSpeech() {}
+            override fun onError(e: Int) { js("window.__stt&&__stt(${q(sttText)},1)") }
+            override fun onEvent(t: Int, p: Bundle?) {}
+            override fun onPartialResults(p: Bundle?) { p?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.let { if (it.isNotBlank()) { sttText = it; js("window.__stt&&__stt(${q(it)},0)") } } }
+            override fun onResults(p: Bundle?) { val t = p?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull() ?: sttText; js("window.__stt&&__stt(${q(t)},1)") }
+        })
+        r.startListening(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ko-KR"); putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 4000L)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 4000L)
+        })
+    }
+
     inner class Bridge {
+        @JavascriptInterface fun sttStart() { runOnUiThread { sttBegin() } }
+        @JavascriptInterface fun sttStop() { runOnUiThread { stt?.stopListening() } }
         @JavascriptInterface fun key(name: String): String = Net.key(this@WebActivity, name)
         @JavascriptInterface fun setTheme(json: String) { this@WebActivity.getSharedPreferences("ox", android.content.Context.MODE_PRIVATE).edit().putString("wtheme", json).apply() }
         @JavascriptInterface fun tap(strong: Boolean) = Haptic.tap(this@WebActivity, strong)

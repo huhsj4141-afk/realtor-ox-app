@@ -119,7 +119,7 @@
     .abar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:8px 0 14px} .abar em{display:block;height:100%;background:linear-gradient(90deg,var(--pri),#22c55e);border-radius:4px}
     .agp{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:20px;padding:18px} .agp small{font-size:13px;font-weight:400;opacity:.85}
     .arow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px} .arow .btn{margin:0} .atd{font-size:12.5px;color:var(--sub2,#9aa3b5);margin-top:10px;text-align:center} .ahow{font-size:12.5px;text-align:center;margin:4px 12px}
-    .a1c{margin:10px 0;padding:12px 14px;border-radius:12px;background:var(--card2,#f4f6fb);border:1px solid var(--line,#e3e7ef)} .a1c small,.a1q small{display:block;font-size:12px;color:var(--sub2,#9aa3b5)} .a1c b{display:block;font-size:16px;margin:6px 0 2px;line-height:1.5} .a1q{text-align:center} .a1f{font-size:20px;font-weight:700;margin:18px 0 10px;line-height:1.5} .a1b{font-size:17px;color:var(--pri,#2563eb);min-height:26px;margin-bottom:12px;line-height:1.5}
+    .padsay{position:absolute;left:12px;right:12px;top:56px;z-index:5;background:#111d;color:#fff;padding:10px 14px;border-radius:12px;font-size:15px} #padmic{touch-action:none;user-select:none;-webkit-user-select:none} #padmic.on{background:#ef4444;color:#fff} u.khint{text-decoration:underline wavy #f59e0b 2px;text-underline-offset:4px;background:#f59e0b22;border-radius:3px} .a1c{margin:10px 0;padding:12px 14px;border-radius:12px;background:var(--card2,#f4f6fb);border:1px solid var(--line,#e3e7ef)} .a1c small,.a1q small{display:block;font-size:12px;color:var(--sub2,#9aa3b5)} .a1c b{display:block;font-size:16px;margin:6px 0 2px;line-height:1.5} .a1q{text-align:center} .a1f{font-size:20px;font-weight:700;margin:18px 0 10px;line-height:1.5} .a1b{font-size:17px;color:var(--pri,#2563eb);min-height:26px;margin-bottom:12px;line-height:1.5}
     #pscore{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:2px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0;line-height:1.25}
     #pscore small{font-size:10.5px;color:var(--sub2,#9aa3b5)} #pscore span{font-size:13.5px;white-space:nowrap} #pscore b{font-size:16px} #pscore b.ok{color:#16a34a} #pscore b.no{color:#ef4444}
     #pscore i{font-style:normal;font-size:10.5px;margin-left:2px} #pscore i.up{color:#16a34a} #pscore i.dn{color:#ef4444}
@@ -1262,11 +1262,11 @@
     const N = pts => pts.map(q => [Math.round(q[0] / W * 10000) / 10000, Math.round(q[1] / H * 10000) / 10000]);
     const line = () => {   // 수평·수직·45도 근처면 딱 맞춤
       let ang = Math.atan2(b[1] - a[1], b[0] - a[0]); const step = Math.PI / 4, near = Math.round(ang / step) * step;
-      if (Math.abs(ang - near) < .12) ang = near;
+      if (Math.abs(ang - near) < .06) ang = near;
       st.p = N([a, [a[0] + Math.cos(ang) * D, a[1] + Math.sin(ang) * D]]); st.s = 'line';
     };
     if (L < 12) return;
-    if (D / L > .88) return line();
+    if (D / L > .96 && L > 40) return line();
     const closed = D < Math.max(bw, bh) * .25 && bw > 16 && bh > 16;
     if (closed) {
       const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
@@ -1346,7 +1346,7 @@
   function padSwitch() {
     const k = padKey(); if (k === PAD.key) return;
     if (PAD.key) padSave();
-    PAD.key = k; PAD.strokes = padLoad(k); PAD.cur = null; PAD.hist = []; PAD.redo = []; padFit(); if (PAD.paint) PAD.paint();
+    PAD.key = k; PAD.strokes = padLoad(k); PAD.cur = null; PAD.hist = []; PAD.redo = []; Object.assign(PAD.v, { ox: 0, oy: 0, s: 1 }); if (PAD.paint) PAD.paint();
     const t = document.getElementById('padt'); if (t) { try { t.value = localStorage.getItem('reb_padt_' + k) || ''; } catch (e) { t.value = ''; } }
     const lb = document.getElementById('padk'); if (lb) lb.textContent = k === 'free' ? '자유 필기' : k.replace(/^(\d+)-(\d)(\d)-(\d+)$/, '$1회 $4번') + ' 필기';
     padDraw();
@@ -1362,7 +1362,7 @@
     if (!on) { if (p) { padSave(); p.classList.remove('show'); } document.body.classList.remove('padon'); return; }
     if (!p) {
       document.body.insertAdjacentHTML('beforeend', `<div id="pad">
-        <div class="ph"><b id="padk"></b><span class="sp"></span><button data-pt="draw">✏️ 그리기</button><button data-pt="memo">⌨️ 글</button><button id="padx" aria-label="닫기">✕</button></div>
+        <div class="ph"><b id="padk"></b><span class="sp"></span><button data-pt="draw">✏️ 그리기</button><button data-pt="memo">⌨️ 글</button><button id="padmic" title="누르고 있는 동안 말하면, 떼는 순간 글자로 들어가요">🎤</button><button id="padx" aria-label="닫기">✕</button></div>
         <div class="pdraw"><div class="pt">
           <button class="pk on" data-k="pen" title="펜">✏️</button><button class="pk" data-k="hl" title="형광펜">🖍</button><button class="pk" data-k="dash" title="점선">┅</button><button class="pk" data-k="arrow" title="화살표">➝</button><button class="pk" data-k="erase" title="지우개 (닿은 획을 지워요)">🧽</button>
           <span class="sp"></span><button id="padu" title="되돌리기">↶</button><button id="padr" title="다시">↷</button><button id="padz" title="모두 지우기">🗑</button></div>
@@ -1373,6 +1373,30 @@
           <div class="pcw"><canvas id="padc"></canvas><div class="pzm"><button id="padzo" aria-label="축소">－</button><button id="padzl" title="전체 보기">100%</button><button id="padzi" aria-label="확대">＋</button></div></div></div>
         <textarea id="padt" placeholder="풀이 메모를 적어 두세요. 문제마다 따로 저장돼요."></textarea></div>`);
       p = document.getElementById('pad');
+      // 🎤 누르고 있는 동안 음성 인식 → 떼면 입력
+      (() => {
+        const mb = p.querySelector('#padmic'), N = window.NativeBridge; let on = false, last = '', tip = null;
+        const show = t => { if (!tip) { tip = document.createElement('div'); tip.className = 'padsay'; p.appendChild(tip); } tip.textContent = t; };
+        const hide = () => { if (tip) { tip.remove(); tip = null; } };
+        const put = t => {
+          t = String(t || '').trim(); if (!t) return;
+          if (PAD.tab === 'memo') { const ta = p.querySelector('#padt'); ta.value = (ta.value ? ta.value.replace(/\s*$/, '\n') : '') + t; ta.dispatchEvent(new Event('input')); return; }
+          const b = padBox(), V = PAD.v, y = Math.min(V.oy + 1 / V.s - .05, (b ? b[3] : V.oy) + .06);
+          PAD.hist.push(JSON.stringify(PAD.strokes)); PAD.redo = []; PAD.strokes.push({ k: 'text', c: PAD.color || 'ink', w: 15, b: 0, al: 'left', t, p: [[V.ox + .04 / V.s, Math.max(V.oy + .05, y)]] });
+          padDraw(); padSave(); if (PAD.paint) PAD.paint();
+        };
+        window.__stt = (t, st) => {
+          if (st === 2) { hide(); on = false; mb.classList.remove('on'); return window.__toast && __toast('마이크 권한을 허용한 뒤 다시 눌러 주세요'); }
+          if (st === 3) { hide(); on = false; mb.classList.remove('on'); return window.__toast && __toast('이 폰에서 음성 인식을 쓸 수 없어요'); }
+          if (t) last = t;
+          if (st === 0) show('🎤 ' + t);
+          if (st === 1) { hide(); mb.classList.remove('on'); put(last); last = ''; on = false; }
+        };
+        const start = e => { e.preventDefault(); if (!N || !N.sttStart) return window.__toast && __toast('앱에서만 쓸 수 있어요'); on = true; last = ''; mb.classList.add('on'); show('🎤 듣는 중… 떼면 입력돼요'); try { N.tap && N.tap(); } catch (x) {} N.sttStart(); };
+        const stop = e => { if (!on) return; e && e.preventDefault(); show('🎤 글자로 바꾸는 중…'); try { N.sttStop(); } catch (x) {} };
+        mb.addEventListener('pointerdown', start); mb.addEventListener('pointerup', stop); mb.addEventListener('pointercancel', stop); mb.addEventListener('pointerleave', stop);
+        mb.oncontextmenu = e => e.preventDefault();
+      })();
       p.querySelector('#padx').onclick = () => padOpen(false);
       p.querySelectorAll('[data-pt]').forEach(b => b.onclick = () => padTab(b.dataset.pt));
       // 설정 기억: 도구·색·굵기·도형 보정·손바닥 무시
@@ -1444,7 +1468,7 @@
         if (Math.abs(pt[0] - l[0]) + Math.abs(pt[1] - l[1]) > .002) {
           c.p.push(pt.map(R4)); padDraw();
           // 끝에서 펜을 0.5초 멈추면 도형으로 맞춤 (갤럭시 노트처럼)
-          clearTimeout(hold); hold = setTimeout(() => { if (PAD.cur === c && c.p.length > 4) { padShape(c, cv, true); c.fixed = 1; padDraw(); } }, 500);
+          clearTimeout(hold); hold = setTimeout(() => { if (PAD.cur === c && c.p.length > 6) { const s0 = c.s; padShape(c, cv, c.k === 'arrow'); if (c.s && c.s !== s0) { c.fixed = 1; padDraw(); } } }, 900);
         }
       });
       const end = e => {
@@ -1457,9 +1481,6 @@
         const c = PAD.cur; PAD.cur = null;
         if (!c.fixed && (PAD.snap || c.k === 'arrow')) padShape(c, cv, c.k === 'arrow');
         delete c.fixed; snapshot(); PAD.strokes.push(c);
-        // 화면 가장자리까지 차거나 밖으로 나가면 다 보이게 살짝 축소
-        const b = padBox(), V = PAD.v, in0 = .04 / V.s;
-        if (b && (b[0] < V.ox + in0 || b[1] < V.oy + in0 || b[2] > V.ox + 1 / V.s - in0 || b[3] > V.oy + 1 / V.s - in0)) padFit(true);
         padDraw(); padSave(); paint();
       };
       cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
@@ -1646,7 +1667,7 @@ ${q.x}
     } catch (e) {}
   }
 
-  /* ---------- 해설 묶음: [📖 해설 | 🔍 더 자세히 | 🐣 기초부터] 탭 하나로, 도구 버튼은 맨 아래 한 줄 ---------- */
+  /* ---------- 해설 묶음: [📖 해설(+자세히) | 🐣 기초부터] 탭 하나로, 도구 버튼은 맨 아래 한 줄 ---------- */
 
   /* 🧭 풀이 도식: AI가 관계도·순서를 만들어 필기장에 그려 줌 (그 위에 바로 메모) */
   async function makeDiagram(q, btn, pre) {
@@ -1704,7 +1725,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     (d.steps || []).slice(0, 7).forEach((t, i) => T(.05, .66 + i * 24 / H, String(t), { al: 'left', f: 13 }));
     PAD.hist.push(JSON.stringify(PAD.strokes)); PAD.redo = [];
     PAD.strokes = PAD.strokes.filter(st => st.g !== 'dia').concat(out);
-    padFit(); padDraw(); padSave(); if (PAD.paint) PAD.paint();
+    Object.assign(PAD.v, { ox: 0, oy: 0, s: 1 }); padDraw(); padSave(); if (PAD.paint) PAD.paint();
   }
   window.makeDiagram = makeDiagram;
 
@@ -1775,8 +1796,11 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     // 더 자세히: 내용이 펼쳐지면 버튼은 숨김
     const mOpen = mb.textContent.trim().length > 20;
     if (!more.dataset.lbl) { more.dataset.lbl = 1; }
-    more.style.display = (tabs.querySelector('.on')?.dataset.x === 'beg' || mOpen) ? 'none' : '';
-    if (!mOpen && !more.disabled && !/더 자세히 보기/.test(more.textContent)) more.innerHTML = '🔍 더 자세히 보기 <small>(예시·비교·함정)</small>' + (saved('reb_more_' + q.id) ? ' <span class="svd">✓ 저장됨</span>' : '');
+    // (해설에 합침) 버튼 없이 해설 탭을 열면 자세한 설명이 이어서 저절로 붙음
+    more.style.display = 'none';
+    const onAi = tabs.querySelector('.on')?.dataset.x !== 'beg';
+    mb.style.display = onAi ? '' : 'none';
+    if (onAi && !mOpen && !more.disabled && more.dataset.auto !== q.id) { more.dataset.auto = q.id; setTimeout(() => { try { more.click(); } catch (e) {} }, 300); }
   }
   function xshow(k, load) {
     const card = document.querySelector('#view .card'); if (!card) return;
@@ -1835,7 +1859,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     lines.slice(idx).forEach(l => { const m = /^\s*([①②③④⑤])/.exec(l); if (m) ch.push({ n: MK5.indexOf(m[1]) + 1, t: l.trim() }); else if (ch.length) ch[ch.length - 1].t += '\n' + l; });
     if (ch.length !== 5) return;
     const set = ELIM[q.id] = ELIM[q.id] || new Set();
-    qt.innerHTML = '<div class="qstem">' + h(lines.slice(0, idx).join('\n')) + '</div>' + (elHint() ? '<div class="elh">💡 아닌 보기는 옆으로 밀어서 줄 긋기</div>' : '') +
+    qt.innerHTML = '<div class="qstem">' + h(lines.slice(0, idx).join('\n')) + '</div>' + (elHint() ? '<div class="elh">💡 보기를 옆으로 밀면 줄 긋기 · 보기를 길게 누르면 힌트 밑줄 · 문제를 길게 누르면 관계도·계산 과정</div>' : '') +
       ch.map(c => `<div class="elc ${set.has(c.n) ? 'x' : ''}" data-n="${c.n}">${h(c.t)}</div>`).join('');
     qt.dataset.el = q.id;
     const sync = () => document.querySelectorAll('#view .choices button').forEach(b => b.classList.toggle('elx', set.has(+b.dataset.c)));
@@ -2072,6 +2096,42 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
       T.speak(lines.map(l => ({ text: l.text })), {}).catch(e => { if (e && e.code !== 'viewer_stopped' && window.__toast) __toast(e.message); });
     }
     window.memoListen = memoListen;
+    // ── 보기 롱터치 → 참·거짓을 가르는 낱말에 밑줄(힌트) ──
+    async function keyHint(q) {
+      const K = 'reb_key_' + q.id; let d = null; try { d = JSON.parse(localStorage.getItem(K)); } catch (e) {}
+      const OPS = () => { const e = [...document.querySelectorAll('#view .qtext .elc')]; return e.length ? e : [...document.querySelectorAll('#view .choices button')].filter(b => b.innerText.trim().length > 3); };
+      const bs = OPS(); if (!bs.length) return;
+      if (!d) {
+        if (!window.__gem) return window.__toast && __toast('인터넷 연결이 필요해요');
+        window.__toast && __toast('🔎 힌트 찾는 중…');
+        const ops = bs.map((b, i) => `${i + 1}. ${b.innerText.replace(/^\s*[①-⑤\d]+[.)]?\s*/, '').split('\n')[0]}`).join('\n');
+        try {
+          const raw = await window.__gem(`공인중개사 기출 문제의 각 보기에서, 그 보기가 옳은지 틀린지를 결정하는 핵심 낱말(숫자·기간·주체·요건 등)을 찾아. 보기 원문에 그대로 있는 2~12자 부분만 골라. 정답이나 옳고 그름은 절대 쓰지 말 것. JSON만: {"k":["보기1 핵심","보기2 핵심",...]}\n문제: ${q.x}\n보기:\n${ops}`, {}, true);
+          d = JSON.parse(String(raw).replace(/^```(json)?|```$/g, '').trim()); if (!d || !Array.isArray(d.k)) throw 0;
+          try { localStorage.setItem(K, JSON.stringify(d)); } catch (e) {}
+        } catch (e) { return window.__toast && __toast('힌트를 못 찾았어요. 잠시 후 다시 길게 눌러 주세요'); }
+      }
+      OPS().forEach((b, i) => {
+        const w = String(d.k[i] || '').trim(); if (w.length < 2 || b.querySelector('.khint')) return;
+        const tw = document.createTreeWalker(b, NodeFilter.SHOW_TEXT); let n;
+        while ((n = tw.nextNode())) { const at = n.nodeValue.indexOf(w); if (at < 0) continue; const r = document.createRange(); r.setStart(n, at); r.setEnd(n, at + w.length); const m = document.createElement('u'); m.className = 'khint'; r.surroundContents(m); break; }
+      });
+      try { haptic && haptic(); } catch (e) {}
+    }
+    setInterval(() => {
+      try {
+        if (cur !== 'quiz' || typeof S === 'undefined' || !S || !S.list) return; const q = S.list[S.i]; if (!q) return;
+        document.querySelectorAll('#view .qtext .elc:not([data-lp]), #view .qtext .qstem:not([data-lp]), #view .choices button:not([data-lp])').forEach(b => {
+          b.dataset.lp = 1; let t = null, x0 = 0, y0 = 0, fired = false;
+          const act = () => { const q2 = S.list[S.i]; if (b.classList.contains('qstem')) window.makeDiagram(q2, null, true); else keyHint(q2); };   // 문제 길게 → 관계도·계산 과정, 보기 길게 → 힌트 밑줄
+          b.addEventListener('pointerdown', e => { fired = false; x0 = e.clientX; y0 = e.clientY; clearTimeout(t); t = setTimeout(() => { fired = true; act(); }, 550); });
+          b.addEventListener('pointermove', e => { if (Math.abs(e.clientX - x0) + Math.abs(e.clientY - y0) > 12) clearTimeout(t); });
+          ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => b.addEventListener(ev, () => clearTimeout(t)));
+          b.addEventListener('click', e => { if (fired) { fired = false; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+          b.addEventListener('contextmenu', e => e.preventDefault());
+        });
+      } catch (e) {}
+    }, 400);
     // ── 🔗 관계도 버튼: 당사자가 여럿이거나 계산 문제면 문제 바로 아래에 ──
     const RELX = /[甲乙丙丁戊]|계산|산출|금액|얼마|합계|세액|과세표준|중개보수|평가액|수익률|비율|㎡/;
     setInterval(() => {
