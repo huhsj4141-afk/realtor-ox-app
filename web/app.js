@@ -1538,7 +1538,10 @@
         if (c.fixed) { if (c.s === 'line') { c.p[1] = PAD.grid ? gsnap(pt) : pt.map(R4); if (PAD.grid) c.p[0] = gsnap(c.p[0]); padDraw(); } return; }   // 곧게 맞춘 뒤엔 끝점만 따라감
         const l = c.p[c.p.length - 1];
         if (Math.abs(pt[0] - l[0]) + Math.abs(pt[1] - l[1]) > .002) {
-          c.p.push(pt.map(R4)); padDraw();
+          // 화면이 놓친 중간 점까지 모두 받아 선을 매끄럽게 (터치펜으로 빨리 써도 각지지 않게)
+          const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : []; let lp = l;
+          (evs.length > 1 ? evs : [e]).forEach(ce => { const q = pos(ce); if (Math.abs(q[0] - lp[0]) + Math.abs(q[1] - lp[1]) > .0012) { c.p.push(q.map(R4)); lp = q; } });
+          padDraw();
           // 끝에서 펜을 0.5초 멈추면 도형으로 맞춤 (갤럭시 노트처럼)
           clearTimeout(hold); hold = setTimeout(() => { if (PAD.cur === c && c.p.length > 6) { const s0 = c.s; padShape(c, cv, c.k === 'arrow'); if (c.s && c.s !== s0) { c.fixed = 1; padDraw(); } } }, 900);
         }
@@ -1560,7 +1563,10 @@
         const c = PAD.cur; PAD.cur = null;
         if (!c.fixed && (PAD.snap || c.k === 'arrow')) padShape(c, cv, c.k === 'arrow');
         if (c.s || c.k === 'arrow') gsnapStroke(c);
-        delete c.fixed; snapshot(); PAD.strokes.push(c);
+        if (!c.s && c.k !== 'arrow' && c.p.length > 4) {   // 손떨림 다듬기: 양 끝은 그대로, 가운데 점만 이웃과 살짝 평균
+          for (let k = 0; k < 2; k++) c.p = c.p.map((q, i, A) => i === 0 || i === A.length - 1 ? q : [R4(A[i - 1][0] * .25 + q[0] * .5 + A[i + 1][0] * .25), R4(A[i - 1][1] * .25 + q[1] * .5 + A[i + 1][1] * .25)]);
+        }
+                delete c.fixed; snapshot(); PAD.strokes.push(c);
         padDraw(); padSave(); paint();
       };
       cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
