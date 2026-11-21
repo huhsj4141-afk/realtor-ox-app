@@ -124,6 +124,40 @@
     .fixl{display:flex;flex-direction:column;gap:6px;margin-top:8px} .fixl button{display:flex;align-items:center;gap:8px;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit;font-size:14px;line-height:1.45} .fixl button i{margin-left:auto;font-style:normal;color:var(--pri,#2563eb);font-weight:700}
     .sit button{text-align:left;padding:12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit}
     .sit b{display:block;font-size:15px} .sit span{font-size:12px;opacity:.7}
+
+    /* 홈은 정보 위계로 구분하고, 큰 색 면적을 줄여요. 다른 학습 화면에는 적용하지 않아요. */
+    #view .hero.calm-hero{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:none}
+    .calm-hero .home-label{font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--sub2,var(--sub));margin-bottom:16px}
+    #view .calm-hero .dd{font-size:28px;font-weight:650;letter-spacing:-.7px;line-height:1.25}
+    #view .calm-hero .muted{color:var(--sub2,var(--sub));line-height:1.6}
+    #view .calm-hero .home-streak>div:first-child{font-size:16px!important;font-weight:600!important}
+    #view .calm-hero .go{background:#526780;color:#fff;box-shadow:none;border:0;border-radius:12px;padding:16px;font-size:18px;margin-top:22px;line-height:1.5}
+    #view .calm-hero .go small{color:#e1e7ef;font-size:12px;font-weight:400;line-height:1.6;margin-top:4px}
+    #view .calm-manager{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:18px;padding:18px;margin-top:14px}
+    #view .calm-manager .mgh{display:block;font-size:16px;font-weight:650;line-height:1.5}
+    #view .calm-manager .mgr-status{display:block;color:var(--sub2,var(--sub));font-weight:400;font-size:13px;margin:5px 0 12px}
+    #view .calm-manager summary{cursor:pointer;font-size:14px;font-weight:500;line-height:1.6;padding:8px 0;color:var(--ink)}
+    #view .calm-manager .fixl button{background:var(--bg);border:1px solid var(--line);color:var(--ink);font-size:13px;padding:12px;line-height:1.65;border-radius:10px}
+    #view .calm-manager .fixl button b{white-space:nowrap;flex:none}
+    #view .calm-manager .fixl button i{color:var(--sub2,var(--sub));font-size:12px}
+    #view .calm-manager .sit button{background:var(--bg);color:var(--ink);border-color:var(--line)}
+    #view .home-progress{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:0;margin-top:14px;overflow:hidden}
+    #view .home-progress>summary{cursor:pointer;padding:18px;font-size:15px;font-weight:600;color:var(--ink);line-height:1.5}
+    #view .home-progress>summary small{font-size:12px;font-weight:400;color:var(--sub2,var(--sub));margin-left:8px}
+    .home-progress .progress-body{padding:0 18px 18px}
+    .home-progress .lvb{margin:0;background:transparent;border:0;padding:10px 0;color:var(--ink)}
+    .home-progress .lvn{background:var(--line);color:var(--ink);font-weight:600}
+    .home-progress .lvt small{color:var(--sub2,var(--sub))}
+    .home-progress .lvt i{background:var(--line)} .home-progress .lvt em{background:#91a69b}
+    .home-progress .lvg{display:none}
+    .home-progress .lgue{font-size:12px;color:var(--sub2,var(--sub));line-height:1.7;border-bottom:1px solid var(--line);padding-bottom:14px;margin:6px 0 0}
+    .home-progress .home-week{font-size:12px;color:var(--sub2,var(--sub));line-height:1.6}
+    .home-progress .wk{gap:7px;margin-top:10px}.home-progress .wk div{font-size:11px;color:var(--sub2,var(--sub));opacity:1}
+    .home-progress .wk i{height:16px;background:var(--line);border-radius:5px}.home-progress .wk i.p{background:#91a69b80}.home-progress .wk i.d{background:#91a69b}
+    body.home-calm #pscore{box-shadow:none;animation:none}body.home-calm #pscore b{font-weight:600;font-size:14px}
+    body.home-calm #hdrb button,body.home-calm #setb{background:var(--card);border-color:var(--line)}
+    body.home-calm nav.tabs button.on{color:var(--ink)}body.home-calm nav.tabs button.on b{background:var(--line)}
+    @media(max-width:360px){.calm-manager .sit{grid-template-columns:1fr}.home-progress>summary small{display:block;margin-left:0}}
   </style>`);
 
   /* ---------- 빈출: 테마별로 10년 동안 몇 번 나왔나 ---------- */
@@ -245,7 +279,7 @@
       const d = mon.getTime() + i * DAY, c = cnt[d] || 0; if (c) { days++; sum += c; }
       return `<div class="${d === t0.getTime() ? 't' : ''}"><i class="${c >= 15 ? 'd' : c ? 'p' : ''}"></i>${n}</div>`;
     }).join('');
-    return `<div style="margin-top:14px;font-size:13px;opacity:.95">이번 주 <b>${days}일</b> 공부 · <b>${sum}</b>문제 <span style="opacity:.8">(목표 주 6일)</span></div><div class="wk">${cells}</div>`;
+    return `<div class="home-week"><div style="margin-top:14px;font-size:13px;opacity:.95">이번 주 <b>${days}일</b> 공부 · <b>${sum}</b>문제 <span style="opacity:.8">(목표 주 6일)</span></div><div class="wk">${cells}</div></div>`;
   }
   function roundCard() {
     const sub = typeof SUBS !== 'undefined' ? SUBS : ['학개론', '민법', '중개사법', '공법', '공시법', '세법'];
@@ -289,8 +323,23 @@
       $('#mgr').querySelectorAll('[data-f]').forEach(b => b.onclick = () => runFix(dg.acts[+b.dataset.f]));
       const fa = $('#fixall'); if (fa) fa.onclick = () => runFix({ k: 'all' });
     }
+    calmHome();
     // 진도·과목별 수준은 기록 → 점수 탭에 있으니 첫 화면에선 뺌
     [...document.querySelectorAll('#view .card')].forEach(c => { const h = c.querySelector('h2,h3'); if (h && /회독 진도|과목별 수준|내용 업데이트/.test(h.textContent)) c.remove(); });
+  }
+  function calmHome() {
+    document.body.classList.toggle('home-calm', cur === 'home');
+    if (cur !== 'home') return;
+    const hero=document.querySelector('#view .hero');if(!hero)return;
+    hero.classList.add('calm-hero');
+    if(!hero.querySelector('.home-label'))hero.insertAdjacentHTML('afterbegin','<div class="home-label">오늘의 학습</div>');
+    const streak=hero.querySelector('.row>div:last-child');if(streak){streak.classList.add('home-streak');const n=streak.firstElementChild;if(n)n.textContent=n.textContent.replace('🔥 ','');}
+    const go=hero.querySelector('.go');if(go){const text=[...go.childNodes].find(n=>n.nodeType===3);if(text)text.textContent=text.textContent.replace(/^(?:▶|🎉)\s*/,'');}
+    let progress=document.getElementById('home-progress');
+    if(!progress){progress=document.createElement('details');progress.id='home-progress';progress.className='card home-progress';progress.innerHTML='<summary>학습 기록<small>이번 주 · 레벨 · 배지</small></summary><div class="progress-body"></div>';hero.after(progress);}
+    const manager=document.getElementById('mgr');if(manager){manager.classList.remove('inhero');manager.classList.add('card','calm-manager');if(manager.nextElementSibling!==progress)progress.before(manager);}
+    const body=progress.querySelector('.progress-body');
+    ['#lvb','#lgh','.home-week'].forEach(sel=>{const node=document.querySelector('#view '+sel);if(node&&node.parentElement!==body)body.appendChild(node);});
   }
   function decorateSetup() {
     cleanCards([]);
@@ -470,12 +519,12 @@
   } catch (e) {}
 
   function managerCard() {
-    const d = diagnose();
-    return `<div id="mgr" class="inhero"><div class="mgh">🧭 매니저 처방 <b>${d.grade[0]}</b><small>시작 버튼에 들어 있어요 · 하나만 하려면 누르기</small></div>
-      ${d.notes.length ? `<div class="fixl">${d.notes.slice(0, 3).map((n, i) => `<button data-f="${i}">${n}<i>${d.acts[i].k === 'listen' ? '🎧' : '▶'}</i></button>`).join('')}</div>` : '<div style="margin-top:6px">빠진 곳 없이 골고루 하고 있어요 👍</div>'}
-      <details style="margin-top:10px"><summary style="font-weight:600">📍 상황별로 고르기 (잠·버스·도서관…)</summary>
-      <div class="sit" style="margin-top:8px">${SITU.map(([k, i, t, sub]) => `<button data-s="${k}"><b>${i} ${t}</b><span>${sub}</span></button>`).join('')}</div></details></div></div>`;
+    const d = diagnose(), status = d.grade[0].replace(/^[^가-힣A-Za-z0-9]+/u, '');
+    return '<div id="mgr" class="card calm-manager"><div class="mgh">학습 추천<span class="mgr-status">'+h(status)+'</span></div>' +
+      (d.notes.length ? '<details><summary>추천 항목 '+Math.min(d.notes.length,3)+'개 펼쳐보기</summary><div class="fixl">'+d.notes.slice(0,3).map((n,i)=>'<button data-f="'+i+'">'+n+'<i>시작</i></button>').join('')+'</div></details>' : '<p class="muted">골고루 공부하고 있어요.</p>') +
+      '<details style="margin-top:6px"><summary>상황에 맞춰 고르기</summary><div class="sit" style="margin-top:8px">'+SITU.map(([k,i,t,sub])=>'<button data-s="'+k+'"><b>'+h(t)+'</b><span>'+h(sub)+'</span></button>').join('')+'</div></details></div>';
   }
+
 
 
   /* ---------- 해설 보기 좋게: 보기별 O·X, 틀린 부분 밑줄, 해설 강조 ---------- */
@@ -1600,6 +1649,8 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
     const h = c.querySelector('h2,h3'); if (h && c.firstElementChild === h) h.style.display = 'none';
   }
   function tidy() {
+    document.body.classList.toggle('home-calm', cur === 'home');
+    if(cur === 'home') calmHome();
     if (cur === 'stats' && !document.getElementById('achc')) { const sg = document.getElementById('rseg'); if (sg) sg.insertAdjacentHTML('afterend', achCard()); }
     if (cur === 'home' && !document.getElementById('lvb')) {
       const go = document.querySelector('#view .hero .go');
