@@ -29,6 +29,7 @@ jobs:
       - name: before
         id: pre
         run: |
+          echo "mem0=$(sha256sum gen/memory-audit.json 2>/dev/null | cut -d' ' -f1 || true)" >> $GITHUB_OUTPUT
           echo "had=$([ -f gen/DONE ] && echo 1 || echo 0)" >> $GITHUB_OUTPUT
           echo "mc0=$(python -c "import json;print(len(json.load(open('gen/mc_exp.json'))))" 2>/dev/null || echo 0)" >> $GITHUB_OUTPUT
       - name: 해설·음성 생성 (이어서)
@@ -60,7 +61,8 @@ jobs:
           echo "done=$([ -f gen/DONE ] && echo true || echo false)" >> $GITHUB_OUTPUT
           echo "newly=$([ -f gen/DONE ] && [ '${{ steps.pre.outputs.had }}' = 0 ] && echo true || echo false)" >> $GITHUB_OUTPUT
           mc1=$(python -c "import json;print(len(json.load(open('gen/mc_exp.json'))))" 2>/dev/null || echo 0)
-          echo "mcnew=$([ "$mc1" != '${{ steps.pre.outputs.mc0 }}' ] && echo true || echo false)" >> $GITHUB_OUTPUT
+          mem1=$(sha256sum gen/memory-audit.json 2>/dev/null | cut -d' ' -f1 || true)
+          if [ "$mc1" != '${{ steps.pre.outputs.mc0 }}' ] || [ "$mem1" != '${{ steps.pre.outputs.mem0 }}' ]; then echo 'mcnew=true' >> $GITHUB_OUTPUT; else echo 'mcnew=false' >> $GITHUB_OUTPUT; fi
   apk:
     needs: gen
     if: always() && (github.event_name != 'schedule' || needs.gen.outputs.mcnew == 'true')

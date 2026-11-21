@@ -1,0 +1,7 @@
+/* 전체 카드 공통 검사: 원문 대조 또는 의미 검사 통과 카드만 표시. */
+const BAD_BLANK=/^(상호\s*간|사이|동일|같은|있다|없다|한다|된다|가능|불가능|해당|통해|대한|위해|것|때|수|이상|이하|경우)$/;
+const META=/빈출|출제자|출제\s*의도|수험생|혼동하게|유도하는|이 문제|이 문항|암기해야|기억하세요/;
+const norm=x=>String(x||'').replace(/[\s.。]/g,'');
+function inspect(c){const reasons=[];if(!c.prompt||!c.answer)reasons.push('질문 또는 답 없음');if(META.test(c.prompt+' '+c.answer))reasons.push('출제·학습 안내');if(c.prompt?.length>160||!/[가-힣]/.test(c.prompt||''))reasons.push('질문 맥락 부족');if(c.answer?.length>150)reasons.push('답이 너무 김');if(norm(c.prompt).includes(norm(c.answer))&&norm(c.answer).length>1)reasons.push('질문에 정답 노출');if(c.cloze){if((c.cloze.match(/\[\s*\]/g)||[]).length!==1)reasons.push('빈칸 구조 오류');if(!c.blankAnswer||BAD_BLANK.test(c.blankAnswer.trim()))reasons.push('의미 없는 빈칸');const [before,after]=c.cloze.split(/\[\s*\]/);if(c.blankAnswer&&(norm(before).includes(norm(c.blankAnswer))||norm(after).includes(norm(c.blankAnswer))))reasons.push('빈칸 정답 노출');}return reasons;}
+function acceptAudit(c,a){if(!a||a.policy!==3||a.sourceRevision!==c.revision||a.valid!==true)return null;if(!a.evidence||!c.sources.some(s=>s.quote.includes(a.evidence)))return null;const d={...c,prompt:a.front,answer:a.back,cloze:a.cloze||null,blankAnswer:a.blank||null,semanticChecked:true,reviewed:false};let issues=inspect(d);if(issues.length&&issues.every(x=>x.includes('빈칸'))){d.cloze=null;d.blankAnswer=null;issues=inspect(d);}if(issues.length)return null;return d;}
+module.exports={inspect,acceptAudit,BAD_BLANK};

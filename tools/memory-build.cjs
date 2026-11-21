@@ -1,5 +1,6 @@
 /* 관계가 확인되는 개념만 질문→짧은 답으로 만든다. 문장 끝·임의 숫자 가리기는 하지 않는다. */
 const fs=require('fs'),path=require('path'),crypto=require('crypto');
+const {inspect,acceptAudit}=require('./memory-quality.cjs');
 const ROOT=path.resolve(__dirname,'..'),hash=s=>crypto.createHash('sha256').update(s).digest('hex').slice(0,16);
 const clean=x=>typeof x==='string'?x.replace(/\s+/g,' ').trim():'',list=x=>Array.isArray(x)?x:[];
 function readable(x){return clean(x).replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g,'($1) ÷ ($2)').replace(/\\(?:text|mathrm)\{([^{}]*)\}/g,'$1').replace(/\\times/g,' × ').replace(/\\div/g,' ÷ ').replace(/\\(?:left|right)/g,'').replace(/\\%/g,'%');}
@@ -7,8 +8,8 @@ const META=/빈출|출제자|출제\s*의도|수험생|혼동하게|유도하|�
 const termText=x=>clean(x).replace(/\([^)]*\)/g,'').replace(/^['"‘“]|['"’”]$/g,'').trim();
 const norm=s=>clean(s).replace(/\s+/g,'').replace(/[.。]$/,'');
 function fieldValue(q,e,field){let v=field==='question'?q.x:e;for(const k of field==='question'?[]:field.split('.'))v=v?.[k];return Array.isArray(v)?v.join(' | '):clean(v);}
-function build(mc,ex,ox,oxex,vars,blocked={},reviewed=[]){
- const cards=[],questions={},dedup=new Map(),protectedKeys=new Set(),coverage={method:'concept-qa-v2',questions:mc.length,withExplanation:0,covered:0,cards:0,reviewed:0,pendingReview:0,skippedOCR:0,types:{},rejected:0};
+function build(mc,ex,ox,oxex,vars,blocked={},reviewed=[],audits={}){
+ const cards=[],questions={},dedup=new Map(),protectedKeys=new Set(),coverage={method:'semantic-quality-v3',questions:mc.length,withExplanation:0,covered:0,cards:0,reviewed:0,pendingReview:0,skippedOCR:0,types:{},rejected:0};
  const byId=new Map(mc.map(q=>[q.id,q]));const bad=q=>![0,'0',false,null,undefined,''].includes(q.ocr);
  for(const q of mc)questions[q.id]={question:q.x,correct:q.a,label:'제'+q.n+'회 '+['학개론','민법','중개사법','공법','공시법','세법'][q.s]+' '+q.no+'번',year:q.y,topic:q.t};
  function add(q,field,term,relation,front,back,options={}){
@@ -24,7 +25,7 @@ function build(mc,ex,ox,oxex,vars,blocked={},reviewed=[]){
   if(options.reviewed)protectedKeys.add(relationKey);
   const id='mem-'+hash('qa-v2:'+q.id+':'+field+':'+relation+':'+norm(term));
   const c={id,title:term,kind:relation==='공식'?'공식 카드':'개념 카드',subject:q.s,prompt:front,answer:back,
-   cloze:options.cloze||front+' [        ]',blankAnswer:options.blank||back,
+   cloze:options.cloze||null,blankAnswer:options.blank||null,
    why:clean(options.explanation||''),reviewed:!!options.reviewed,sources:[source]};
   dedup.set(key,c);cards.push(c);
  }
@@ -60,10 +61,20 @@ function build(mc,ex,ox,oxex,vars,blocked={},reviewed=[]){
    add(q,'concept',term,'정의',term+'란?',m[2],{evidence:sentence});
   });
  }
- const active=cards.filter(c=>{c.revision=hash('qa-v2:'+JSON.stringify(c)+JSON.stringify(c.sources.map(s=>questions[s.id])));return blocked[c.id]?.revision!==c.revision&&blocked[c.id]?.answer!==c.answer;});
- const seen=new Set();active.forEach(c=>{c.sources.forEach(s=>seen.add(s.id));coverage.types[c.kind]=(coverage.types[c.kind]||0)+1;if(c.reviewed)coverage.reviewed++;});coverage.covered=seen.size;coverage.cards=active.length;coverage.pendingReview=cards.length-active.length;
- return {cards:active,questions,coverage};
+ const candidates=cards.map(c=>({...c,revision:hash('qa-v2:'+JSON.stringify(c)+JSON.stringify(c.sources.map(s=>questions[s.id])))}));
+ const active=[],audit=[];
+ for(const c of candidates){
+  const reasons=inspect(c);let accepted=null;
+  if(c.reviewed&&!reasons.length)accepted=c;else if(!c.reviewed)accepted=acceptAudit(c,audits[c.id]);
+  if(accepted)accepted.revision=hash('quality-v3:'+JSON.stringify(accepted));
+  if(blocked[c.id]?.revision===c.revision||blocked[c.id]?.answer===c.answer||accepted&&(blocked[c.id]?.revision===accepted.revision||blocked[c.id]?.answer===accepted.answer))accepted=null;
+  const status=accepted?'active':c.reviewed?'needs-fix':audits[c.id]?.sourceRevision===c.revision&&audits[c.id]?.valid===false?'rejected':'pending-semantic';
+  audit.push({id:c.id,status,reasons,sourceRevision:c.revision});
+  if(accepted)active.push(accepted);
+ }
+ const seen=new Set();active.forEach(c=>{c.sources.forEach(s=>seen.add(s.id));coverage.types[c.kind]=(coverage.types[c.kind]||0)+1;if(c.reviewed)coverage.reviewed++;});coverage.covered=seen.size;coverage.cards=active.length;coverage.candidates=candidates.length;coverage.pendingSemantic=audit.filter(a=>a.status==='pending-semantic').length;coverage.rejectedByAudit=audit.filter(a=>a.status==='rejected'||a.status==='needs-fix').length;
+ return {cards:active,questions,coverage,candidates,audit};
 }
-function main(){const read=p=>JSON.parse(fs.readFileSync(path.join(ROOT,p),'utf8').replace(/^\uFEFF/,''));const d=build(read('data/mc.json'),read('gen/mc_exp.json'),[],{},{},fs.existsSync(path.join(ROOT,'gen/memory-blocked.json'))?read('gen/memory-blocked.json'):{},read('data/memory-reviewed.json'));
- fs.writeFileSync(path.join(ROOT,'web/memory-data.js'),'window.MEMORY_META = '+JSON.stringify(d.coverage)+';\nwindow.MEMORY_QUESTIONS = '+JSON.stringify(d.questions)+';\nwindow.MEMORY_CARDS = '+JSON.stringify(d.cards)+';\n');console.log(JSON.stringify(d.coverage));return d;}
+function main(){const read=p=>JSON.parse(fs.readFileSync(path.join(ROOT,p),'utf8').replace(/^\uFEFF/,''));const d=build(read('data/mc.json'),read('gen/mc_exp.json'),[],{},{},fs.existsSync(path.join(ROOT,'gen/memory-blocked.json'))?read('gen/memory-blocked.json'):{},read('data/memory-reviewed.json'),fs.existsSync(path.join(ROOT,'gen/memory-audit.json'))?read('gen/memory-audit.json'):{});
+ fs.writeFileSync(path.join(ROOT,'web/memory-data.js'),'window.MEMORY_META = '+JSON.stringify(d.coverage)+';\nwindow.MEMORY_QUESTIONS = '+JSON.stringify(d.questions)+';\nwindow.MEMORY_CARDS = '+JSON.stringify(d.cards)+';\n');fs.writeFileSync(path.join(ROOT,'gen/memory-candidates.json'),JSON.stringify(d.candidates));fs.writeFileSync(path.join(ROOT,'gen/memory-audit-report.json'),JSON.stringify({coverage:d.coverage,items:d.audit},null,2));console.log(JSON.stringify(d.coverage));return d;}
 if(require.main===module)main();module.exports={build,readable,META};
