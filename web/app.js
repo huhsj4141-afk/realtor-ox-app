@@ -1368,13 +1368,13 @@
       document.body.insertAdjacentHTML('beforeend', `<div id="pad">
         <div class="ph"><b id="padk"></b><span class="sp"></span><button data-pt="draw">✏️ 그리기</button><button data-pt="memo">⌨️ 글</button><button id="padmic" title="누르고 있는 동안 말하면, 떼는 순간 글자로 들어가요">🎤</button><button id="padx" aria-label="닫기">✕</button></div>
         <div class="pdraw"><div class="pt">
-          <button class="pk on" data-k="pen" title="펜">✏️</button><button class="pk" data-k="hl" title="형광펜">🖍</button><button class="pk" data-k="dash" title="점선">┅</button><button class="pk" data-k="arrow" title="화살표">➝</button><button class="pk" data-k="erase" title="지우개 (닿은 획을 지워요)">🧽</button>
+          <button class="pk on" data-k="pen" title="펜">✏️</button><button class="pk" data-k="hl" title="형광펜">🖍</button><button class="pk" data-k="dash" title="점선">┅</button><button class="pk" data-k="arrow" title="화살표">➝</button><button class="pk" data-k="erase" title="지우개 (닿은 획을 지워요)">🧽</button><button class="pk" data-k="move" title="옮기기: 글자·상자·선을 끌어서 옮겨요">✥</button>
           <span class="sp"></span><button id="padu" title="되돌리기">↶</button><button id="padr" title="다시">↷</button><button id="padz" title="모두 지우기">🗑</button></div>
           <div class="pt" style="flex-wrap:nowrap">
           <button class="pc" data-c="ink" style="--c:var(--ink)"></button><button class="pc" data-c="#ef4444" style="--c:#ef4444"></button><button class="pc" data-c="#3b82f6" style="--c:#3b82f6"></button><button class="pc" data-c="#22c55e" style="--c:#22c55e"></button><button class="pc" data-c="#f59e0b" style="--c:#f59e0b"></button>
           <input id="padw" type="range" min="1" max="14" step="1" title="굵기"><i id="padwv"></i>
           <button id="pads" title="그린 선을 곧은 선·네모·동그라미로 맞춰요. 끝에서 펜을 잠깐 멈춰도 맞춰져요">📐</button><button id="padp" title="손바닥이 닿아도 선이 안 그어져요">✋</button></div>
-          <div class="pcw"><canvas id="padc"></canvas><div class="pzm"><button id="padzo" aria-label="축소">－</button><button id="padzl" title="전체 보기">100%</button><button id="padzi" aria-label="확대">＋</button></div></div></div>
+          <div class="pcw"><canvas id="padc"></canvas><div class="pzm"><button id="padzo" aria-label="축소">－</button><button id="padzl" title="100%로">100%</button><button id="padzi" aria-label="확대">＋</button></div></div></div>
         <textarea id="padt" placeholder="풀이 메모를 적어 두세요. 문제마다 따로 저장돼요."></textarea></div>`);
       p = document.getElementById('pad');
       // 🎤 누르고 있는 동안 음성 인식 → 떼면 입력
@@ -1429,7 +1429,7 @@
       const cv = p.querySelector('#padc');
       const pos = e => { const r = cv.getBoundingClientRect(), V = PAD.v; return [(e.clientX - r.left) / (r.width * V.s) + V.ox, (e.clientY - r.top) / (r.height * V.s) + V.oy]; };
       p.querySelector('#padzi').onclick = () => padZoom(1.25); p.querySelector('#padzo').onclick = () => padZoom(.8);
-      p.querySelector('#padzl').onclick = () => { padFit(); padDraw(); };
+      p.querySelector('#padzl').onclick = () => { Object.assign(PAD.v, { ox: 0, oy: 0, s: 1 }); padDraw(); };
       const T = new Map(); let pinch = null;   // 두 손가락: 벌리면 확대, 모으면 축소, 끌면 이동
       const R4 = v => Math.round(v * 10000) / 10000;
       const palmy = e => PAD.palm && e.pointerType === 'touch' && ((e.width || 0) > 38 || (e.height || 0) > 38);
@@ -1442,6 +1442,27 @@
       let hold = null;
       const pinchStart = () => { const [a, b] = [...T.values()], r = cv.getBoundingClientRect();
         pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), cx: ((a[0] + b[0]) / 2 - r.left) / r.width, cy: ((a[1] + b[1]) / 2 - r.top) / r.height, v: { ...PAD.v } }; };
+      // ✥ 옮기기: 누른 곳의 글자·상자·선을 찾아 함께 끌기 (상자를 잡으면 안의 글자와 이어진 화살표 끝도 따라옴)
+      const tbox = st => { const r = cv.getBoundingClientRect(), W = r.width, H = r.height, fs = st.w || 14, L = String(st.t || '').split('\n');
+        const w = Math.max(...L.map(l => [...l].reduce((v, ch) => v + (/[\x00-\x7f]/.test(ch) ? .6 : 1) * fs, 0))) / W, h = L.length * fs * 1.25 / H, x = st.p[0][0], y = st.p[0][1];
+        const x0 = st.al === 'center' ? x - w / 2 : st.al === 'right' ? x - w : x; return [x0 - .01, y - h / 2 - .01, x0 + w + .01, y + h / 2 + .01]; };
+      const bb = st => { let x0 = 9, y0 = 9, x1 = -9, y1 = -9; st.p.forEach(q => { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); }); return [x0, y0, x1, y1]; };
+      const inB = (q, b, m = 0) => q[0] >= b[0] - m && q[0] <= b[2] + m && q[1] >= b[1] - m && q[1] <= b[3] + m;
+      const findHit = pt => {
+        const r = cv.getBoundingClientRect(), tol = 16 / (r.width * PAD.v.s), S2 = PAD.strokes;
+        let hit = -1;
+        for (let i = S2.length - 1; i >= 0 && hit < 0; i--) { const st = S2[i];
+          if (st.k === 'text') { if (inB(pt, tbox(st))) hit = i; }
+          else if (st.s === 'rect' ? inB(pt, bb(st), tol) : st.p.some((q, j) => Math.hypot(q[0] - pt[0], q[1] - pt[1]) < tol || (j && (() => { const a2 = st.p[j - 1], dx = q[0] - a2[0], dy = q[1] - a2[1], L2 = dx * dx + dy * dy || 1e-9, t = Math.max(0, Math.min(1, ((pt[0] - a2[0]) * dx + (pt[1] - a2[1]) * dy) / L2)); return Math.hypot(a2[0] + t * dx - pt[0], a2[1] + t * dy - pt[1]) < tol; })()))) hit = i; }
+        if (hit < 0) return null;
+        let st = S2[hit];
+        if (st.k === 'text') { const ri = S2.findIndex(x => x.s === 'rect' && inB(st.p[0], bb(x))); if (ri >= 0) { hit = ri; st = S2[ri]; } }
+        const set = new Set([hit]), att = [];
+        if (st.s === 'rect') { const b = bb(st), m = 14 / (r.width * PAD.v.s);
+          S2.forEach((x, i) => { if (i === hit) return; if (x.k === 'text' && inB(x.p[0], b)) set.add(i);
+            else if (x.k === 'arrow' || x.s === 'line') { if (inB(x.p[0], b, m)) att.push([i, 0]); if (inB(x.p[x.p.length - 1], b, m)) att.push([i, x.p.length - 1]); } }); }
+        return { set, att };
+      };
       cv.addEventListener('pointerdown', e => {
         if (e.pointerType === 'touch' && !palmy(e)) {
           T.set(e.pointerId, [e.clientX, e.clientY]);
@@ -1452,6 +1473,7 @@
         if (palmy(e) || (PAD.cur && PAD.pid !== e.pointerId)) return;
         PAD.pid = e.pointerId; cv.setPointerCapture(e.pointerId);
         if (PAD.tool === 'erase') { PAD.erasing = true; PAD.erasedOnce = false; eraseAt(pos(e)); return; }
+        if (PAD.tool === 'move') { const h2 = findHit(pos(e)); if (h2) { snapshot(); PAD.mv = { ...h2, last: pos(e) }; } return; }
         PAD.cur = { c: PAD.color, w: PAD.w, k: PAD.tool, p: [pos(e)] }; padDraw();
       });
       cv.addEventListener('pointermove', e => {
@@ -1464,6 +1486,9 @@
           PAD.v = { s: ns, ox: wx - cx / ns, oy: wy - cy / ns }; padDraw(); return;
         }
         if (e.pointerId !== PAD.pid) return;
+        if (PAD.mv) { const pt = pos(e), dx = pt[0] - PAD.mv.last[0], dy = pt[1] - PAD.mv.last[1]; PAD.mv.last = pt;
+          PAD.mv.set.forEach(i => PAD.strokes[i].p = PAD.strokes[i].p.map(q => [R4(q[0] + dx), R4(q[1] + dy)]));
+          PAD.mv.att.forEach(([i, j]) => { const q = PAD.strokes[i].p[j]; PAD.strokes[i].p[j] = [R4(q[0] + dx), R4(q[1] + dy)]; }); padDraw(); return; }
         if (PAD.erasing) return eraseAt(pos(e));
         if (!PAD.cur) return;
         const pt = pos(e), c = PAD.cur;
@@ -1480,6 +1505,8 @@
         if (pinch) { if (T.size < 2) pinch = null; return; }
         if (e && e.pointerId !== PAD.pid) return;
         clearTimeout(hold);
+        if (PAD.mv) { PAD.mv = null; padSave(); paint(); return; }
+        if (PAD.tool === 'move') return;
         if (PAD.erasing) { PAD.erasing = false; padSave(); paint(); return; }
         if (!PAD.cur) return;
         const c = PAD.cur; PAD.cur = null;
