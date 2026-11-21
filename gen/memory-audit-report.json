@@ -3,19 +3,19 @@
     "method": "semantic-quality-v3",
     "questions": 1999,
     "withExplanation": 1999,
-    "covered": 3,
-    "cards": 10,
+    "covered": 7,
+    "cards": 15,
     "reviewed": 10,
     "pendingReview": 0,
     "skippedOCR": 0,
     "types": {
-      "개념 카드": 9,
-      "공식 카드": 1
+      "개념 카드": 10,
+      "공식 카드": 5
     },
     "rejected": 470,
     "candidates": 4277,
-    "pendingSemantic": 4267,
-    "rejectedByAudit": 0
+    "pendingSemantic": 4251,
+    "rejectedByAudit": 11
   },
   "items": [
     {
@@ -80,19 +80,19 @@
     },
     {
       "id": "mem-151dc0a10c95c730",
-      "status": "pending-semantic",
+      "status": "rejected",
       "reasons": [],
       "sourceRevision": "86399857cf4420eb"
     },
     {
       "id": "mem-7d00477a4a892f62",
-      "status": "pending-semantic",
+      "status": "active",
       "reasons": [],
       "sourceRevision": "a9bb4349dd616fcc"
     },
     {
       "id": "mem-2f1b26b90fe2ffd7",
-      "status": "pending-semantic",
+      "status": "rejected",
       "reasons": [],
       "sourceRevision": "0dcfd0da279926ca"
     },
@@ -602,19 +602,19 @@
     },
     {
       "id": "mem-38b239d02fabdfe3",
-      "status": "pending-semantic",
+      "status": "rejected",
       "reasons": [],
       "sourceRevision": "bcca6e7b76054822"
     },
     {
       "id": "mem-190ce5095721b2c1",
-      "status": "pending-semantic",
+      "status": "rejected",
       "reasons": [],
       "sourceRevision": "b0b9d3b3c9ca61c1"
     },
     {
       "id": "mem-7225c28697e8d8fb",
-      "status": "pending-semantic",
+      "status": "rejected",
       "reasons": [],
       "sourceRevision": "90d4c2dfd522e240"
     },
@@ -1052,19 +1052,19 @@
     },
     {
       "id": "mem-b528ee45ef1b13e1",
-      "status": "pending-semantic",
+      "status": "rejected",
       "reasons": [],
       "sourceRevision": "3e773dcb1e2c1f10"
     },
     {
       "id": "mem-b7091350051fb6a1",
-      "status": "pending-semantic",
+      "status": "rejected",
       "reasons": [],
       "sourceRevision": "5f06a73c9e314c41"
     },
     {
       "id": "mem-fddb72312ca17e53",
-      "status": "pending-semantic",
+      "status": "rejected",
       "reasons": [],
       "sourceRevision": "75401f6bb8b26999"
     },
@@ -1546,19 +1546,19 @@
     },
     {
       "id": "mem-2ae9cde7c695af09",
-      "status": "pending-semantic",
+      "status": "rejected",
       "reasons": [],
       "sourceRevision": "56b1cf2ce6a5e15f"
     },
     {
       "id": "mem-7dadf871892a1be8",
-      "status": "pending-semantic",
+      "status": "rejected",
       "reasons": [],
       "sourceRevision": "4752f71d94510337"
     },
     {
       "id": "mem-09535ce044743823",
-      "status": "pending-semantic",
+      "status": "rejected",
       "reasons": [],
       "sourceRevision": "9bc95c77a6edff8e"
     },
@@ -2062,13 +2062,13 @@
     },
     {
       "id": "mem-ce091692ec4e0365",
-      "status": "pending-semantic",
+      "status": "active",
       "reasons": [],
       "sourceRevision": "df8b652de50f86ad"
     },
     {
       "id": "mem-ba6baf8b00b4ace0",
-      "status": "pending-semantic",
+      "status": "active",
       "reasons": [],
       "sourceRevision": "82140ea286107f3e"
     },
@@ -2310,13 +2310,13 @@
     },
     {
       "id": "mem-b6585179c27c6679",
-      "status": "pending-semantic",
+      "status": "active",
       "reasons": [],
       "sourceRevision": "13b0c0de2930ebe5"
     },
     {
       "id": "mem-546c8e793f4c4b08",
-      "status": "pending-semantic",
+      "status": "active",
       "reasons": [],
       "sourceRevision": "4af66e54614dab90"
     },
