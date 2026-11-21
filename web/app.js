@@ -119,7 +119,7 @@
     .abar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:8px 0 14px} .abar em{display:block;height:100%;background:linear-gradient(90deg,var(--pri),#22c55e);border-radius:4px}
     .agp{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:20px;padding:18px} .agp small{font-size:13px;font-weight:400;opacity:.85}
     .arow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px} .arow .btn{margin:0} .atd{font-size:12.5px;color:var(--sub2,#9aa3b5);margin-top:10px;text-align:center} .ahow{font-size:12.5px;text-align:center;margin:4px 12px}
-    .padsay{position:absolute;left:12px;right:12px;top:56px;z-index:5;background:#111d;color:#fff;padding:10px 14px;border-radius:12px;font-size:15px} #padmic{touch-action:none;user-select:none;-webkit-user-select:none} #padmic.on{background:#ef4444;color:#fff} u.khint{text-decoration:underline wavy #f59e0b 2px;text-underline-offset:4px;background:#f59e0b22;border-radius:3px} #sync{display:none} .moreh{font-weight:700;font-size:15px;margin:18px 0 6px;padding-top:12px;border-top:1px dashed var(--line,#e3e7ef)} .morec{white-space:pre-wrap;line-height:1.75;font-size:15px} .diawait{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);background:#111e;color:#fff;padding:14px 20px;border-radius:14px;z-index:300;font-size:15px} #view .qtext,#view .qtext *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none} .ahero .agp{background:var(--pri);color:#fff;border:0} .ahero .agp small{color:#ffffffcc} #wrev,#view .wbtns .btn{white-space:nowrap;font-size:15px} .a1c{margin:10px 0;padding:12px 14px;border-radius:12px;background:var(--bg);color:var(--ink);border:1.5px solid var(--warn,#f59e0b)} .a1c small,.a1q small{display:block;font-size:12px;color:var(--sub)} .a1c b{display:block;font-size:16px;margin:6px 0 2px;line-height:1.5} .a1q{text-align:center} .a1f{font-size:20px;font-weight:700;margin:18px 0 10px;line-height:1.5} .a1b{font-size:17px;color:var(--pri,#2563eb);min-height:26px;margin-bottom:12px;line-height:1.5}
+    .padsay{position:absolute;left:12px;right:12px;top:56px;z-index:5;background:#111d;color:#fff;padding:10px 14px;border-radius:12px;font-size:15px} #padmic{touch-action:none;user-select:none;-webkit-user-select:none} #padmic.on{background:#ef4444;color:#fff} u.khint{text-decoration:underline wavy #f59e0b 2px;text-underline-offset:4px;background:#f59e0b22;border-radius:3px} #sync{display:none} .moreh{font-weight:700;font-size:15px;margin:18px 0 6px;padding-top:12px;border-top:1px dashed var(--line,#e3e7ef)} .morec{white-space:pre-wrap;line-height:1.75;font-size:15px} .diawait{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);background:#111e;color:#fff;padding:14px 20px;border-radius:14px;z-index:300;font-size:15px} #view .qtext,#view .qtext *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none} .ahero .agp{background:var(--pri);color:#fff;border:0} .ahero .agp small{color:#ffffffcc} #wrev,#view .wbtns .btn{white-space:nowrap;font-size:15px} .sbg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px} .sbig{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px 14px} .sbig small{display:block;font-size:12.5px;color:var(--sub)} .sbig b{font-size:30px;line-height:1.2} .sbig b i{font-size:14px;font-style:normal;margin-left:2px} .sbig span{display:block;font-size:12.5px;color:var(--sub)} .ssub{margin-top:10px} .sr{display:grid;grid-template-columns:7.2em 1fr 2.2em 4.4em;align-items:center;gap:8px;padding:7px 0;font-size:14px} .sr em{height:8px;border-radius:5px;background:var(--line);overflow:hidden} .sr em i{display:block;height:100%} .sr b{text-align:right} .sr small{text-align:right;color:var(--sub);font-size:12px} .sach summary{cursor:pointer;font-weight:600} .a1c{margin:10px 0;padding:12px 14px;border-radius:12px;background:var(--bg);color:var(--ink);border:1.5px solid var(--warn,#f59e0b)} .a1c small,.a1q small{display:block;font-size:12px;color:var(--sub)} .a1c b{display:block;font-size:16px;margin:6px 0 2px;line-height:1.5} .a1q{text-align:center} .a1f{font-size:20px;font-weight:700;margin:18px 0 10px;line-height:1.5} .a1b{font-size:17px;color:var(--pri,#2563eb);min-height:26px;margin-bottom:12px;line-height:1.5}
     #pscore{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:2px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0;line-height:1.25}
     #pscore small{font-size:10.5px;color:var(--sub2,#9aa3b5)} #pscore span{font-size:13.5px;white-space:nowrap} #pscore b{font-size:16px} #pscore b.ok{color:#16a34a} #pscore b.no{color:#ef4444}
     #pscore i{font-style:normal;font-size:10.5px;margin-left:2px} #pscore i.up{color:#16a34a} #pscore i.dn{color:#ef4444}
@@ -646,19 +646,21 @@
   }
   /* 기록 → 점수 맨 위: 성취 카드 */
   function achCard() {
-    const a = achStats(), x = xpNow(), L = lvOf(x);
-    const PD = predict(), r = s => PD.sub[s];   // 맨 위 예상 점수와 같은 계산
-    const avg = ids => { const v = ids.map(r); return v.some(z => z == null) ? null : v.reduce((p, q) => p + q, 0) / v.length; };
-    const fail = ids => ids.some(s => r(s) != null && r(s) < 40);
-    const exm = (nm, ids) => { const v = avg(ids); return `<div class="pr"><b>${nm}</b>${v == null ? '<span class="muted">과목마다 10문제 이상 풀면 보여요</span>' : `<span class="${v >= 60 && !fail(ids) ? 'hok' : 'hno'}">예상 ${Math.round(v)}점</span><small>${v >= 60 && !fail(ids) ? '합격권이에요 👏' : fail(ids) ? '과락(40점 미만) 과목부터 채워요' : `합격선까지 +${Math.ceil(60 - v)}점`}</small>`}</div>`; };
-    return `<div class="card" id="achc"><h2>🏆 나의 성취</h2>
-      <div class="lvbig"><span class="lvn">Lv.${L.n}</span><div><b>${L.name}</b><i><em style="width:${Math.round(L.cur / L.need * 100)}%"></em></i><small>${x.toLocaleString()} XP · 다음 레벨까지 ${L.need - L.cur} XP</small></div></div>
-      <div class="pred">${exm('1차', [0, 1])}${exm('2차', [2, 3, 4])}</div>
+    const a = achStats(), x = xpNow(), L = lvOf(x), PD = predict(), st = subjStats();
+    const col = v => v < 40 ? 'var(--no)' : v < 60 ? 'var(--warn)' : 'var(--ok)';
+    const NM = ['부동산학개론', '민법·민사특별법', '중개사법·실무', '부동산공법', '공시법·세법'];
+    const dn = [st[0], st[1], st[2], st[3], { done: st[4].done + st[5].done, total: st[4].total + st[5].total }];
+    const big = (nm, v, ok, ids) => `<div class="sbig"><small>${nm}</small><b style="color:${ok ? 'var(--ok)' : col(v)}">${Math.round(v)}<i>점</i></b><span>${ok ? '합격권' : ids.some(i => PD.s5[i] < 40) ? '과락 과목 있음' : '합격선까지 +' + Math.max(0, Math.ceil(60 - v))}</span></div>`;
+    const got = BADGES.filter(b => b[4](a)).length;
+    return `<div class="card" id="achc">
+      <div class="sbg">${big('1차 예상', PD.a1, PD.ok1, [0, 1])}${big('2차 예상', PD.a2, PD.ok2, [2, 3, 4])}</div>
       ${predChart()}
-      <div class="lgue">${leagueLine()}</div>
-      <div class="muted" style="font-size:12.5px;margin:6px 0 10px">🔥 연속 ${streak().n}일${streak().frozen ? ` (🧊 보호권 ${streak().frozen}번 씀)` : ''} · 한 주에 하루는 쉬어도 이어져요 · 🌳 집중 나무 ${trees()}그루</div>
-      <div class="bdg">${BADGES.map(b => { const ok = b[4](a); return `<div class="${ok ? 'on' : ''}" title="${b[3]}"><b>${ok ? b[1] : '🔒'}</b><span>${b[2]}</span><small>${b[3]}</small></div>`; }).join('')}</div>
-      <div class="muted" style="font-size:12px;margin-top:8px">맞히면 10 XP, 틀려도 풀면 3 XP예요. 틀린 문제를 다시 맞히면 '오답 정복'이 쌓여요.</div></div>`;
+      <div class="ssub">${NM.map((n, i) => { const v = PD.s5[i]; return `<div class="sr"><span>${n}</span><em><i style="width:${Math.round(v)}%;background:${col(v)}"></i></em><b style="color:${col(v)}">${Math.round(v)}</b><small>${dn[i].done}/${dn[i].total}</small></div>`; }).join('')}</div>
+      <div class="muted" style="font-size:12px;margin-top:6px">과목 점수 = 지금까지 맞힌 비율(적게 풀었으면 낮게 잡음) · 40점 미만 과락 · 오른쪽은 푼 문제 수</div>
+    </div>
+    <details class="card sach"><summary>🏅 Lv.${L.n} ${L.name} · 배지 ${got}/${BADGES.length} · 🔥 ${streak().n}일 연속</summary>
+      <div class="bdg" style="margin-top:10px">${BADGES.map(b => { const ok = b[4](a); return `<div class="${ok ? 'on' : ''}" title="${b[3]}"><b>${ok ? b[1] : '🔒'}</b><span>${b[2]}</span><small>${b[3]}</small></div>`; }).join('')}</div>
+      <div class="muted" style="font-size:12px;margin-top:8px">${x.toLocaleString()} XP · 맞히면 10 XP, 틀려도 3 XP</div></details>`;
   }
 
   /* 📈 실시간 예상 점수: 맨 위 제목 자리에 늘 보여 주고, 문제를 풀 때마다 바로 바뀜
@@ -666,9 +668,11 @@
   function predict() {
     const st = subjStats(), k = 10, pr = .3;
     const sub = st.map(x => 100 * (x.ok + k * pr) / (x.grad + k));
-    const a1 = (sub[0] + sub[1]) / 2, a2 = (sub[2] + sub[3] + sub[4]) / 3;
-    const ok1 = a1 >= 60 && sub[0] >= 40 && sub[1] >= 40, ok2 = a2 >= 60 && sub.slice(2).every(v => v >= 40);
-    return { sub: st.map(x => 100 * (x.ok + k * pr) / (x.grad + k)), a1: Math.round(a1 * 10) / 10, a2: Math.round(a2 * 10) / 10, ok1, ok2, n: st.reduce((a, x) => a + x.grad, 0) };
+    const gs = 100 * (st[4].ok + st[5].ok + k * pr) / (st[4].grad + st[5].grad + k);   // 2차 셋째 과목 = 공시법·세법 한 과목
+    const s5 = [sub[0], sub[1], sub[2], sub[3], gs];
+    const a1 = (s5[0] + s5[1]) / 2, a2 = (s5[2] + s5[3] + s5[4]) / 3;
+    const ok1 = a1 >= 60 && s5[0] >= 40 && s5[1] >= 40, ok2 = a2 >= 60 && s5.slice(2).every(v => v >= 40);
+    return { sub, s5, a1: Math.round(a1 * 10) / 10, a2: Math.round(a2 * 10) / 10, ok1, ok2, n: st.reduce((a, x) => a + x.grad, 0) };
   }
   window.predict = predict;
   let PS0 = null;

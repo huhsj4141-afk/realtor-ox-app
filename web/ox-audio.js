@@ -558,9 +558,7 @@ function stats(){RT='stats';const s=subjStats();const sc=s.map(x=>x.rate==null?n
   const g45=(s[4].grad+s[5].grad)?Math.round((s[4].ok+s[5].ok)/(s[4].grad+s[5].grad)*100):null;
   const off=[['부동산학개론',sc[0]],['민법·민사특별법',sc[1]],['중개사법·실무',sc[2]],['부동산공법',sc[3]],['공시법·세법',g45]];
   const tot=s.reduce((a,b)=>a+b.done,0);
-  V.innerHTML=seg(RSEG,'stats','rseg')+`<div class="card"><h2>과목별 예상 점수 <span class="muted">목표 60점 · 40점 미만 과락</span></h2>
-  ${off.map(([n,v])=>`<div class="subj"><span class="nm">${n}</span><span class="sc" style="color:${color(v)}">${v==null?'-':v+'점'}</span><div class="bar"><i style="width:${v||0}%;background:${color(v)}"></i></div></div>`).join('')}</div>
-  <div class="card"><h2>진도 <span class="muted">${tot} / ${Q.length}문항</span></h2>${s.map(x=>`<div class="subj"><span class="nm">${SUB[x.s]} <span class="chip">Lv.${lvOf(TH[x.s]).toFixed(1)}</span></span><span class="muted">${x.done}/${x.total}</span><div class="bar"><i style="width:${x.done/x.total*100}%;background:var(--pri)"></i></div></div>`).join('')}</div>
+  V.innerHTML=seg(RSEG,'stats','rseg')+`
   <details class="card muted"><summary style="cursor:pointer">ℹ️ 자료 안내 · 단축키</summary><div style="margin-top:8px;font-size:13px">· 큐넷 기출 2017~2026(제28~37회) 2,000문항 · 정답은 큐넷 최종정답(A형) · 출처: 한국산업인력공단(공공누리 제1유형)<br>· 제36·37회는 스캔본이라 오탈자 가능 → 원본 PDF 확인 · 옛 기출은 법 개정에 주의<br>· 키보드/키패드: 1~5 보기 · Enter 다음 · ← 이전 · H 해설 · 듣기에서 Space 재생</div></details>`;
   bindSeg('rseg')}
 window.stats=stats;TABOF.stats='wrong';TABOF.journal='wrong';window.seg=seg;window.bindSeg=bindSeg;window.RSEG=RSEG;
