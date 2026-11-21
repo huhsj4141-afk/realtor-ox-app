@@ -415,6 +415,22 @@ def strs(e):
     return re.findall(r"'((?:[^'\\]|\\.)*)'", e)
 
 
+REDO = {}   # 검수에서 두 번 지적된 해설: {문항: [지적]}
+
+
+def exp_ok(q, e):
+    """해설의 정답 번호·보기 O/X 가 공식 정답과 모순되지 않는지 (tools/test_exp_consistency.py 와 같은 기준)"""
+    if not re.fullmatch(r'[1-5](,[1-5])*', str(q.get('a', ''))): return True
+    keys = set(map(int, str(q['a']).split(',')))
+    m = re.findall(r'[①②③④⑤]', str(e.get('answer', ''))[:40])
+    if m and '①②③④⑤'.index(m[0]) + 1 not in keys: return False
+    ch = e.get('choices') or []
+    if len(ch) == 5 and len(keys) == 1 and not re.search(r'모두\s*고른|묶인|옳은\s*것의\s*개수', q['x']) and '계산' not in (q.get('k') or ''):
+        a = next(iter(keys)); O = [c.get('no') for c in ch if c.get('ox') == 'O']
+        if O not in ([a], [i for i in range(1, 6) if i != a]): return False
+    return True
+
+
 def ex_prompt(q):
     """앱(Claude 해설)과 똑같은 해설 지시문을 만듦"""
     calc = '계산' in q['k']
@@ -432,7 +448,10 @@ def ex_prompt(q):
             elif e.startswith('calc'): val = ss[0] if calc else ss[1]
             else: val = '' if has else (ss[1] if len(ss) > 1 else '')
         res.append(str(val))
-    return ''.join(res).replace('\\\\', '\\')
+    out = ''.join(res).replace('\\\\', '\\')
+    if q['id'] in REDO:   # 검수 지적을 꼭 반영
+        out += '\n\n[검수 지적 — 지난 해설에서 틀린 부분이에요. 공식 정답과 출제 당시 법령에 맞게 바로잡아 다시 써]\n' + '\n'.join('- ' + str(x) for x in REDO[q['id']])
+    return out
 
 
 def pick_flash():
@@ -461,7 +480,12 @@ def mc_explanations():
     made = 0
     # 계산 문제는 그림·계산표(v3)가 없으면 먼저 다시 — 관계도·식을 그림으로 보여 주기 위해
     calc3 = [q for q in data if '계산' in (q.get('k') or '') and exp.get(q['id'], {}).get('v') != 3]
-    data = calc3 + [q for q in data if q['id'] not in exp and q not in calc3] + [q for q in data if q['id'] in exp and exp[q['id']].get('v') not in (2, 3) and q not in calc3]
+    # 검수(tools/exp_audit.py)에서 두 번 심각하게 지적된 해설은 맨 먼저, 지적을 붙여 다시
+    rp = os.path.join(GEN, 'exp_redo.json')
+    REDO.update(json.load(open(rp, encoding='utf8')) if os.path.exists(rp) else {})
+    redo = [q for q in data if q['id'] in REDO]
+    for q in redo: exp.get(q['id'], {})['v'] = 0
+    data = redo + [q for q in calc3 if q not in redo] + [q for q in data if q['id'] not in exp and q not in calc3] + [q for q in data if q['id'] in exp and exp[q['id']].get('v') not in (2, 3) and q not in calc3]
     for q in data:
         want = 3 if '계산' in (q.get('k') or '') else 2
         if exp.get(q['id'], {}).get('v', 0) >= want: continue
@@ -473,7 +497,10 @@ def mc_explanations():
         try:
             r = call(f'models/{model}:generateContent', body)
             txt = ''.join(p.get('text', '') for p in r['candidates'][0]['content']['parts'])
-            exp[q['id']] = json.loads(fixjson(re.search(r'\{.*\}', txt, re.S).group(0))); exp[q['id']]['v'] = 3 if '계산' in (q.get('k') or '') else 2; made += 1
+            new = json.loads(fixjson(re.search(r'\{.*\}', txt, re.S).group(0)))
+            if not exp_ok(q, new):   # 공식 정답과 모순되는 해설은 저장하지 않음 (예전 것 유지, 다음에 다시)
+                log('  정답과 안 맞는 해설이라 버림', q['id']); continue
+            exp[q['id']] = new; exp[q['id']]['v'] = 3 if '계산' in (q.get('k') or '') else 2; made += 1
         except DailyLimit:
             jline.dump(exp, path)
             if not models: raise
@@ -484,6 +511,8 @@ def mc_explanations():
             jline.dump(exp, path)
             log(f'객관식 해설 {len(exp)}개 · 오늘 만든 것 {made}')
     jline.dump(exp, path)
+    if REDO:   # 다시 만든 것은 목록에서 빼기 (검수가 다시 확인)
+        json.dump({k: v for k, v in REDO.items() if exp.get(k, {}).get('v', 0) < 2}, open(rp, 'w', encoding='utf8'), ensure_ascii=False, indent=0)
     left = sum(1 for q in data if exp.get(q['id'], {}).get('v', 0) < (3 if '계산' in (q.get('k') or '') else 2))
     if left: log(f'남은 해설 {left}개 — 다음 실행에서 이어서')
     return left == 0

@@ -40,6 +40,14 @@ def main():
                 if len(full) >= 8: out[f'{ti}_{i}'] = full; continue
             if len(s) >= 20 and (re.search(r'[甲乙丙丁戊]|A|B|X|Y', it['s']) or len(s) >= 40):
                 out[f'{ti}_{i}'] = s
+                continue
+            # 주어가 빠진 지문 ('…비교하여 분석하는데 활용될 수 있다'): 묻는 말의 주제가 지문에 없으면 '○○에 관한 내용이에요'
+            m = re.search(r'([^\s.?]+(?:\s[^\s.?]+){0,3})에\s*관한\s*설명', x.split('①')[0])
+            if m:
+                topic = re.sub(r'^(?:다음은|다음|\S*상)\s+', '', m.group(1)).strip()
+                key = topic.split()[-1] if topic else ''
+                if key and len(key) >= 2 and key[:2] not in it['s']:
+                    out[f'{ti}_{i}'] = f'{topic}에 관한 내용이에요.'
     json.dump(out, open(os.path.join(ROOT, 'gen', 'ox_ctx.json'), 'w', encoding='utf8'), ensure_ascii=False, indent=0)
     print('상황 붙은 지문', len(out))
 

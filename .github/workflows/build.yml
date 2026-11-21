@@ -81,6 +81,7 @@ jobs:
           npm ci --ignore-scripts --no-audit --no-fund
           npm test
           python3 tools/test_memory_audit.py
+          python3 tools/test_exp_consistency.py
       - name: 자료 넣기
         run: |
           python3 tools/gen.py sounds
