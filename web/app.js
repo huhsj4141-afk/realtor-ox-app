@@ -56,7 +56,7 @@
     #hdrb{display:flex;gap:6px;margin-left:auto;margin-right:6px} #say,#padb,#nzb{position:relative;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:17px;cursor:pointer;padding:0} header.top{position:sticky;top:0;z-index:50;background:var(--bg)} #say.on{background:#ef4444;color:#fff;border-color:#ef4444} @keyframes sayp{50%{box-shadow:0 0 0 10px rgba(239,68,68,.15)}} #moreSay{display:none}
         #padb.has::after{content:'';position:absolute;top:4px;right:4px;width:9px;height:9px;border-radius:50%;background:#facc15}
     #pad{position:fixed;left:0;right:0;bottom:0;height:56vh;z-index:80;background:var(--card);border-top:1px solid var(--line);border-radius:18px 18px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.4);display:flex;flex-direction:column;transform:translateY(105%);transition:transform .18s}
-    #pad.show{transform:none} 
+    #pad.show{transform:none}
     #pad .ph{display:flex;align-items:center;gap:6px;padding:8px 10px 4px} #pad .ph b{font-size:14px} #pad .sp{flex:1}
     #pad button{font:inherit;font-size:13.5px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;padding:6px 10px;cursor:pointer}
     #pad button.on{background:var(--pri2);color:var(--pri);border-color:var(--pri)} #padx{font-size:16px!important}
@@ -795,6 +795,7 @@
   }
   function courseRun() {
     const st = COURSE.steps[COURSE.i]; if (!st) return courseDone();
+    if (st.memo && window.Memory) { COURSE.active = false; return Memory.open({ onDone: () => { COURSE.i++; courseRun(); } }); }
     const title = `${st.t} · ${COURSE.i + 1}/${COURSE.steps.length}단계`;
     if (st.ad) startAdaptive(st.ad.qs, st.ad.n, { from: 'home', title }); else startQuiz(st.qs, { from: 'home', title });
     COURSE.session = S;
@@ -807,8 +808,11 @@
   }
   function courseStart(mode, sleep) {
     COURSE.active = false; COURSE.session = null;
+    if (mode === 'memory' && window.Memory) return Memory.open({ all: true });
     if (mode === 'listen') { pushToday(); return openListen('today', sleep || 0, 0); }
-    COURSE.steps = buildCourse(mode === 'short'); COURSE.i = 0; courseRun();
+    COURSE.steps = buildCourse(mode === 'short');
+    if (window.Memory && Memory.dueCount()) COURSE.steps.unshift({ t: '🧠 필수 암기', memo: true });
+    COURSE.i = 0; courseRun();
   }
   window.courseStart = courseStart;
   function courseSheet() {
@@ -818,6 +822,7 @@
       opt('listen', '🎧', '듣기로 진도 빼기', '복습·약점 지문부터 들려줘요. 화면 꺼도 돼요 · 지문 2개 = 1문제로 쳐요'),
       opt('short', '⚡', '10분만', '바쁠 땐 복습·약점 10문제만')];
     if (rec === 'listen') o.unshift(o.splice(1, 1)[0]);
+    if (window.Memory) o.push(opt('memory', '🧠', '필수 암기 · 샘플 2개', '복습할 카드 ' + Memory.dueCount() + '개 · 빈칸·직접 답하기·기출 적용'));
     const el = document.createElement('div'); el.className = 'kc csheet';
     el.innerHTML = `<div><div class="row"><h3 class="grow">오늘 어떻게 할까요?</h3><button class="btn sm" id="csx">닫기</button></div>
       <div class="muted" style="font-size:13px;margin:2px 0 10px">${why}</div>${o.join('')}
@@ -1767,4 +1772,17 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
     const v = document.querySelector('#tabs button.on')?.dataset.v;
     if (v === 'home') decorateHome();
   }, 50));
+})();
+
+// 검토한 암기 샘플만 읽어요. 새로운 암기 내용을 자동으로 만들거나 API를 호출하지 않아요.
+(() => {
+  const load = (src, done) => { const s=document.createElement('script'); s.src=src; s.onload=done; document.head.appendChild(s); };
+  load('memory-samples.js', () => load('memory.js', () => {
+    const original = window.record;
+    if (typeof original === 'function') window.record = function(q, c) {
+      const r=original.apply(this,arguments);
+      try { Memory.wrong(q.id, isRight(q,c)); } catch (_) {}
+      return r;
+    };
+  }));
 })();
