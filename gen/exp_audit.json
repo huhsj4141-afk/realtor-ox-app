@@ -1,0 +1,18 @@
+{
+"28-11-1":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash","d":"2026-11-21","h":"35ffab3f26","hits":0},
+"28-11-10":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash-lite","d":"2026-11-21","h":"4979955020","hits":0},
+"28-11-11":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash-lite","d":"2026-11-21","h":"3869c584a0","hits":0},
+"28-11-12":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash-lite","d":"2026-11-21","h":"4ccffce9ed","hits":0},
+"28-11-13":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.1-flash-lite","d":"2026-11-21","h":"9a25a57827","hits":0},
+"28-11-14":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.1-flash-lite","d":"2026-11-21","h":"7d4e0d1fad","hits":0},
+"28-11-15":{"ok":false,"sev":"high","issues":["보기 ⑤: 내부수익률법은 할인율로 '요구수익률'이 아닌 '내부수익률' 자체를 사용함. 해설의 '내부수익률법에서도 요구수익률을 사용한다'는 설명은 틀림."],"m":"gemini-3.1-flash-lite","d":"2026-11-21","h":"bfe0363f1b","hits":1},
+"28-11-16":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.1-flash-lite","d":"2026-11-21","h":"2b439cbba0","hits":0},
+"28-11-2":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash","d":"2026-11-21","h":"552f1b986e","hits":0},
+"28-11-3":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash","d":"2026-11-21","h":"2888b95328","hits":0},
+"28-11-4":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash","d":"2026-11-21","h":"2b0dbfcaec","hits":0},
+"28-11-5":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash","d":"2026-11-21","h":"bc01d1f951","hits":0},
+"28-11-6":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash","d":"2026-11-21","h":"bb85f1951d","hits":0},
+"28-11-7":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash","d":"2026-11-21","h":"5f1f6877c1","hits":0},
+"28-11-8":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash","d":"2026-11-21","h":"17e79ea821","hits":0},
+"28-11-9":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash-lite","d":"2026-11-21","h":"c721f0a740","hits":0}
+}
