@@ -29,11 +29,10 @@ jobs:
       - name: before
         id: pre
         run: |
-          echo "mem0=$(sha256sum gen/memory-audit.json 2>/dev/null | cut -d' ' -f1 || true)" >> $GITHUB_OUTPUT
           echo "had=$([ -f gen/DONE ] && echo 1 || echo 0)" >> $GITHUB_OUTPUT
           echo "mc0=$(python -c "import json;print(len(json.load(open('gen/mc_exp.json'))))" 2>/dev/null || echo 0)" >> $GITHUB_OUTPUT
       - name: 해설·음성 생성 (이어서)
-        env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', GCLOUD_TTS_KEY: '${{ secrets.GCLOUD_TTS_KEY }}', MINUTES: '300', MEMORY_MAX: '${{ github.event_name == ''push'' && ''0'' || ''16'' }}' }
+        env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', GCLOUD_TTS_KEY: '${{ secrets.GCLOUD_TTS_KEY }}', MINUTES: '300' }
         run: 'python tools/oxctx.py || true; [ -f gen/DONE ] && python tools/gen.py cues || python tools/gen.py full'
       - name: 객관식 해설 (무료 Flash-Lite, 하루 한도만큼 이어서)
         if: github.event_name != 'push'
@@ -48,7 +47,7 @@ jobs:
         run: |
           rm -rf gen/tmp
           git config user.name "ox-bot"; git config user.email "ox-bot@users.noreply.github.com"
-          git add -A gen web/memory-data.js 2>/dev/null || true
+          git add -A gen 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git commit -m "음성 생성 진행 [skip ci]"
             for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done
@@ -61,8 +60,7 @@ jobs:
           echo "done=$([ -f gen/DONE ] && echo true || echo false)" >> $GITHUB_OUTPUT
           echo "newly=$([ -f gen/DONE ] && [ '${{ steps.pre.outputs.had }}' = 0 ] && echo true || echo false)" >> $GITHUB_OUTPUT
           mc1=$(python -c "import json;print(len(json.load(open('gen/mc_exp.json'))))" 2>/dev/null || echo 0)
-          mem1=$(sha256sum gen/memory-audit.json 2>/dev/null | cut -d' ' -f1 || true)
-          if [ "$mc1" != '${{ steps.pre.outputs.mc0 }}' ] || [ "$mem1" != '${{ steps.pre.outputs.mem0 }}' ]; then echo 'mcnew=true' >> $GITHUB_OUTPUT; else echo 'mcnew=false' >> $GITHUB_OUTPUT; fi
+          echo "mcnew=$([ "$mc1" != '${{ steps.pre.outputs.mc0 }}' ] && echo true || echo false)" >> $GITHUB_OUTPUT
   apk:
     needs: gen
     if: always() && (github.event_name != 'schedule' || needs.gen.outputs.mcnew == 'true')
@@ -74,18 +72,11 @@ jobs:
         with: { distribution: temurin, java-version: '17' }
       - uses: gradle/actions/setup-gradle@v4
         with: { gradle-version: '8.11.1' }
-      - uses: actions/setup-node@v4
-        with: { node-version: '24', cache: 'npm' }
-      - name: 기능 회귀 검사
-        run: |
-          npm ci --ignore-scripts --no-audit --no-fund
-          npm test
-          python3 tools/test_memory_audit.py
-          python3 tools/test_exp_consistency.py
       - name: 자료 넣기
         run: |
           python3 tools/gen.py sounds
           mkdir -p app/src/main/assets/snd
+          python3 tools/test_exp_consistency.py   # 해설이 공식 정답과 모순되면 빌드 멈춤
           cp data/ox.json app/src/main/assets/
           [ -f gen/exp.json ] && cp gen/exp.json app/src/main/assets/ || echo '{}' > app/src/main/assets/exp.json
           [ -f gen/ox_mark.json ] && cp gen/ox_mark.json app/src/main/assets/ || echo '{}' > app/src/main/assets/ox_mark.json
@@ -103,7 +94,7 @@ jobs:
           PY
       - name: 빌드
         env: { VCODE: '${{ github.run_number }}' }
-        run: gradle testDebugUnitTest assembleRelease --no-daemon --stacktrace
+        run: gradle assembleRelease --no-daemon --stacktrace
       - name: 올리기
         env: { GH_TOKEN: '${{ github.token }}' }
         run: |

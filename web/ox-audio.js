@@ -616,7 +616,7 @@ loadEx=async function(q){
   const rec=await iget(q.id);
   if(rec&&rec.e){const st=stale(q,rec);rec.e._stale=st;rec.e._law=rec.law||[];
     if(!st||!LX.force||LX.force!==q.id||!online()){EXC[q.id]=rec.e;return rec.e}return null}
-  if(!online()){const e=window.__mcx&&window.__mcx(q.id);if(e){EXC[q.id]=e;e._stale=stale(q,{law:e._lawApplied||[]});}return e||null;}
+  if(!online())return null;
   const e=await _loadEx(q);if(e){const st=stale(q,{law:e._lawApplied||[]});await iput(q.id,{e,law:e._lawApplied||[],ts:Date.now()});if(st)e._stale=true}
   return e};
 saveEx=async function(q,e){const L=lawFor(q).map(u=>u.id);e._lawApplied=L;e._stale=false;await iput(q.id,{e,law:L,ts:Date.now()});return _saveEx(q,e)};
@@ -624,11 +624,11 @@ exPrompt=function(q){const L=lawFor(q);let p=_exPrompt(q);
   if(L.length)p+=`\n\n[최근 법령·제도 변동 — 반드시 반영할 것]\n${L.map(u=>`- ${u.date||''} ${u.law||''}: ${u.title||''} — ${u.summary||''} (${u.status||''}${u.effective?', 시행 '+u.effective:''})`).join('\n')}\n위 변동이 이 문제의 정답·보기 판단·해설에 영향을 주면 해설을 현재 법령 기준으로 쓰고, "warn"에 '출제 당시 정답 → 지금 법령 기준'을 구체적으로 적어라. 영향이 없으면 "warn"은 빈 문자열.`;
   return p};
 explain=async function(q){
-  if(!online()){const box=document.getElementById('aibox');const e=await loadEx(q);
-    if(e){if(box)box.innerHTML=renderEx(e);lawBox(q,e);return}
+  if(!online()){const box=document.getElementById('aibox');const rec=await iget(q.id);
+    if(rec&&rec.e){EXC[q.id]=rec.e;if(box)box.innerHTML=renderEx(rec.e);lawBox(q,rec.e);return}
     if(box)box.innerHTML='<div class="ai">📴 인터넷이 없어요. 이 문제 해설은 아직 이 기기에 받아두지 않았어요. 홈의 <b>📥 해설 미리 받기</b>로 받아두면 인터넷 없이도 볼 수 있어요.</div>';return}
   await _explain(q);const e=EXC[q.id];if(e)lawBox(q,e)};
-function lawBox(q,e){if(cur!=='quiz'||!S||S.list[S.i]!==q)return;const L=lawFor(q);const box=document.getElementById('aibox');if(!box||!L.length)return;
+function lawBox(q,e){const L=lawFor(q);const box=document.getElementById('aibox');if(!box||!L.length)return;
   const st=e&&e._stale;box.insertAdjacentHTML('afterbegin',`<div class="exw" style="margin-bottom:8px"><b>⚖️ 법령 변동 ${st?'— 갱신 대기':'반영'}</b>${L.map(u=>`<div style="margin-top:4px">· <b>${esc(u.law||'')}</b> ${esc(u.title||'')}${u.effective?` <span class="muted">(시행 ${esc(u.effective)})</span>`:''}<div class="muted" style="font-size:13px">${esc(u.summary||'')}</div></div>`).join('')}${st?'<div class="muted" style="font-size:12px;margin-top:4px">아래 해설은 변동 전에 만든 거예요. 위 변동 내용을 함께 보세요.</div><button class="btn sm" id="lxre" style="margin-top:6px">🔄 새 법령으로 해설 다시 만들기 (AI 1회 사용)</button>':''}</div>`);
   const rb=document.getElementById('lxre');if(rb)rb.onclick=async()=>{if(!online()){rb.textContent='인터넷이 연결되면 눌러 주세요';return}LX.force=q.id;delete EXC[q.id];try{await explain(q)}finally{LX.force=null}}}
 /* 문제 화면에 ⚖️ 표시 */

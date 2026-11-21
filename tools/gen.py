@@ -311,7 +311,6 @@ def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else 'full'
     if mode == 'mc':
         os.makedirs(GEN, exist_ok=True)
-        subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'memory-audit.py')], env={**os.environ, 'MEMORY_MAX': '128', 'MEMORY_SECONDS': '900'}, check=False)
         try:
             # 빠진 해설 → 계산 문제 그림판(v3) → 예전 해설 자세한 판(v2) 순서로 매일 이어서 (다 되면 할 일 없이 끝남)
             if mc_explanations(): log('객관식 해설 모두 최신')
@@ -328,12 +327,9 @@ def main():
                 w = os.path.join(tmp, 'c.wav'); say_wav('', '', t, w); encode([w], out); log('안내', k)
         ctx_audio(tmp)
         pron_redo(tmp)
-        subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'memory-audit.py')], check=False)
         return
     if mode == 'sounds':
-        os.makedirs(GEN, exist_ok=True); print(sounds())
-        subprocess.run(['node', os.path.join(ROOT, 'tools', 'memory-build.cjs')], check=True)
-        return
+        os.makedirs(GEN, exist_ok=True); print(sounds()); return
     if not KEY and not GKEY:
         sys.exit('GEMINI_API_KEY 가 없어요 (저장소 Settings > Secrets > Actions)')
     os.makedirs(GEN, exist_ok=True)

@@ -56,7 +56,7 @@
     #hdrb{display:flex;gap:6px;margin-left:auto;margin-right:6px} #say,#padb,#nzb{position:relative;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:17px;cursor:pointer;padding:0} header.top{position:sticky;top:0;z-index:50;background:var(--bg)} #say.on{background:#ef4444;color:#fff;border-color:#ef4444} @keyframes sayp{50%{box-shadow:0 0 0 10px rgba(239,68,68,.15)}} #moreSay{display:none}
         #padb.has::after{content:'';position:absolute;top:4px;right:4px;width:9px;height:9px;border-radius:50%;background:#facc15}
     #pad{position:fixed;left:0;right:0;bottom:0;height:56vh;z-index:80;background:var(--card);border-top:1px solid var(--line);border-radius:18px 18px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.4);display:flex;flex-direction:column;transform:translateY(105%);transition:transform .18s}
-    #pad.show{transform:none}
+    #pad.show{transform:none} 
     #pad .ph{display:flex;align-items:center;gap:6px;padding:8px 10px 4px} #pad .ph b{font-size:14px} #pad .sp{flex:1}
     #pad button{font:inherit;font-size:13.5px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;padding:6px 10px;cursor:pointer}
     #pad button.on{background:var(--pri2);color:var(--pri);border-color:var(--pri)} #padx{font-size:16px!important}
@@ -124,40 +124,6 @@
     .fixl{display:flex;flex-direction:column;gap:6px;margin-top:8px} .fixl button{display:flex;align-items:center;gap:8px;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit;font-size:14px;line-height:1.45} .fixl button i{margin-left:auto;font-style:normal;color:var(--pri,#2563eb);font-weight:700}
     .sit button{text-align:left;padding:12px;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit}
     .sit b{display:block;font-size:15px} .sit span{font-size:12px;opacity:.7}
-
-    /* 홈은 정보 위계로 구분하고, 큰 색 면적을 줄여요. 다른 학습 화면에는 적용하지 않아요. */
-    #view .hero.calm-hero{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:none}
-    .calm-hero .home-label{font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--sub2,var(--sub));margin-bottom:16px}
-    #view .calm-hero .dd{font-size:28px;font-weight:650;letter-spacing:-.7px;line-height:1.25}
-    #view .calm-hero .muted{color:var(--sub2,var(--sub));line-height:1.6}
-    #view .calm-hero .home-streak>div:first-child{font-size:16px!important;font-weight:600!important}
-    #view .calm-hero .go{background:#526780;color:#fff;box-shadow:none;border:0;border-radius:12px;padding:16px;font-size:18px;margin-top:22px;line-height:1.5}
-    #view .calm-hero .go small{color:#e1e7ef;font-size:12px;font-weight:400;line-height:1.6;margin-top:4px}
-    #view .calm-manager{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:18px;padding:18px;margin-top:14px}
-    #view .calm-manager .mgh{display:block;font-size:16px;font-weight:650;line-height:1.5}
-    #view .calm-manager .mgr-status{display:block;color:var(--sub2,var(--sub));font-weight:400;font-size:13px;margin:5px 0 12px}
-    #view .calm-manager summary{cursor:pointer;font-size:14px;font-weight:500;line-height:1.6;padding:8px 0;color:var(--ink)}
-    #view .calm-manager .fixl button{background:var(--bg);border:1px solid var(--line);color:var(--ink);font-size:13px;padding:12px;line-height:1.65;border-radius:10px}
-    #view .calm-manager .fixl button b{white-space:nowrap;flex:none}
-    #view .calm-manager .fixl button i{color:var(--sub2,var(--sub));font-size:12px}
-    #view .calm-manager .sit button{background:var(--bg);color:var(--ink);border-color:var(--line)}
-    #view .home-progress{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:0;margin-top:14px;overflow:hidden}
-    #view .home-progress>summary{cursor:pointer;padding:18px;font-size:15px;font-weight:600;color:var(--ink);line-height:1.5}
-    #view .home-progress>summary small{font-size:12px;font-weight:400;color:var(--sub2,var(--sub));margin-left:8px}
-    .home-progress .progress-body{padding:0 18px 18px}
-    .home-progress .lvb{margin:0;background:transparent;border:0;padding:10px 0;color:var(--ink)}
-    .home-progress .lvn{background:var(--line);color:var(--ink);font-weight:600}
-    .home-progress .lvt small{color:var(--sub2,var(--sub))}
-    .home-progress .lvt i{background:var(--line)} .home-progress .lvt em{background:#91a69b}
-    .home-progress .lvg{display:none}
-    .home-progress .lgue{font-size:12px;color:var(--sub2,var(--sub));line-height:1.7;border-bottom:1px solid var(--line);padding-bottom:14px;margin:6px 0 0}
-    .home-progress .home-week{font-size:12px;color:var(--sub2,var(--sub));line-height:1.6}
-    .home-progress .wk{gap:7px;margin-top:10px}.home-progress .wk div{font-size:11px;color:var(--sub2,var(--sub));opacity:1}
-    .home-progress .wk i{height:16px;background:var(--line);border-radius:5px}.home-progress .wk i.p{background:#91a69b80}.home-progress .wk i.d{background:#91a69b}
-    body.home-calm #pscore{box-shadow:none;animation:none}body.home-calm #pscore b{font-weight:600;font-size:14px}
-    body.home-calm #hdrb button,body.home-calm #setb{background:var(--card);border-color:var(--line)}
-    body.home-calm nav.tabs button.on{color:var(--ink)}body.home-calm nav.tabs button.on b{background:var(--line)}
-    @media(max-width:360px){.calm-manager .sit{grid-template-columns:1fr}.home-progress>summary small{display:block;margin-left:0}}
   </style>`);
 
   /* ---------- 빈출: 테마별로 10년 동안 몇 번 나왔나 ---------- */
@@ -279,7 +245,7 @@
       const d = mon.getTime() + i * DAY, c = cnt[d] || 0; if (c) { days++; sum += c; }
       return `<div class="${d === t0.getTime() ? 't' : ''}"><i class="${c >= 15 ? 'd' : c ? 'p' : ''}"></i>${n}</div>`;
     }).join('');
-    return `<div class="home-week"><div style="margin-top:14px;font-size:13px;opacity:.95">이번 주 <b>${days}일</b> 공부 · <b>${sum}</b>문제 <span style="opacity:.8">(목표 주 6일)</span></div><div class="wk">${cells}</div></div>`;
+    return `<div style="margin-top:14px;font-size:13px;opacity:.95">이번 주 <b>${days}일</b> 공부 · <b>${sum}</b>문제 <span style="opacity:.8">(목표 주 6일)</span></div><div class="wk">${cells}</div>`;
   }
   function roundCard() {
     const sub = typeof SUBS !== 'undefined' ? SUBS : ['학개론', '민법', '중개사법', '공법', '공시법', '세법'];
@@ -323,23 +289,8 @@
       $('#mgr').querySelectorAll('[data-f]').forEach(b => b.onclick = () => runFix(dg.acts[+b.dataset.f]));
       const fa = $('#fixall'); if (fa) fa.onclick = () => runFix({ k: 'all' });
     }
-    calmHome();
     // 진도·과목별 수준은 기록 → 점수 탭에 있으니 첫 화면에선 뺌
     [...document.querySelectorAll('#view .card')].forEach(c => { const h = c.querySelector('h2,h3'); if (h && /회독 진도|과목별 수준|내용 업데이트/.test(h.textContent)) c.remove(); });
-  }
-  function calmHome() {
-    document.body.classList.toggle('home-calm', cur === 'home');
-    if (cur !== 'home') return;
-    const hero=document.querySelector('#view .hero');if(!hero)return;
-    hero.classList.add('calm-hero');
-    if(!hero.querySelector('.home-label'))hero.insertAdjacentHTML('afterbegin','<div class="home-label">오늘의 학습</div>');
-    const streak=hero.querySelector('.row>div:last-child');if(streak){streak.classList.add('home-streak');const n=streak.firstElementChild;if(n)n.textContent=n.textContent.replace('🔥 ','');}
-    const go=hero.querySelector('.go');if(go){const text=[...go.childNodes].find(n=>n.nodeType===3);if(text)text.textContent=text.textContent.replace(/^(?:▶|🎉)\s*/,'');}
-    let progress=document.getElementById('home-progress');
-    if(!progress){progress=document.createElement('details');progress.id='home-progress';progress.className='card home-progress';progress.innerHTML='<summary>학습 기록<small>이번 주 · 레벨 · 배지</small></summary><div class="progress-body"></div>';hero.after(progress);}
-    const manager=document.getElementById('mgr');if(manager){manager.classList.remove('inhero');manager.classList.add('card','calm-manager');if(manager.nextElementSibling!==progress)progress.before(manager);}
-    const body=progress.querySelector('.progress-body');
-    ['#lvb','#lgh','.home-week'].forEach(sel=>{const node=document.querySelector('#view '+sel);if(node&&node.parentElement!==body)body.appendChild(node);});
   }
   function decorateSetup() {
     cleanCards([]);
@@ -519,12 +470,12 @@
   } catch (e) {}
 
   function managerCard() {
-    const d = diagnose(), status = d.grade[0].replace(/^[^가-힣A-Za-z0-9]+/u, '');
-    return '<div id="mgr" class="card calm-manager"><div class="mgh">학습 추천<span class="mgr-status">'+h(status)+'</span></div>' +
-      (d.notes.length ? '<details><summary>추천 항목 '+Math.min(d.notes.length,3)+'개 펼쳐보기</summary><div class="fixl">'+d.notes.slice(0,3).map((n,i)=>'<button data-f="'+i+'">'+n+'<i>시작</i></button>').join('')+'</div></details>' : '<p class="muted">골고루 공부하고 있어요.</p>') +
-      '<details style="margin-top:6px"><summary>상황에 맞춰 고르기</summary><div class="sit" style="margin-top:8px">'+SITU.map(([k,i,t,sub])=>'<button data-s="'+k+'"><b>'+h(t)+'</b><span>'+h(sub)+'</span></button>').join('')+'</div></details></div>';
+    const d = diagnose();
+    return `<div id="mgr" class="inhero"><div class="mgh">🧭 매니저 처방 <b>${d.grade[0]}</b><small>시작 버튼에 들어 있어요 · 하나만 하려면 누르기</small></div>
+      ${d.notes.length ? `<div class="fixl">${d.notes.slice(0, 3).map((n, i) => `<button data-f="${i}">${n}<i>${d.acts[i].k === 'listen' ? '🎧' : '▶'}</i></button>`).join('')}</div>` : '<div style="margin-top:6px">빠진 곳 없이 골고루 하고 있어요 👍</div>'}
+      <details style="margin-top:10px"><summary style="font-weight:600">📍 상황별로 고르기 (잠·버스·도서관…)</summary>
+      <div class="sit" style="margin-top:8px">${SITU.map(([k, i, t, sub]) => `<button data-s="${k}"><b>${i} ${t}</b><span>${sub}</span></button>`).join('')}</div></details></div></div>`;
   }
-
 
 
   /* ---------- 해설 보기 좋게: 보기별 O·X, 틀린 부분 밑줄, 해설 강조 ---------- */
@@ -561,13 +512,13 @@
     lines.slice(idx).forEach(l => { const m = /^\s*([①②③④⑤])/.exec(l); if (m) ch.push({ n: MK5.indexOf(m[1]) + 1, t: l.trim() }); else if (ch.length) ch[ch.length - 1].t += '\n' + l; });
     if (ch.length !== 5) return;
     const ans = String(q.a).split(',').map(Number);
-    const info = {}; (e && Array.isArray(e.choices) ? e.choices : []).forEach(c => { info[+c.no] = { ox: (window.__choiceOx ? window.__choiceOx(c) : /^[OX]$/.test(c.ox) ? c.ox : null)?.toLowerCase(), why: c.why || '', bad: c.bad || '', fix: c.fix || '' }; });
+    const info = {}; (e && Array.isArray(e.choices) ? e.choices : []).forEach(c => { info[+c.no] = { ox: String(c.ox).includes('O') ? 'o' : 'x', why: c.why || '', bad: c.bad || '', fix: c.fix || '' }; });
     if (e && Array.isArray(e.steps)) e.steps.forEach(st => { const m = /([①②③④⑤])/.exec(st.title || ''); if (m) { const n = MK5.indexOf(m[1]) + 1; info[n] = info[n] || {}; if (!info[n].why) info[n].why = st.say || ''; } });
     const stmt = /①\s*[가-힣]/.test(q.x) && !/ㄱ\s*[,·]/.test(lines.slice(idx).join(' '));   // 문장형 보기일 때만 O·X 추정
     const neg = NEG.test(stem);
     qt.innerHTML = '<div class="qstem">' + h(stem) + '</div>' + ch.map(c => {
       const isAns = ans.includes(c.n), mine = c.n === pick && !isAns;
-      let ox = info[c.n] && info[c.n].ox; if (!ox && stmt && isRight(q, 1) !== null) ox = (isAns === neg) ? 'x' : 'o';
+      let ox = info[c.n] && info[c.n].ox; if (!ox && stmt) ox = (isAns === neg) ? 'x' : 'o';
       let text = h(c.t);
       const why = info[c.n] && info[c.n].why;
       const I = info[c.n] || {};
@@ -796,7 +747,7 @@
      누르면 → 지금 상황에 맞는 방법 추천(보면서 풀기 / 듣기 / 10분만) → 단계별로 자동 진행
      단계: 🔁 복습 → 🎯 약점 훈련 → 🆕 오늘 진도 → 🧩 마무리. 한 단계 끝나면 다음 단계 안내.
      듣기로 한 공부(들은 지문·시간)도 오늘 진도·경험치에 들어감 */
-  const COURSE = window.COURSE = { steps: [], i: 0, active: false, session: null };
+  const COURSE = window.COURSE = { steps: [], i: 0, active: false };
   function todayLog() { try { return LJ.d[dkey()] || {}; } catch (e) { return {}; } }
   function courseRecommend() {
     const h = new Date().getHours(), wd = new Date().getDay(), t = todayLog();
@@ -844,12 +795,9 @@
   }
   function courseRun() {
     const st = COURSE.steps[COURSE.i]; if (!st) return courseDone();
-    if (st.memo && window.Memory) { COURSE.active = false; return Memory.open({ onDone: () => { COURSE.i++; courseRun(); } }); }
     const title = `${st.t} · ${COURSE.i + 1}/${COURSE.steps.length}단계`;
-    const previous = S;
     if (st.ad) startAdaptive(st.ad.qs, st.ad.n, { from: 'home', title }); else startQuiz(st.qs, { from: 'home', title });
-    COURSE.session = S !== previous && cur === 'quiz' ? S : null;
-    COURSE.active = !!COURSE.session;
+    COURSE.active = true;
   }
   function courseDone() {
     COURSE.active = false; const t = todayLog();
@@ -857,12 +805,8 @@
     go('home');
   }
   function courseStart(mode, sleep) {
-    COURSE.active = false; COURSE.session = null;
-    if (mode === 'memory' && window.Memory) return Memory.open({ all: true });
     if (mode === 'listen') { pushToday(); return openListen('today', sleep || 0, 0); }
-    COURSE.steps = buildCourse(mode === 'short');
-    if (window.Memory && Memory.dueCount()) COURSE.steps.unshift({ t: '🧠 필수 암기', memo: true });
-    COURSE.i = 0; courseRun();
+    COURSE.steps = buildCourse(mode === 'short'); COURSE.i = 0; courseRun();
   }
   window.courseStart = courseStart;
   function courseSheet() {
@@ -872,7 +816,6 @@
       opt('listen', '🎧', '듣기로 진도 빼기', '복습·약점 지문부터 들려줘요. 화면 꺼도 돼요 · 지문 2개 = 1문제로 쳐요'),
       opt('short', '⚡', '10분만', '바쁠 땐 복습·약점 10문제만')];
     if (rec === 'listen') o.unshift(o.splice(1, 1)[0]);
-    if (window.Memory) o.push(opt('memory', '🧠', '필수 암기 · 전체 목록', '복습할 카드 ' + Memory.dueCount() + '개 · 빈칸·직접 답하기·기출 적용'));
     const el = document.createElement('div'); el.className = 'kc csheet';
     el.innerHTML = `<div><div class="row"><h3 class="grow">오늘 어떻게 할까요?</h3><button class="btn sm" id="csx">닫기</button></div>
       <div class="muted" style="font-size:13px;margin:2px 0 10px">${why}</div>${o.join('')}
@@ -882,7 +825,7 @@
   }
   /* 단계가 끝난 결과 화면: 다음 단계 안내 */
   function courseNext() {
-    if (cur !== 'result' || !COURSE.active || S !== COURSE.session || document.getElementById('cnext')) return;
+    if (cur !== 'result' || !COURSE.active || document.getElementById('cnext')) return;
     const v = document.getElementById('view'); if (!v) return;
     const nx = COURSE.steps[COURSE.i + 1], dots = COURSE.steps.map((x, k) => `<i class="${k <= COURSE.i ? 'on' : ''}">${x.t.split(' ')[0]}</i>`).join('');
     const cheer = ['좋아요! 리듬 탔어요 💪', '잘하고 있어요 👏', '한 단계 끝! 🔥', '꾸준함이 합격을 만들어요 🌱'][COURSE.i % 4];
@@ -891,7 +834,7 @@
            : `<div class="muted" style="font-size:13.5px;margin:4px 0 10px">오늘 코스를 다 끝냈어요!</div><button class="go" id="cgo">🎉 마치기</button>`}
       <button class="btn full" id="cstop" style="margin-top:8px">오늘은 여기까지</button></div>`);
     [...v.querySelectorAll('.card')].forEach(c => { if (/오늘 수준 체크/.test(c.textContent) && c.id !== 'cnext') c.remove(); });   // 코스 중엔 딴 길 안 보이게
-    document.getElementById('cgo').onclick = e => { e.currentTarget.disabled = true; COURSE.active = false; COURSE.i++; courseRun(); };
+    document.getElementById('cgo').onclick = () => { COURSE.i++; courseRun(); };
     document.getElementById('cstop').onclick = () => { COURSE.active = false; go('home'); };
   }
   setInterval(courseNext, 400);
@@ -924,7 +867,6 @@
     document.getElementById('updb').onclick = () => { try { NB.update(); } catch (e) {} };
   }
   // 듣기 화면에서 돌아오면 아래 탭 선택 표시를 지금 화면에 맞게
-  window.__refreshStudy = () => { if (cur === 'home') home(); };
   window.__fixTab = () => { try { const n = document.getElementById('tabs'); if (!n || typeof TABOF === 'undefined') return;
     const t = (cur === 'quiz' || cur === 'result') ? ((S && S.from) === 'home' ? 'home' : (S && S.from) === 'wrong' ? 'wrong' : 'setup') : TABOF[cur] || 'home';
     n.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === t)); } catch (e) {} };
@@ -1650,8 +1592,6 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
     const h = c.querySelector('h2,h3'); if (h && c.firstElementChild === h) h.style.display = 'none';
   }
   function tidy() {
-    document.body.classList.toggle('home-calm', cur === 'home');
-    if(cur === 'home') calmHome();
     if (cur === 'stats' && !document.getElementById('achc')) { const sg = document.getElementById('rseg'); if (sg) sg.insertAdjacentHTML('afterend', achCard()); }
     if (cur === 'home' && !document.getElementById('lvb')) {
       const go = document.querySelector('#view .hero .go');
@@ -1813,10 +1753,6 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
   }, 1000);
   window.addEventListener('load', () => setTimeout(() => {
     wrap('quiz', () => { decorateQuiz(); decorateChoices(); decorateElim(); quizScroll(); dockQuiz(); });
-    const _go = window.go; window.go = go = function (v) {
-      if (v !== 'quiz' && v !== 'result') { COURSE.active = false; COURSE.session = null; }
-      return _go.apply(this, arguments);
-    };
     const _sq = window.startQuiz; window.startQuiz = function () { window.__xp0 = xpNow(); COURSE.active = false; return _sq.apply(this, arguments); };
     setTimeout(achCheck, 1500);
     setTimeout(scoreChip, 300);
@@ -1824,17 +1760,4 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
     const v = document.querySelector('#tabs button.on')?.dataset.v;
     if (v === 'home') decorateHome();
   }, 50));
-})();
-
-// 전체 자료에서 추출한 암기 후보를 읽어요. 학습 중 추가 AI 호출은 없어요.
-(() => {
-  const load = (src, done) => { const s=document.createElement('script'); s.src=src; s.onload=done; document.head.appendChild(s); };
-  load('memory-data.js', () => load('memory.js', () => {
-    const original = window.record;
-    if (typeof original === 'function') window.record = function(q, c) {
-      const r=original.apply(this,arguments);
-      try { Memory.wrong(q.id, isRight(q,c)); } catch (_) {}
-      return r;
-    };
-  }));
 })();

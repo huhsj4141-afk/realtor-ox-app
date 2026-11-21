@@ -64,22 +64,6 @@ def fix_spacing(x, cnt):
     return re.sub(r'([가-힣]+)[ \t]([가-힣])(?![가-힣])', j, x)
 
 
-def fix_runtime(s):
-    """Keep session fixes when regenerating the embedded question data."""
-    s = s.replace("if(can){EX.push({ts:Date.now(),n:S.exam.n,ct:S.exam.ct,sc,pass});touch('meta')}",
-                  "if(can&&S.done&&!S.resultSaved){EX.push({ts:S.doneAt||Date.now(),n:S.exam.n,ct:S.exam.ct,sc,pass});S.resultSaved=true;touch('meta')}")
-    s = s.replace("if(ex&&S.i<S.list.length-1)setTimeout(()=>{S.i++;quiz()},180)",
-                  "if(ex&&S.i<S.list.length-1){const session=S,index=S.i;clearTimeout(session.advanceTimer);session.advanceTimer=setTimeout(()=>{if(S===session&&cur==='quiz'&&!session.done&&session.i===index){session.i++;quiz()}},180)}")
-    s = s.replace("function renderEx(e){if(!e)return'';const A=x=>Array.isArray(x)?x:[];",
-                  "function renderEx(e){if(!e)return'';const A=x=>Array.isArray(x)?x:[],O=c=>window.__choiceOx?window.__choiceOx(c):(/^[OX]$/.test(c.ox)?c.ox:null);")
-    s = s.replace("String(c.ox).includes('O')?'o':'x'", "O(c)==='O'?'o':O(c)==='X'?'x':''")
-    s = s.replace("String(c.ox).includes('O')?'O':'X'", "O(c)||'?'"
-                  )
-    s = s.replace("catch(err){const el=document.getElementById('aitxt');",
-                  "catch(err){const el=box.isConnected&&S&&S.list[S.i]===q?box.querySelector('#aitxt'):null;")
-    return s
-
-
 def main():
     s, i, j, _ = load()
     raw = json.load(open(os.path.join(ROOT, 'data', 'raw.json'), encoding='utf8'))
@@ -102,7 +86,7 @@ def main():
         if r[8] != old: changed.append(idd)
         keep.append(r)
     s = s[:i + 10] + json.dumps(keep, ensure_ascii=False, separators=(',', ':')) + s[j + 1:]
-    open(HTML, 'w', encoding='utf8').write(fix_runtime(s))
+    open(HTML, 'w', encoding='utf8').write(s)
     mc_p = os.path.join(ROOT, 'data', 'mc.json'); mc = json.load(open(os.path.join(ROOT, 'data', 'mc_src.json'), encoding='utf8'))
     by = {f'{r[0]}-{r[2]}-{r[3]}': r for r in keep}
     mc = [dict(q, x=by[q['id']][8], ocr='0' if q['id'] in fix else q['ocr']) for q in mc if q['id'] in by]

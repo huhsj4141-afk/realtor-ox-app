@@ -23,7 +23,6 @@ class WebActivity : Activity() {
     @Volatile private var allQueued = true
     private val ttsGen = java.util.concurrent.atomic.AtomicInteger(0)
     private var loaded = false
-    private var destroyed = false
 
     /** 듣기 화면의 아래 탭에서 넘어올 때 그 탭 열기 */
     private fun goTab(i: Intent?) {
@@ -87,19 +86,19 @@ class WebActivity : Activity() {
         super.onResume()
         Updater.onLatest = { v -> js("window.__upd&&__upd($v)") }
         Updater.check(this, quiet = true)                  // 첫 화면 맨 위 배너로 알림
-        if (loaded) js("window.__syncListen&&__syncListen();window.__fixTab&&__fixTab()")
+        if (loaded) js("window.__fixTab&&__fixTab()")
     }
 
-    override fun onDestroy() { destroyed = true; ttsGen.incrementAndGet(); speakId = null; voice.release(); io.shutdown(); web.destroy(); super.onDestroy() }
+    override fun onDestroy() { voice.release(); io.shutdown(); web.destroy(); super.onDestroy() }
 
     @Deprecated("back")
     override fun onBackPressed() {
-        web.evaluateJavascript("(window.Memory&&Memory.isOpen())?(Memory.close(),1):(typeof cur!=='undefined'&&cur!=='home')?(go('home'),1):0") { r ->
+        web.evaluateJavascript("(typeof cur!=='undefined'&&cur!=='home')?(go('home'),1):0") { r ->
             if (r != "1") @Suppress("DEPRECATION") super.onBackPressed()
         }
     }
 
-    private fun js(code: String) = runOnUiThread { if (!destroyed) web.evaluateJavascript(code, null) }
+    private fun js(code: String) = runOnUiThread { web.evaluateJavascript(code, null) }
     private fun done(ev: String) { val id = speakId ?: return; speakId = null; js("__nbt('$id','$ev')") }
 
     inner class Bridge {
@@ -148,15 +147,14 @@ class WebActivity : Activity() {
                         voice.setMediaItems(files.map { MediaItem.fromUri(Uri.fromFile(it)) })
                         voice.setPlaybackSpeed(rate.toFloat().coerceIn(0.5f, 2f)); voice.prepare(); voice.play()
                     }
-                } catch (e: Exception) { runOnUiThread { if (!destroyed && g == ttsGen.get()) { speakId = id; done("error") } } }
+                } catch (e: Exception) { runOnUiThread { speakId = id; done("error") } }
             }
         }
         /** 여러 줄을 한 번에 받아 앱이 끝까지 이어 읽기 — 화면이 꺼져 웹이 멈춰도 계속 읽힘 */
         @JavascriptInterface fun speakAll(id: String, linesJson: String, rate: Double) {
             val g = ttsGen.get()
             val arr = try { org.json.JSONArray(linesJson) } catch (e: Exception) { org.json.JSONArray() }
-            runOnUiThread { if (destroyed || g != ttsGen.get()) return@runOnUiThread
-                speakId = id; allQueued = false; voice.stop(); voice.clearMediaItems(); voice.setPlaybackSpeed(rate.toFloat().coerceIn(0.5f, 2f)) }
+            runOnUiThread { speakId = id; allQueued = false; voice.stop(); voice.clearMediaItems(); voice.setPlaybackSpeed(rate.toFloat().coerceIn(0.5f, 2f)) }
             io.execute {
                 var any = false
                 for (k in 0 until arr.length()) {

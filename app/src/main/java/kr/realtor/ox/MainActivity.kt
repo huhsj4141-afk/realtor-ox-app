@@ -122,7 +122,7 @@ class MainActivity : Activity() {
                 override fun onItemSelected(p: AdapterView<*>?, v: View?, n: Int, id: Long) {
                     val s = svc ?: return
                     if (spinBusy || !synced) return
-                    if (n >= Store.tracks.size) s.load(s.trackIdx, LISTS[n - Store.tracks.size].first, 0, false, resume = true) else s.load(n, "all", 0, false, resume = true)
+                    if (n >= Store.tracks.size) s.load(s.trackIdx, LISTS[n - Store.tracks.size].first, 0, false) else s.load(n, "all", 0, false)
                 }
                 override fun onNothingSelected(p: AdapterView<*>?) {}
             }
