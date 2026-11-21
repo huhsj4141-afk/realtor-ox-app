@@ -1507,7 +1507,8 @@
         if (e.pointerType === 'touch' && !palmy(e)) {
           T.set(e.pointerId, [e.clientX, e.clientY]);
           // 두 번째 손가락이 바로(획이 짧을 때) 닿으면 확대·이동, 아니면 손바닥으로 보고 무시
-          if (T.size === 2 && !PAD.palm && (!PAD.cur || PAD.cur.p.length < 6) && !PAD.erasing) {   /* 손바닥 무시(✋)가 켜져 있으면 두 손가락 배율 조절 끔: 손바닥이 닿아 배율이 저절로 바뀌는 것 방지 */ PAD.cur = null; PAD.pid = null; clearTimeout(hold); pinchStart(); padDraw(); return; }
+          if (T.size === 1) PAD.t1 = performance.now();
+          if (T.size === 2 && performance.now() - (PAD.t1 || 0) < 350 && (!PAD.cur || PAD.cur.p.length < 8) && !PAD.erasing) {   /* 두 손가락이 거의 동시에(0.35초 안) 닿을 때만 확대·축소·이동 → 손바닥이 늦게 닿아 배율이 바뀌는 일은 막음 */   /* 손바닥 무시(✋)가 켜져 있으면 두 손가락 배율 조절 끔: 손바닥이 닿아 배율이 저절로 바뀌는 것 방지 */ PAD.cur = null; PAD.pid = null; clearTimeout(hold); pinchStart(); padDraw(); return; }
         }
         if (pinch) return;
         if (palmy(e) || (PAD.cur && PAD.pid !== e.pointerId)) return;
