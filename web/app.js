@@ -1594,6 +1594,7 @@
     const show = () => { const el = document.getElementById('cdsp'); if (!el) return; const [i, f] = C.d.split('.'); const n = i.replace('-', ''); el.textContent = (C.d.startsWith('-') ? '-' : '') + (isNaN(+n) ? n : (+n).toLocaleString('en-US')) + (f !== undefined ? '.' + f : ''); document.getElementById('cop').textContent = (C.mem ? 'M ' : '') + (C.op || ''); };
     const key = k => {
       if (C.err && k !== 'AC') return;
+      if (/^[0-9]$/.test(k) || ['00', '.', 'MR', '±', '√'].includes(k)) C.typed = true;   // 연산 뒤에 두 번째 숫자가 들어왔는지 (MR로 불러온 것도 포함)
       if (/^[0-9]$/.test(k) || k === '00') { if (C.fresh) { C.d = k === '00' ? '0' : k; C.fresh = false; } else if (C.d.replace(/[-.]/g, '').length < 12) C.d = C.d === '0' ? (k === '00' ? '0' : k) : C.d + k; }
       else if (k === '.') { if (C.fresh) { C.d = '0.'; C.fresh = false; } else if (!C.d.includes('.')) C.d += '.'; }
       else if (k === 'AC') Object.assign(C, { d: '0', acc: null, op: null, fresh: true, err: false, kop: null, kb: null });
@@ -1601,9 +1602,9 @@
       else if (k === '±') C.d = C.d.startsWith('-') ? C.d.slice(1) : (C.d === '0' ? '0' : '-' + C.d);
       else if (k === '√') { C.d = fmt(Math.sqrt(val())); C.fresh = true; }
       else if (k === '%') { const b = val(), a = C.acc; if (a == null || !C.op) { C.d = fmt(b / 100); } else { const r = C.op === '+' ? a + a * b / 100 : C.op === '-' ? a - a * b / 100 : C.op === '×' ? a * b / 100 : a / b * 100; C.d = fmt(r); C.acc = null; C.op = null; } C.fresh = true; }
-      else if ('+-×÷'.includes(k)) { C.kop = null; if (C.op && !C.fresh && C.acc != null) C.d = fmt(calc(C.acc, C.op, val())); C.acc = parseFloat(C.d); C.op = k; C.fresh = true; }
+      else if ('+-×÷'.includes(k)) { C.kop = null; if (C.op && C.typed && C.acc != null) C.d = fmt(calc(C.acc, C.op, val())); C.acc = parseFloat(C.d); C.op = k; C.fresh = true; C.typed = false; }
       else if (k === '=') {   // 일반 계산기처럼: 5 × = → 25(제곱), = 를 또 누르면 125(세제곱)… / + − ÷ 도 = 반복이면 같은 계산 반복
-        if (C.op && C.acc != null) { const b = C.fresh ? C.acc : val(); C.kop = C.op; C.kb = C.op === '×' ? C.acc : b; C.d = fmt(calc(C.acc, C.op, b)); C.acc = null; C.op = null; }
+        if (C.op && C.acc != null) { const b = C.typed ? val() : C.acc; C.kop = C.op; C.kb = C.op === '×' ? C.acc : b; C.d = fmt(calc(C.acc, C.op, b)); C.acc = null; C.op = null; }
         else if (C.kop) C.d = fmt(C.kop === '×' ? C.kb * val() : calc(val(), C.kop, C.kb));
         C.fresh = true; }
       else if (k === 'M+') { C.mem += val(); C.fresh = true; } else if (k === 'M-') { C.mem -= val(); C.fresh = true; }
