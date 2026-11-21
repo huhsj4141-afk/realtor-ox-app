@@ -551,7 +551,7 @@ exam=function(a){PT='exam';_exam(a);V.insertAdjacentHTML('afterbegin',seg(PSEG,'
 ox=function(a){_ox(a);if(cur==='ox')dropBack()};
 
 /* ---- 기록 ---- */
-const RSEG=[['hist','최근'],['journal','달력'],['wrong','오답'],['stats','점수'],['plan','계획']];
+const RSEG=[['stats','점수'],['hist','최근'],['journal','달력']];
 wrong=function(a){RT='wrong';_wrong(a);V.insertAdjacentHTML('afterbegin',seg(RSEG,'wrong','rseg'));bindSeg('rseg')};
 plan=function(a){RT='plan';_plan(a);V.insertAdjacentHTML('afterbegin',seg(RSEG,'plan','rseg'));bindSeg('rseg')};
 function stats(){RT='stats';const s=subjStats();const sc=s.map(x=>x.rate==null?null:Math.round(x.rate*100));
@@ -819,7 +819,7 @@ const _h=home;home=function(){_h.apply(this,arguments);try{const an=analyze();co
   document.querySelector('.card.hero').insertAdjacentHTML('afterend',`<div class="card" id="jhome" style="cursor:pointer;padding:12px 14px"><div style="font-size:13px"><b>📈 오늘의 처방</b> · ${esc(a.t)}</div><div class="muted" style="font-size:12px;margin-top:2px">${esc(a.d)}</div></div>`);
   document.getElementById('jhome').onclick=()=>go('journal')}}catch(e){}};
 /* 아래 '기록' 탭을 누르면 일지부터 */
-try{document.getElementById('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b&&b.dataset.v==='wrong'){e.stopImmediatePropagation();go('journal')}},true)}catch(e){}
+// (A) 오답 탭은 오답 화면으로 — journal 리다이렉트 제거
 setTimeout(()=>{backfill();pull()},3000);
 })();
 

@@ -229,7 +229,7 @@ class MainActivity : Activity() {
         val wrap = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(c("#FFFFFF", "#1B1F27")) }
         wrap.addView(View(this).apply { setBackgroundColor(c("#E3E6EC", "#2C3240")); layoutParams = LinearLayout.LayoutParams(-1, line) })
         val bar = LinearLayout(this).apply { gravity = Gravity.CENTER_HORIZONTAL; layoutParams = LinearLayout.LayoutParams(-1, navH - line) }
-        listOf(Triple("🏠", "오늘", "home"), Triple("✏️", "문제", "setup"), Triple("🌳", "개념", "concept"), Triple("🎧", "듣기", ""), Triple("📊", "기록", "wrong")).forEach { (ic, n, v) ->
+        listOf(Triple("🏠", "오늘", "home"), Triple("📕", "오답", "wrong"), Triple("📊", "기록", "stats")).forEach { (ic, n, v) ->
             val on = v.isEmpty()
             val cell = FrameLayout(this).apply { layoutParams = LinearLayout.LayoutParams(0, -1, 1f).apply { width = 0 }
                 setOnClickListener { Haptic.tap(this@MainActivity); if (!on) { startActivity(Intent(this@MainActivity, WebActivity::class.java).putExtra("tab", v).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)); finish() } } }

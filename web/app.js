@@ -115,6 +115,10 @@
     .cth{font-size:12px;color:var(--sub2,#9aa3b5)} .cfront{font-size:22px;font-weight:700;line-height:1.5;margin:10px 0 18px;min-height:70px} .cback{font-size:18px;line-height:1.6;padding:14px;border-radius:14px;background:color-mix(in srgb,var(--pri) 10%,transparent);margin-bottom:8px}
     .crts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px} .crt{display:flex;flex-direction:column;align-items:center;padding:10px 0;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit} .crt small{font-size:11px;color:var(--sub2,#9aa3b5)}
     .crt.r1 b{color:#ef4444} .crt.r2 b{color:#f59e0b} .crt.r3 b{color:#22c55e} .crt.r4 b{color:#3b82f6}
+    .ahero .add{font-size:24px;font-weight:800} .ahero .ask{font-weight:700} .arnd{margin-top:10px;font-size:15px} .arnd small{color:var(--sub2,#9aa3b5);font-size:12px}
+    .abar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:8px 0 14px} .abar em{display:block;height:100%;background:linear-gradient(90deg,var(--pri),#22c55e);border-radius:4px}
+    .agp{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:20px;padding:18px} .agp small{font-size:13px;font-weight:400;opacity:.85}
+    .arow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px} .arow .btn{margin:0} .atd{font-size:12.5px;color:var(--sub2,#9aa3b5);margin-top:10px;text-align:center} .ahow{font-size:12.5px;text-align:center;margin:4px 12px}
     #pscore{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:2px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0;line-height:1.25}
     #pscore small{font-size:10.5px;color:var(--sub2,#9aa3b5)} #pscore span{font-size:13.5px;white-space:nowrap} #pscore b{font-size:16px} #pscore b.ok{color:#16a34a} #pscore b.no{color:#ef4444}
     #pscore i{font-style:normal;font-size:10.5px;margin-left:2px} #pscore i.up{color:#16a34a} #pscore i.dn{color:#ef4444}
@@ -1957,7 +1961,69 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
     setTimeout(achCheck, 1500);
     setTimeout(scoreChip, 300);
     const _rec = window.record; window.record = function (q, c) { const r = _rec.apply(this, arguments); logAnswer(q, c); try { if (!String(q.a).split(',').includes(String(c))) linkWrong(q); } catch (e) {} try { scoreChip(); } catch (e) {} return r; }; wrap('home', decorateHome); wrap('setup', decorateSetup); wrap('wrong', decorateWrong); wrap('themes', decorateThemes);
-    const v = document.querySelector('#tabs button.on')?.dataset.v;
-    if (v === 'home') decorateHome();
+
+    /* ================= A. 기출 회독형 =================
+       탭: 오늘 · 오답 · 기록. 첫 화면은 '문제 풀기' 하나.
+       문제 풀기 = 다시 볼 틀린 문제(1·3·7일 간격) + 이번 회독에서 아직 안 푼 기출(과목 번갈아). */
+    const DAILY = () => { try { return +localStorage.getItem('reb_daily') || 30; } catch (e) { return 30; } };
+    function roundInfo() {
+      const G = Q.filter(q => !q.ocr && graded(q)), att = q => P[q.id] ? (P[q.id][2] || 1) : 0;
+      let r = Infinity; G.forEach(q => { r = Math.min(r, att(q)); }); r = (isFinite(r) ? r : 0) + 1;
+      const done = G.filter(q => att(q) >= r).length;
+      return { r, done, total: G.length, pct: G.length ? done / G.length : 0, G, att };
+    }
+    function sessionList() {
+      const n = DAILY(), { r, G, att } = roundInfo(), seen = new Set(), rev = [], fresh = [];
+      const add = (arr, q, cap) => { if (q && !q.ocr && !seen.has(q.id) && arr.length < cap) { seen.add(q.id); arr.push(q); } };
+      let due = []; try { due = dueList(); } catch (e) {}
+      const wrong = Object.keys(P).filter(k => P[k][1] === 0 && BYID[k] && Date.now() - P[k][4] > 6 * 3600000).sort((a, b) => P[a][4] - P[b][4]).map(k => BYID[k]);
+      wrong.concat(due).forEach(q => add(rev, q, Math.ceil(n / 2)));   // 복습은 하루 몫의 절반까지
+      // 이번 회독에서 아직 안 푼 기출: 과목을 번갈아 (오래된 회차부터)
+      const bySub = {}; G.filter(q => att(q) < r && !seen.has(q.id)).sort((a, b) => a.n - b.n || a.no - b.no).forEach(q => (bySub[q.s] = bySub[q.s] || []).push(q));
+      const subs = Object.keys(bySub);
+      for (let i = 0; fresh.length < n - rev.length && subs.some(s => bySub[s].length); i++) add(fresh, bySub[subs[i % subs.length]].shift(), n - rev.length);
+      return { rev, fresh, list: rev.concat(fresh), r };
+    }
+    window.sessionList = sessionList;
+    home = window.home = function () {
+      cur = 'home'; window.scrollTo(0, 0); navA();
+      const R = roundInfo(), S0 = sessionList(), sk = streak(), t = todayLog();
+      let dd = null; try { dd = todayPlan().dday; } catch (e) {}
+      const V = document.getElementById('view');
+      V.innerHTML = `<div class="card ahero">
+        <div class="row"><div class="grow"><b class="add">${dd != null ? 'D-' + dd : '공인중개사'}</b></div><div class="ask">🔥 ${sk.n}일</div></div>
+        <div class="arnd"><b>${R.r}회독째</b> · ${Math.round(R.pct * 100)}% <small>(${R.done.toLocaleString()} / ${R.total.toLocaleString()}문제)</small></div>
+        <div class="abar"><em style="width:${Math.round(R.pct * 100)}%"></em></div>
+        <button class="go agp" id="ago">▶ 문제 풀기<small>${S0.rev.length ? `틀린 ${S0.rev.length} + ` : ''}새 기출 ${S0.fresh.length}</small></button>
+        <div class="arow"><button class="btn" id="alis">🎧 듣기</button><button class="btn" id="aexm">⏱ 모의고사</button></div>
+        <div class="atd">오늘 ${t.q || 0}문제 풀었어요${t.ox ? ` · 🎧 ${t.ox}지문` : ''}</div></div>
+        <div class="muted ahow">틀린 문제는 1일·3일·7일 뒤에 저절로 다시 나와요. 버튼 하나만 누르면 돼요.</div>`;
+      document.getElementById('ago').onclick = () => {
+        const L = sessionList(); if (!L.list.length) return window.__toast && __toast('오늘 몫을 다 했어요 👏');
+        startQuiz(L.list, { from: 'home', title: `${L.r}회독 · 오늘 ${L.list.length}문제` });
+      };
+      document.getElementById('alis').onclick = () => { try { pushToday(); } catch (e) {} openListen('today', 0, 0); };
+      document.getElementById('aexm').onclick = () => go('exam');
+      try { updBanner(); } catch (e) {}
+    };
+    // 아래 탭 3개
+    function navA() {
+      const nav = document.getElementById('tabs'); if (!nav) return;
+      if (!nav.dataset.a) {
+        nav.dataset.a = 1;
+        nav.innerHTML = '<button data-v="home"><b>🏠</b>오늘</button><button data-v="wrong"><b>📕</b>오답</button><button data-v="stats"><b>📊</b>기록</button>';
+        nav.querySelectorAll('button').forEach(b => b.onclick = e => { e.stopPropagation(); go(b.dataset.v); });
+      }
+      const t = ['quiz', 'result'].includes(cur) ? ((window.S && S.from) === 'wrong' ? 'wrong' : 'home') : cur === 'wrong' ? 'wrong' : ['stats', 'hist', 'journal', 'plan'].includes(cur) ? 'stats' : cur === 'home' ? 'home' : '';
+      nav.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === t));
+    }
+    const _goA = window.go;
+    window.go = go = function (v, a) {
+      if (v === 'setup' || v === 'concept' || v === 'ox') v = v === 'ox' ? 'ox' : 'home';   // 없어진 탭
+      const r = _goA.call(this, v, a);
+      if (cur === 'wrong') document.getElementById('rseg')?.remove();   // 오답 탭은 오답만
+      navA(); return r;
+    };
+    navA(); if (cur === 'home') home();
   }, 50));
 })();
