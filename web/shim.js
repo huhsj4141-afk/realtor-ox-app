@@ -203,7 +203,7 @@
             box.insertAdjacentHTML('afterend', '<button class="btn full" id="more" style="margin-top:8px">🤖 더 자세히 <span class="svd no">인터넷</span></button><div id="moreBox"></div>');
             const MK = 'reb_more_' + q.id;
             const show = (b, t) => {
-              b.innerHTML = '<div class="fb" style="white-space:pre-wrap;font-weight:400;margin-top:8px">' + t.replace(/</g, '&lt;') + '</div><button class="btn full" id="moreSay">🔊 읽어 주기</button>';
+              b.innerHTML = '<div class="moreh">🔍 더 자세히</div><div class="morec">' + t.replace(/</g, '&lt;') + '</div><button class="btn full" id="moreSay" style="display:none">🔊 읽어 주기</button>';
               const sb = document.getElementById('moreSay');
               sb.onclick = () => {      // 누르면 읽기, 읽는 중에 누르면 멈춤
                 if (sb.dataset.on) { tts.stop(); return; }

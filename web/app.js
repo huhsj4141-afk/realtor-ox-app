@@ -119,7 +119,7 @@
     .abar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:8px 0 14px} .abar em{display:block;height:100%;background:linear-gradient(90deg,var(--pri),#22c55e);border-radius:4px}
     .agp{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:20px;padding:18px} .agp small{font-size:13px;font-weight:400;opacity:.85}
     .arow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px} .arow .btn{margin:0} .atd{font-size:12.5px;color:var(--sub2,#9aa3b5);margin-top:10px;text-align:center} .ahow{font-size:12.5px;text-align:center;margin:4px 12px}
-    .padsay{position:absolute;left:12px;right:12px;top:56px;z-index:5;background:#111d;color:#fff;padding:10px 14px;border-radius:12px;font-size:15px} #padmic{touch-action:none;user-select:none;-webkit-user-select:none} #padmic.on{background:#ef4444;color:#fff} u.khint{text-decoration:underline wavy #f59e0b 2px;text-underline-offset:4px;background:#f59e0b22;border-radius:3px} .a1c{margin:10px 0;padding:12px 14px;border-radius:12px;background:var(--card2,#f4f6fb);border:1px solid var(--line,#e3e7ef)} .a1c small,.a1q small{display:block;font-size:12px;color:var(--sub2,#9aa3b5)} .a1c b{display:block;font-size:16px;margin:6px 0 2px;line-height:1.5} .a1q{text-align:center} .a1f{font-size:20px;font-weight:700;margin:18px 0 10px;line-height:1.5} .a1b{font-size:17px;color:var(--pri,#2563eb);min-height:26px;margin-bottom:12px;line-height:1.5}
+    .padsay{position:absolute;left:12px;right:12px;top:56px;z-index:5;background:#111d;color:#fff;padding:10px 14px;border-radius:12px;font-size:15px} #padmic{touch-action:none;user-select:none;-webkit-user-select:none} #padmic.on{background:#ef4444;color:#fff} u.khint{text-decoration:underline wavy #f59e0b 2px;text-underline-offset:4px;background:#f59e0b22;border-radius:3px} #sync{display:none} .moreh{font-weight:700;font-size:15px;margin:18px 0 6px;padding-top:12px;border-top:1px dashed var(--line,#e3e7ef)} .morec{white-space:pre-wrap;line-height:1.75;font-size:15px} .a1c{margin:10px 0;padding:12px 14px;border-radius:12px;background:var(--card2,#f4f6fb);border:1px solid var(--line,#e3e7ef)} .a1c small,.a1q small{display:block;font-size:12px;color:var(--sub2,#9aa3b5)} .a1c b{display:block;font-size:16px;margin:6px 0 2px;line-height:1.5} .a1q{text-align:center} .a1f{font-size:20px;font-weight:700;margin:18px 0 10px;line-height:1.5} .a1b{font-size:17px;color:var(--pri,#2563eb);min-height:26px;margin-bottom:12px;line-height:1.5}
     #pscore{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:2px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0;line-height:1.25}
     #pscore small{font-size:10.5px;color:var(--sub2,#9aa3b5)} #pscore span{font-size:13.5px;white-space:nowrap} #pscore b{font-size:16px} #pscore b.ok{color:#16a34a} #pscore b.no{color:#ef4444}
     #pscore i{font-style:normal;font-size:10.5px;margin-left:2px} #pscore i.up{color:#16a34a} #pscore i.dn{color:#ef4444}
@@ -223,7 +223,7 @@
       mk(document.getElementById('qb'), BM[q.id] ? '★' : '☆', BM[q.id] ? '북마크됨' : '북마크');
       mk(pdfA, '📄', '원본');
       row.insertAdjacentHTML('beforeend', '<button id="qk"></button><button id="qr"></button>');
-      mk(document.getElementById('qk'), '📇', '핵심 카드'); mk(document.getElementById('qr'), '🚩', '신고');
+      { const k = document.getElementById('qk'); if (k) k.style.display = 'none'; } mk(document.getElementById('qr'), '🚩', '신고');
       document.getElementById('qk').onclick = () => card(q.t);
       document.getElementById('qr').onclick = () => report(q);
       if (ai) { ai.className = 'btn pri bigai'; row.parentElement.insertBefore(ai, row); if (!pickd) ai.style.display = 'none'; }
@@ -1776,7 +1776,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
       pnl.append(ab, more, mb, bb);                      // 더 자세히는 해설 바로 아래 이어서
       [qa, beg].forEach(b => b.classList.add('xhid')); more.classList.add('full', 'xmore');
       if (qv) { qv.className = 'btn'; qv.innerHTML = '<span class="ic">🔁</span>숫자 바꾸기'; tb.insertBefore(qv, tb.lastElementChild); tb.classList.add('q5'); }
-      if (!document.getElementById('qdia')) { tb.insertAdjacentHTML('afterbegin', '<button class="btn" id="qdia"><span class="ic">🧭</span>풀이 도식</button>'); document.getElementById('qdia').onclick = e => makeDiagram(q, e.currentTarget); }
+      if (!document.getElementById('qdia')) { tb.insertAdjacentHTML('afterbegin', '<button class="btn" id="qdia"><span class="ic">🔗</span>관계도</button>'); document.getElementById('qdia').onclick = e => makeDiagram(q, e.currentTarget); }
       if (!tb.closest('.qdock')) pnl.after(tb);          // (아래 고정 줄에 들어가 있으면 그대로)
       tabs.querySelectorAll('button').forEach(b => b.onclick = () => xshow(b.dataset.x, true));
       // 저장된 해설이 있으면 바로 펼쳐 보여 주기(인터넷 필요 없음)
@@ -1789,7 +1789,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     // 틀렸거나 헷갈렸으면: 그 테마 핵심 카드로 바로 (개념을 다시 잡을 때)
     const okA = String(q.a).split(',').map(Number).includes(+S.ans[q.id]);
     const fbx = card.querySelector('.fb'), uns = (() => { try { const v = conf()[q.id]; return !!v && v !== 'sure'; } catch (e) { return false; } })();
-    if (fbx && (!okA || uns) && !document.getElementById('fbk')) {
+    if (false && fbx && (!okA || uns) && !document.getElementById('fbk')) {
       fbx.insertAdjacentHTML('beforeend', '<button class="btn fbk" id="fbk">🌳 이 테마 개념 노트로 다시 잡기</button>');
       document.getElementById('fbk').onclick = () => themeView(tkey(q));
     }
@@ -2030,10 +2030,12 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
         const L = sessionList(); if (!L.list.length) return window.__toast && __toast('오늘 몫을 다 했어요 👏');
         const run = () => startQuiz(L.list, { from: 'home', title: `${L.r}회독 · 오늘 ${L.list.length}문제` });
         const due = againDue(); due.length ? quickCards(due.slice(0, 10), run) : run();
+        setTimeout(() => prefetch(L.list), 1500);
       };
       document.getElementById('alis').onclick = () => memoListen();
       document.getElementById('aexm').onclick = () => go('exam');
       try { updBanner(); } catch (e) {}
+      setTimeout(() => { try { prefetch(S0.list); } catch (e) {} }, 4000);
     };
     // ── 틀리면 그 자리 1장 + 다음 날 다시 보기 ──
     const AG = () => LSJ('reb_again', {});           // { cardId: 다시 볼 시각 }
@@ -2096,6 +2098,25 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
       T.speak(lines.map(l => ({ text: l.text })), {}).catch(e => { if (e && e.code !== 'viewer_stopped' && window.__toast) __toast(e.message); });
     }
     window.memoListen = memoListen;
+    // ── 더 자세히·기초부터 미리 받아 두기: 오늘 풀 문제를 뒤에서 조용히 ──
+    let PF = false;
+    async function prefetch(list) {
+      if (PF || !window.__gem || !navigator.onLine) return; PF = true;
+      const has = k => { try { return !!localStorage.getItem(k); } catch (e) { return true; } };
+      const morePrompt = q => `너는 공인중개사 시험 강사야. 아래 기출문제를 수험생이 완전히 이해하도록 더 자세히, 쉬운 말로 설명해 줘. 왜 그 보기가 정답인지, 헷갈리는 보기는 왜 아닌지, 관련 개념과 암기 요령까지. 해요체, 8문장 안팎. 소리 내어 읽기 좋게 괄호·한자·기호는 쓰지 마.\n[정답] ${q.a}번\n[문제]\n${q.x}`;
+      try {
+        for (const q of list.slice(0, 30)) {
+          if (!q || q.ocr) continue;
+          for (const [k, pr] of [['reb_more_' + q.id, () => morePrompt(q)], ['reb_beg_' + q.id, () => (typeof begPrompt === 'function' ? begPrompt(q) : null)]]) {
+            if (has(k)) continue; const prompt = pr(); if (!prompt) continue;
+            const t = await window.__gem(prompt, { modelTier: 'default' }, false);   // 실패(한도 등)하면 멈춤
+            if (t && String(t).trim().length > 30) { try { localStorage.setItem(k, t); } catch (e) { return; } }
+            await new Promise(r => setTimeout(r, 2500));
+          }
+        }
+      } catch (e) {} finally { PF = false; }
+    }
+    window.prefetchExp = prefetch;
     // ── 보기 롱터치 → 참·거짓을 가르는 낱말에 밑줄(힌트) ──
     async function keyHint(q) {
       const K = 'reb_key_' + q.id; let d = null; try { d = JSON.parse(localStorage.getItem(K)); } catch (e) {}
@@ -2130,18 +2151,6 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
           b.addEventListener('click', e => { if (fired) { fired = false; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
           b.addEventListener('contextmenu', e => e.preventDefault());
         });
-      } catch (e) {}
-    }, 400);
-    // ── 🔗 관계도 버튼: 당사자가 여럿이거나 계산 문제면 문제 바로 아래에 ──
-    const RELX = /[甲乙丙丁戊]|계산|산출|금액|얼마|합계|세액|과세표준|중개보수|평가액|수익률|비율|㎡/;
-    setInterval(() => {
-      try {
-        if (cur !== 'quiz' || typeof S === 'undefined' || !S || !S.list) return; const q = S.list[S.i]; if (!q) return;
-        const qt = document.querySelector('#view .qtext'); if (!qt || qt.dataset.rel === q.id) return;
-        qt.dataset.rel = q.id; document.querySelectorAll('#view .qrel').forEach(e => e.remove());
-        if (!RELX.test(q.x + ' ' + (q.o || []).map(o => o.t || o).join(' '))) return;
-        qt.insertAdjacentHTML('afterend', `<button class="btn qrel" style="width:100%;margin:6px 0 10px">🔗 관계도로 보기</button>`);
-        const b = document.querySelector('#view .qrel'); b.onclick = () => window.makeDiagram(q, b, true);
       } catch (e) {}
     }, 400);
     // 아래 탭 3개
