@@ -119,7 +119,7 @@
     .abar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:8px 0 14px} .abar em{display:block;height:100%;background:linear-gradient(90deg,var(--pri),#22c55e);border-radius:4px}
     .agp{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:20px;padding:18px} .agp small{font-size:13px;font-weight:400;opacity:.85}
     .arow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px} .arow .btn{margin:0} .atd{font-size:12.5px;color:var(--sub2,#9aa3b5);margin-top:10px;text-align:center} .ahow{font-size:12.5px;text-align:center;margin:4px 12px}
-    .padsay{position:absolute;left:12px;right:12px;top:56px;z-index:5;background:#111d;color:#fff;padding:10px 14px;border-radius:12px;font-size:15px} #padmic{touch-action:none;user-select:none;-webkit-user-select:none} #padmic.on{background:#ef4444;color:#fff} u.khint{text-decoration:underline wavy #f59e0b 2px;text-underline-offset:4px;background:#f59e0b22;border-radius:3px} #sync{display:none} .moreh{font-weight:700;font-size:15px;margin:18px 0 6px;padding-top:12px;border-top:1px dashed var(--line,#e3e7ef)} .morec{white-space:pre-wrap;line-height:1.75;font-size:15px} .diawait{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);background:#111e;color:#fff;padding:14px 20px;border-radius:14px;z-index:300;font-size:15px} #view .qtext,#view .qtext *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none} .ahero .agp{background:var(--pri);color:#fff;border:0} .ahero .agp small{color:#ffffffcc} #wrev,#view .wbtns .btn{white-space:nowrap;font-size:15px} .sbg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px} .sbig{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px 14px} .sbig small{display:block;font-size:12.5px;color:var(--sub)} .sbig b{font-size:30px;line-height:1.2} .sbig b i{font-size:14px;font-style:normal;margin-left:2px} .sbig span{display:block;font-size:12.5px;color:var(--sub)} .ssub{margin-top:10px} .sr{display:grid;grid-template-columns:7.2em 1fr 2.2em 4.4em;align-items:center;gap:8px;padding:7px 0;font-size:14px} .sr em{height:8px;border-radius:5px;background:var(--line);overflow:hidden} .sr em i{display:block;height:100%} .sr b{text-align:right} .sr small{text-align:right;color:var(--sub);font-size:12px} .sach summary{cursor:pointer;font-weight:600} .a1c{margin:10px 0;padding:12px 14px;border-radius:12px;background:var(--bg);color:var(--ink);border:1.5px solid var(--warn,#f59e0b)} .a1c small,.a1q small{display:block;font-size:12px;color:var(--sub)} .a1c b{display:block;font-size:16px;margin:6px 0 2px;line-height:1.5} .a1q{text-align:center} .a1f{font-size:20px;font-weight:700;margin:18px 0 10px;line-height:1.5} .a1b{font-size:17px;color:var(--pri,#2563eb);min-height:26px;margin-bottom:12px;line-height:1.5}
+    .padsay{position:absolute;left:12px;right:12px;top:56px;z-index:5;background:#111d;color:#fff;padding:10px 14px;border-radius:12px;font-size:15px} #padmic{touch-action:none;user-select:none;-webkit-user-select:none} #padmic.on{background:#ef4444;color:#fff} u.khint{text-decoration:underline wavy #f59e0b 2px;text-underline-offset:4px;background:#f59e0b22;border-radius:3px} #sync{display:none} .moreh{font-weight:700;font-size:15px;margin:18px 0 6px;padding-top:12px;border-top:1px dashed var(--line,#e3e7ef)} .morec{white-space:pre-wrap;line-height:1.75;font-size:15px} .diawait{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);background:#111e;color:#fff;padding:14px 20px;border-radius:14px;z-index:300;font-size:15px} #view .qtext,#view .qtext *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none} .ahero .agp{background:var(--pri);color:#fff;border:0} .ahero .agp small{color:#ffffffcc} #wrev,#view .wbtns .btn{white-space:nowrap;font-size:15px} .sbg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px} .sbig{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px 14px} .sbig small{display:block;font-size:12.5px;color:var(--sub)} .sbig b{font-size:30px;line-height:1.2} .sbig b i{font-size:14px;font-style:normal;margin-left:2px} .sbig span{display:block;font-size:12.5px;color:var(--sub)} .ssub{margin-top:10px} .sr{display:grid;grid-template-columns:7.2em 1fr 2.2em 4.4em;align-items:center;gap:8px;padding:7px 0;font-size:14px} .sr em{height:8px;border-radius:5px;background:var(--line);overflow:hidden} .sr em i{display:block;height:100%} .sr b{text-align:right} .sr small{text-align:right;color:var(--sub);font-size:12px} .sach summary{cursor:pointer;font-weight:600} #pad.p2row .ph{display:none} #pad.p2row.pmemo .ph{display:flex} #pad.p2row .pt{flex-wrap:nowrap;gap:4px;padding:6px 8px 2px} #pad.p2row .pt button{min-width:0;flex:0 0 auto;width:36px;height:36px;padding:0;font-size:16px!important;border-radius:10px} #pad.p2row .pt .sp{flex:1} #pad.p2row #padw{max-width:90px;min-width:50px} .pcb i{display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid #fff8;vertical-align:middle} .ppal{position:absolute;left:8px;top:6px;z-index:6;display:none;gap:8px;padding:8px;border-radius:14px;background:var(--card);border:1px solid var(--line)} .ppal.on{display:flex} .ppal .pc{width:32px;height:32px} #padmic.on{background:#ef4444!important;color:#fff} .a1c{margin:10px 0;padding:12px 14px;border-radius:12px;background:var(--bg);color:var(--ink);border:1.5px solid var(--warn,#f59e0b)} .a1c small,.a1q small{display:block;font-size:12px;color:var(--sub)} .a1c b{display:block;font-size:16px;margin:6px 0 2px;line-height:1.5} .a1q{text-align:center} .a1f{font-size:20px;font-weight:700;margin:18px 0 10px;line-height:1.5} .a1b{font-size:17px;color:var(--pri,#2563eb);min-height:26px;margin-bottom:12px;line-height:1.5}
     #pscore{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:2px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0;line-height:1.25}
     #pscore small{font-size:10.5px;color:var(--sub2,#9aa3b5)} #pscore span{font-size:13.5px;white-space:nowrap} #pscore b{font-size:16px} #pscore b.ok{color:#16a34a} #pscore b.no{color:#ef4444}
     #pscore i{font-style:normal;font-size:10.5px;margin-left:2px} #pscore i.up{color:#16a34a} #pscore i.dn{color:#ef4444}
@@ -1359,6 +1359,7 @@
     PAD.tab = t; const p = document.getElementById('pad'); if (!p) return;
     p.querySelectorAll('[data-pt]').forEach(b => b.classList.toggle('on', b.dataset.pt === t));
     p.querySelector('.pdraw').style.display = t === 'draw' ? '' : 'none'; p.querySelector('#padt').style.display = t === 'memo' ? '' : 'none';
+    if (p.classList.contains('p2row')) { p.classList.toggle('pmemo', t === 'memo'); const mic = p.querySelector('#padmic'), x = p.querySelector('#padx'); (t === 'memo' ? p.querySelector('.ph') : p.querySelector('.pdraw .pt')).append(mic, x); if (t === 'memo' && PAD.voice) { PAD.voice = false; mic.classList.remove('on'); } }
     if (t === 'draw') requestAnimationFrame(padDraw);
   }
   function padOpen(on) {
@@ -1382,27 +1383,49 @@
         const mb = p.querySelector('#padmic'), N = window.NativeBridge; let on = false, last = '', tip = null;
         const show = t => { if (!tip) { tip = document.createElement('div'); tip.className = 'padsay'; p.appendChild(tip); } tip.textContent = t; };
         const hide = () => { if (tip) { tip.remove(); tip = null; } };
+        let at = null;
         const put = t => {
           t = String(t || '').trim(); if (!t) return;
+          if (at && PAD.tab !== 'memo') { PAD.hist.push(JSON.stringify(PAD.strokes)); PAD.redo = []; PAD.strokes.push({ k: 'text', c: PAD.color || 'ink', w: 15, b: 0, al: 'left', t, p: [at] }); at = null; padDraw(); padSave(); if (PAD.paint) PAD.paint(); return; }
           if (PAD.tab === 'memo') { const ta = p.querySelector('#padt'); ta.value = (ta.value ? ta.value.replace(/\s*$/, '\n') : '') + t; ta.dispatchEvent(new Event('input')); return; }
           const b = padBox(), V = PAD.v, y = Math.min(V.oy + 1 / V.s - .05, (b ? b[3] : V.oy) + .06);
           PAD.hist.push(JSON.stringify(PAD.strokes)); PAD.redo = []; PAD.strokes.push({ k: 'text', c: PAD.color || 'ink', w: 15, b: 0, al: 'left', t, p: [[V.ox + .04 / V.s, Math.max(V.oy + .05, y)]] });
           padDraw(); padSave(); if (PAD.paint) PAD.paint();
         };
         window.__stt = (t, st) => {
-          if (st === 2) { hide(); on = false; mb.classList.remove('on'); return window.__toast && __toast('마이크 권한을 허용한 뒤 다시 눌러 주세요'); }
+          if (st === 2) { hide(); on = false; at = null; return window.__toast && __toast('마이크 권한을 허용한 뒤 다시 눌러 주세요'); }
           if (st === 3) { hide(); on = false; mb.classList.remove('on'); return window.__toast && __toast('이 폰에서 음성 인식을 쓸 수 없어요'); }
           if (t) last = t;
           if (st === 0) show('🎤 ' + t);
-          if (st === 1) { hide(); mb.classList.remove('on'); put(last); last = ''; on = false; }
+          if (st === 1) { hide(); if (!PAD.voice) mb.classList.remove('on'); put(last); last = ''; on = false; }
         };
-        const start = e => { e.preventDefault(); if (!N || !N.sttStart) return window.__toast && __toast('앱에서만 쓸 수 있어요'); on = true; last = ''; mb.classList.add('on'); show('🎤 듣는 중… 떼면 입력돼요'); try { N.tap && N.tap(); } catch (x) {} N.sttStart(); };
+        // 🎤 누르면 '말하기 모드' → 필기장에서 글자 놓을 곳을 누르고 있는 동안 말하고, 떼면 그 자리에 글자
+        mb.onclick = () => { if (PAD.tab === 'memo') return; PAD.voice = !PAD.voice; mb.classList.toggle('on', PAD.voice); if (PAD.voice) { show('🎤 글자를 놓을 곳을 누르고 있는 동안 말해 주세요'); setTimeout(() => { if (!on) hide(); }, 2200); } else hide(); };
+        PAD.sttAt = (pt, down) => { if (down) { at = pt; if (!N || !N.sttStart) { at = null; return window.__toast && __toast('앱에서만 쓸 수 있어요'); } on = true; last = ''; show('🎤 듣는 중… 떼면 그 자리에 들어가요'); N.sttStart(); } else if (on) { show('🎤 글자로 바꾸는 중…'); try { N.sttStop(); } catch (x) {} } };
+        const start = e => { if (PAD.tab !== 'memo') return; e.preventDefault(); if (!N || !N.sttStart) return window.__toast && __toast('앱에서만 쓸 수 있어요'); on = true; last = ''; mb.classList.add('on'); show('🎤 듣는 중… 떼면 입력돼요'); try { N.tap && N.tap(); } catch (x) {} N.sttStart(); };
         const stop = e => { if (!on) return; e && e.preventDefault(); show('🎤 글자로 바꾸는 중…'); try { N.sttStop(); } catch (x) {} };
         mb.addEventListener('pointerdown', start); mb.addEventListener('pointerup', stop); mb.addEventListener('pointercancel', stop); mb.addEventListener('pointerleave', stop);
         mb.oncontextmenu = e => e.preventDefault();
       })();
       p.querySelector('#padx').onclick = () => padOpen(false);
       p.querySelectorAll('[data-pt]').forEach(b => b.onclick = () => padTab(b.dataset.pt));
+      // 도구 2줄로: [도구 6개 · ⌨️ 🎤 ✕] / [● 색 · 굵기 · 📐 ✋ ↶ ↷ 🗑]
+      (() => {
+        const rows = p.querySelectorAll('.pdraw .pt'), r1 = rows[0], r2 = rows[1]; if (!r1 || !r2) return;
+        const sp1 = r1.querySelector('.sp'), und = ['#padu', '#padr', '#padz'].map(x => p.querySelector(x));
+        sp1 && sp1.remove();
+        const mk = (html) => { const t = document.createElement('div'); t.innerHTML = html; return t.firstElementChild; };
+        const kb = mk('<button class="pk2" title="글로 쓰기">⌨️</button>'); kb.onclick = () => padTab('memo');
+        const sp = mk('<span class="sp"></span>');
+        r1.append(sp, kb, p.querySelector('#padmic'), p.querySelector('#padx'));
+        const pcs = [...r2.querySelectorAll('.pc')], pal = mk('<div class="ppal"></div>'), cb = mk('<button class="pcb" title="색"><i></i></button>');
+        pcs.forEach(b => { pal.appendChild(b); b.addEventListener('click', () => { pal.classList.remove('on'); setTimeout(() => cb.querySelector('i').style.background = getComputedStyle(b).getPropertyValue('--c') || '', 0); }); });
+        cb.onclick = () => pal.classList.toggle('on');
+        r2.prepend(cb); p.querySelector('.pcw').appendChild(pal);
+        const sel = pcs.find(b => b.classList.contains('on')) || pcs[0]; cb.querySelector('i').style.background = getComputedStyle(sel).getPropertyValue('--c');
+        r2.append(...und);
+        p.classList.add('p2row');
+      })();
       // 설정 기억: 도구·색·굵기·도형 보정·손바닥 무시
       const LS = (k, d) => { try { const v = localStorage.getItem('reb_pad_' + k); return v == null ? d : v; } catch (e) { return d; } };
       const SS = (k, v) => { try { localStorage.setItem('reb_pad_' + k, v); } catch (e) {} };
@@ -1473,7 +1496,8 @@
         if (palmy(e) || (PAD.cur && PAD.pid !== e.pointerId)) return;
         PAD.pid = e.pointerId; cv.setPointerCapture(e.pointerId);
         if (PAD.tool === 'erase') { PAD.erasing = true; PAD.erasedOnce = false; eraseAt(pos(e)); return; }
-        if (PAD.tool === 'move') { const h2 = findHit(pos(e)); if (h2) { snapshot(); PAD.mv = { ...h2, last: pos(e) }; } return; }
+        if (PAD.voice && PAD.sttAt) { PAD.sttAt(pos(e).map(R4), true); PAD.vdown = 1; return; }
+        if (PAD.tool === 'move') { const h2 = findHit(pos(e)); if (h2) { snapshot(); PAD.mv = { ...h2, last: pos(e) }; } else PAD.pan = { x: e.clientX, y: e.clientY, v: { ...PAD.v } }; return; }   // 빈 곳을 끌면 화면 이동
         PAD.cur = { c: PAD.color, w: PAD.w, k: PAD.tool, p: [pos(e)] }; padDraw();
       });
       cv.addEventListener('pointermove', e => {
@@ -1486,6 +1510,7 @@
           PAD.v = { s: ns, ox: wx - cx / ns, oy: wy - cy / ns }; padDraw(); return;
         }
         if (e.pointerId !== PAD.pid) return;
+        if (PAD.pan) { const r = cv.getBoundingClientRect(), v0 = PAD.pan.v; PAD.v.ox = v0.ox - (e.clientX - PAD.pan.x) / (r.width * v0.s); PAD.v.oy = v0.oy - (e.clientY - PAD.pan.y) / (r.height * v0.s); padDraw(); return; }
         if (PAD.mv) { const pt = pos(e), dx = pt[0] - PAD.mv.last[0], dy = pt[1] - PAD.mv.last[1]; PAD.mv.last = pt;
           PAD.mv.set.forEach(i => PAD.strokes[i].p = PAD.strokes[i].p.map(q => [R4(q[0] + dx), R4(q[1] + dy)]));
           PAD.mv.att.forEach(([i, j]) => { const q = PAD.strokes[i].p[j]; PAD.strokes[i].p[j] = [R4(q[0] + dx), R4(q[1] + dy)]; }); padDraw(); return; }
@@ -1505,6 +1530,8 @@
         if (pinch) { if (T.size < 2) pinch = null; return; }
         if (e && e.pointerId !== PAD.pid) return;
         clearTimeout(hold);
+        if (PAD.vdown) { PAD.vdown = 0; PAD.sttAt && PAD.sttAt(null, false); return; }
+        if (PAD.pan) { PAD.pan = null; return; }
         if (PAD.mv) { PAD.mv = null; padSave(); paint(); return; }
         if (PAD.tool === 'move') return;
         if (PAD.erasing) { PAD.erasing = false; padSave(); paint(); return; }
@@ -1704,7 +1731,7 @@ ${q.x}
   async function makeDiagram(q, btn, pre) {
     const solved = !!document.querySelector('#view .fb');
     pre = pre && !solved;   // 아직 안 풀었으면 정답 없이
-    const key = 'reb_dia_' + (pre ? 'p_' : '') + q.id; let d = null;
+    const key = 'reb_dia2_' + (pre ? 'p_' : '') + q.id; let d = null;
     try { d = JSON.parse(localStorage.getItem(key)); } catch (e) {}
     const old = btn ? btn.innerHTML : '';
     if (!d) {
@@ -1715,13 +1742,15 @@ ${q.x}
       try {
         const ex = expOf(q);
         const prompt = `공인중개사 기출 문제를 한눈에 이해하게 하는 '풀이 도식'을 만들어. JSON만 출력.
-형식: {"title":"12자 이내 제목","nodes":[{"id":"a","label":"甲\\n매도인","x":15,"y":20}],"edges":[{"from":"a","to":"b","label":"매매계약"}],"steps":["① …","② …","→ 정답 ③ …"]}
+형식: {"title":"12자 이내 제목","calc":[],"nodes":[{"id":"a","label":"甲\\n매도인","x":15,"y":20}],"edges":[{"from":"a","to":"b","label":"매매계약"}],"steps":["① …","② …","→ 정답 ③ …"]}
 규칙:
 - nodes 2~7개. x·y는 0~100, 서로 25 이상 떨어지게 넓게 배치. label은 짧게: 한 줄 7자 이내, 최대 두 줄(\\n). 날짜·긴 설명은 label 말고 steps에.
 - edges는 관계·흐름·계산 방향. label은 8자 이내.
 - 사람(甲·乙)·물건·권리·금액 관계가 있으면 그 관계도. 계산 문제면 값 → 계산 → 결과 흐름. 개념 문제면 핵심 개념을 분류 트리로.
 ${pre ? `- steps 3~5줄, 한 줄 28자 이내. 문제를 푸는 순서만 안내하고 정답 번호와 결론은 절대 쓰지 말 것.
-문제: ${q.x}` : `- steps 3~6줄, 한 줄 28자 이내. 계산 문제는 계산식을 숫자 그대로. 마지막 줄은 정답과 이유.
+- 계산 문제면 "calc" 배열도: 대입할 공식과 숫자를 한 단계씩 풀어 쓰되 마지막 결과값은 "= ?"로 남김(예: "PV = 1억 ÷ (1+0.07)^5", "(1.07)^5 = 1.40255", "PV = 1억 ÷ 1.40255 = ?"). 한 줄 30자 이내. 계산 문제가 아니면 빈 배열.
+문제: ${q.x}` : `- steps 3~6줄, 한 줄 28자 이내. 마지막 줄은 정답과 이유.
+- 계산 문제면 "calc" 배열도: 계산식을 한 단계씩 숫자로 풀어 씀(예: "1억 ÷ (1.07)^5", "= 1억 ÷ 1.40255", "= 71,298,618원 ≈ 7,130만 원"). 한 줄 30자 이내, 3~6줄. 계산 문제가 아니면 calc는 빈 배열.
 문제: ${q.x}
 정답: ${q.a}
 ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
@@ -1776,7 +1805,10 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
         const off = Math.abs(dy) < 8 ? Math.max(a.hh, b.hh) * H + 10 : 15; T((mx + nx * off) / W, (my + ny * off) / H, String(e.label).slice(0, 10), { c: '#3b82f6', f: LF, b: 1 });
       }
     });
-    (d.steps || []).slice(0, 7).forEach((t, i) => T(.05, stepY + i * 24 / H, String(t), { al: 'left', f: 13 }));
+    let sy = stepY;
+    const CL = (d.calc || []).filter(Boolean).slice(0, 7);
+    if (CL.length) { T(.05, sy, '🧮 계산식', { al: 'left', f: 14, b: 1, c: '#22c55e' }); sy += 26 / H; CL.forEach(t => { T(.08, sy, String(t), { al: 'left', f: 15, b: 1, c: '#22c55e' }); sy += 27 / H; }); sy += 14 / H; }
+    (d.steps || []).slice(0, 7).forEach((t, i) => T(.05, sy + i * 24 / H, String(t), { al: 'left', f: 13 }));
     PAD.hist.push(JSON.stringify(PAD.strokes)); PAD.redo = [];
     PAD.strokes = PAD.strokes.filter(st => st.g !== 'dia').concat(out);
     Object.assign(PAD.v, { ox: 0, oy: 0, s: 1 }); padDraw(); padSave(); if (PAD.paint) PAD.paint();
