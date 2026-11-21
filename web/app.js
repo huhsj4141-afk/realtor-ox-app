@@ -119,7 +119,7 @@
     .abar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:8px 0 14px} .abar em{display:block;height:100%;background:linear-gradient(90deg,var(--pri),#22c55e);border-radius:4px}
     .agp{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:20px;padding:18px} .agp small{font-size:13px;font-weight:400;opacity:.85}
     .arow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px} .arow .btn{margin:0} .atd{font-size:12.5px;color:var(--sub2,#9aa3b5);margin-top:10px;text-align:center} .ahow{font-size:12.5px;text-align:center;margin:4px 12px}
-    .padsay{position:absolute;left:12px;right:12px;top:56px;z-index:5;background:#111d;color:#fff;padding:10px 14px;border-radius:12px;font-size:15px} #padmic{touch-action:none;user-select:none;-webkit-user-select:none} #padmic.on{background:#ef4444;color:#fff} u.khint{text-decoration:underline wavy #f59e0b 2px;text-underline-offset:4px;background:#f59e0b22;border-radius:3px} #sync{display:none} .moreh{font-weight:700;font-size:15px;margin:18px 0 6px;padding-top:12px;border-top:1px dashed var(--line,#e3e7ef)} .morec{white-space:pre-wrap;line-height:1.75;font-size:15px} .diawait{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);background:#111e;color:#fff;padding:14px 20px;border-radius:14px;z-index:300;font-size:15px} #view .qtext,#view .qtext *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none} .ahero .agp{background:var(--pri);color:#fff;border:0} .ahero .agp small{color:#ffffffcc} #wrev,#view .wbtns .btn{white-space:nowrap;font-size:15px} .sbg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px} .sbig{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px 14px} .sbig small{display:block;font-size:12.5px;color:var(--sub)} .sbig b{font-size:30px;line-height:1.2} .sbig b i{font-size:14px;font-style:normal;margin-left:2px} .sbig span{display:block;font-size:12.5px;color:var(--sub)} .ssub{margin-top:10px} .sr{display:grid;grid-template-columns:7.2em 1fr 2.2em 4.4em;align-items:center;gap:8px;padding:7px 0;font-size:14px} .sr em{height:8px;border-radius:5px;background:var(--line);overflow:hidden} .sr em i{display:block;height:100%} .sr b{text-align:right} .sr small{text-align:right;color:var(--sub);font-size:12px} .sach summary{cursor:pointer;font-weight:600} #pad.p2row .ph{display:none} #pad.p2row.pmemo .ph{display:flex} #pad.p2row .pt{flex-wrap:nowrap;gap:4px;padding:6px 8px 2px} #pad.p2row .pt button{min-width:0;flex:0 0 auto;width:36px;height:36px;padding:0;font-size:16px!important;border-radius:10px} #pad.p2row .pt .sp{flex:1} #pad.p2row #padw{max-width:90px;min-width:40px;flex:1 1 40px} #pad.p2row #padwv{display:none} .pcb i{display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid #fff8;vertical-align:middle} .ppal{position:absolute;left:8px;top:6px;z-index:6;display:none;gap:8px;padding:8px;border-radius:14px;background:var(--card);border:1px solid var(--line)} .ppal.on{display:flex} .ppal .pc{width:32px;height:32px} #padmic.on{background:#ef4444!important;color:#fff} #vf{display:none!important} #calc{position:fixed;right:10px;bottom:96px;width:min(300px,calc(100vw - 20px));z-index:250;background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 10px 30px #0006;padding:10px;touch-action:none} #calc .crow{display:flex;align-items:center;gap:8px;cursor:move;padding:0 2px 8px} #calc .crow small{color:var(--sub);font-size:11.5px;flex:1} #calc #cx{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--ink)} #calc .cscr{background:#1a2b1f;color:#d9f99d;border-radius:10px;padding:8px 12px;text-align:right;font:600 28px/1.2 ui-monospace,monospace;margin-bottom:8px;position:relative;min-height:44px;overflow:hidden} #calc .cscr i{position:absolute;left:10px;top:6px;font:600 12px sans-serif;font-style:normal;color:#a3e635} #calc .ckeys{display:grid;grid-template-columns:repeat(4,1fr);gap:6px} #calc .ckeys button{height:44px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:17px;font-weight:600} #calc .ckeys .f{color:var(--pri)} #calc .ckeys .eq{background:var(--pri);color:#fff;border:0} #calc .ckeys .cl{color:#ef4444} #calc [data-k=AC],#calc [data-k=C]{grid-column:span 2} .a1c{margin:10px 0;padding:12px 14px;border-radius:12px;background:var(--bg);color:var(--ink);border:1.5px solid var(--warn,#f59e0b)} .a1c small,.a1q small{display:block;font-size:12px;color:var(--sub)} .a1c b{display:block;font-size:16px;margin:6px 0 2px;line-height:1.5} .a1q{text-align:center} .a1f{font-size:20px;font-weight:700;margin:18px 0 10px;line-height:1.5} .a1b{font-size:17px;color:var(--pri,#2563eb);min-height:26px;margin-bottom:12px;line-height:1.5}
+    .padsay{position:absolute;left:12px;right:12px;top:56px;z-index:5;background:#111d;color:#fff;padding:10px 14px;border-radius:12px;font-size:15px} #padmic{touch-action:none;user-select:none;-webkit-user-select:none} #padmic.on{background:#ef4444;color:#fff} u.khint{text-decoration:underline wavy #f59e0b 2px;text-underline-offset:4px;background:#f59e0b22;border-radius:3px} #sync{display:none} .moreh{font-weight:700;font-size:15px;margin:18px 0 6px;padding-top:12px;border-top:1px dashed var(--line,#e3e7ef)} .morec{white-space:pre-wrap;line-height:1.75;font-size:15px} .diawait{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);background:#111e;color:#fff;padding:14px 20px;border-radius:14px;z-index:300;font-size:15px} #view .qtext,#view .qtext *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none} .ahero .agp{background:var(--pri);color:#fff;border:0} .ahero .agp small{color:#ffffffcc} #wrev,#view .wbtns .btn{white-space:nowrap;font-size:15px} .sbg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px} .sbig{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px 14px} .sbig small{display:block;font-size:12.5px;color:var(--sub)} .sbig b{font-size:30px;line-height:1.2} .sbig b i{font-size:14px;font-style:normal;margin-left:2px} .sbig span{display:block;font-size:12.5px;color:var(--sub)} .ssub{margin-top:10px} .sr{display:grid;grid-template-columns:7.2em 1fr 2.2em 4.4em;align-items:center;gap:8px;padding:7px 0;font-size:14px} .sr em{height:8px;border-radius:5px;background:var(--line);overflow:hidden} .sr em i{display:block;height:100%} .sr b{text-align:right} .sr small{text-align:right;color:var(--sub);font-size:12px} .sach summary{cursor:pointer;font-weight:600} #pad.p2row .ph{display:none} #pad.p2row.pmemo .ph{display:flex} #pad.p2row .pt{flex-wrap:nowrap;gap:4px;padding:6px 8px 2px} #pad.p2row .pt button{min-width:0;flex:0 0 auto;width:36px;height:36px;padding:0;font-size:16px!important;border-radius:10px} #pad.p2row .pt .sp{flex:1} #pad.p2row #padw{max-width:90px;min-width:40px;flex:1 1 40px} #pad.p2row #padwv{display:none} .pcb i{display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid #fff8;vertical-align:middle} .ppal{position:absolute;left:8px;top:6px;z-index:6;display:none;gap:8px;padding:8px;border-radius:14px;background:var(--card);border:1px solid var(--line)} .ppal.on{display:flex} .ppal .pc{width:32px;height:32px} #padmic.on{background:#ef4444!important;color:#fff} #vf{display:none!important} #calc{position:fixed;right:10px;bottom:96px;width:min(300px,calc(100vw - 20px));z-index:250;background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 10px 30px #0006;padding:10px;touch-action:none} #calc .crow{display:flex;align-items:center;gap:8px;cursor:move;padding:0 2px 8px} #calc .crow small{color:var(--sub);font-size:11.5px;flex:1} #calc #cx{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--ink)} #calc .cscr{background:#1a2b1f;color:#d9f99d;border-radius:10px;padding:8px 12px;text-align:right;font:600 28px/1.2 ui-monospace,monospace;margin-bottom:8px;position:relative;min-height:44px;overflow:hidden} #calc .cscr i{position:absolute;left:10px;top:6px;font:600 12px sans-serif;font-style:normal;color:#a3e635} #calc .ckeys{display:grid;grid-template-columns:repeat(4,1fr);gap:6px} #calc .ckeys button{height:44px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:17px;font-weight:600} #calc .ckeys .f{color:var(--pri)} #calc .ckeys .eq{background:var(--pri);color:#fff;border:0} #calc .ckeys .cl{color:#ef4444} #calc [data-k=AC],#calc [data-k=C]{grid-column:span 2} em.trap{font-style:normal;font-weight:700;text-decoration:underline 2px #f97316;text-underline-offset:3px} .elc.cfz{outline:2px dashed #a855f7;outline-offset:2px} .elc.cfz::after{content:' ❓';} .qtm{color:var(--sub);font-weight:400} .qsim{margin-top:8px;font-size:13px;font-weight:600;color:var(--pri)} .cfrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0} #ovb{margin:0 0 8px} #ovb.on{background:var(--pri);color:#fff} canvas.ovc{position:absolute;left:0;top:0;z-index:5;touch-action:auto} canvas.ovc.on{touch-action:none;outline:2px dashed var(--pri)} #ovbar{position:fixed;left:50%;transform:translateX(-50%);bottom:150px;z-index:260;display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px;box-shadow:0 8px 24px #0006} #ovbar button{min-width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)} #ovbar button.on{border-color:var(--pri);background:var(--pri2,#1e3a8a33)} .wk h3{margin:0 0 8px} .wkg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center} .wkg b{display:block;font-size:22px} .wkg small{color:var(--sub);font-size:12px} .wkn{margin-top:10px;font-size:13.5px} .a1c{margin:10px 0;padding:12px 14px;border-radius:12px;background:var(--bg);color:var(--ink);border:1.5px solid var(--warn,#f59e0b)} .a1c small,.a1q small{display:block;font-size:12px;color:var(--sub)} .a1c b{display:block;font-size:16px;margin:6px 0 2px;line-height:1.5} .a1q{text-align:center} .a1f{font-size:20px;font-weight:700;margin:18px 0 10px;line-height:1.5} .a1b{font-size:17px;color:var(--pri,#2563eb);min-height:26px;margin-bottom:12px;line-height:1.5}
     #pscore{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:2px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0;line-height:1.25}
     #pscore small{font-size:10.5px;color:var(--sub2,#9aa3b5)} #pscore span{font-size:13.5px;white-space:nowrap} #pscore b{font-size:16px} #pscore b.ok{color:#16a34a} #pscore b.no{color:#ef4444}
     #pscore i{font-style:normal;font-size:10.5px;margin-left:2px} #pscore i.up{color:#16a34a} #pscore i.dn{color:#ef4444}
@@ -660,7 +660,7 @@
     </div>
     <details class="card sach"><summary>🏅 Lv.${L.n} ${L.name} · 배지 ${got}/${BADGES.length} · 🔥 ${streak().n}일 연속</summary>
       <div class="bdg" style="margin-top:10px">${BADGES.map(b => { const ok = b[4](a); return `<div class="${ok ? 'on' : ''}" title="${b[3]}"><b>${ok ? b[1] : '🔒'}</b><span>${b[2]}</span><small>${b[3]}</small></div>`; }).join('')}</div>
-      <div class="muted" style="font-size:12px;margin-top:8px">${x.toLocaleString()} XP · 맞히면 10 XP, 틀려도 3 XP</div></details>`;
+      <div class="muted" style="font-size:12px;margin-top:8px">${x.toLocaleString()} XP · 맞히면 10 XP, 틀려도 3 XP</div></details>${(() => { try { return window.weekCard ? weekCard() : ''; } catch (e) { return ''; } })()}`;
   }
 
   /* 📈 실시간 예상 점수: 맨 위 제목 자리에 늘 보여 주고, 문제를 풀 때마다 바로 바뀜
@@ -1059,6 +1059,7 @@
     document.body.insertAdjacentHTML('beforeend', `<div id="setp" class="nzp"><div class="nzh"><b>🎨 화면 색</b><button id="spx" aria-label="닫기">✕</button></div>
       <div class="thg">${sw}</div>
       <button id="sph" class="nzoff">📳 터치 진동 ${(() => { try { return !window.NativeBridge || !NativeBridge.hapticOn || NativeBridge.hapticOn(); } catch (e) { return true; } })() ? '켬' : '끔'}</button>
+      <button class="nzoff" onclick="backupNow()">💾 기록 백업 (구글 드라이브에 저장)</button><button class="nzoff" onclick="backupRestore()">📂 백업에서 되돌리기</button>
       <button id="spu" class="nzoff">${nv ? '⬇ 새 버전 v' + LATEST + ' 받기' : '지금 v' + v + ' · 업데이트 확인'}</button></div>`);
     p = document.getElementById('setp');
     p.querySelector('#spx').onclick = () => p.remove();
@@ -2152,7 +2153,14 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     /* ================= A. 기출 회독형 =================
        탭: 오늘 · 오답 · 기록. 첫 화면은 '문제 풀기' 하나.
        문제 풀기 = 다시 볼 틀린 문제(1·3·7일 간격) + 이번 회독에서 아직 안 푼 기출(과목 번갈아). */
-    const DAILY = () => { try { return +localStorage.getItem('reb_daily') || 30; } catch (e) { return 30; } };
+    // 하루 문제 수: 직접 정한 값이 없으면 시험일까지 3회독이 되도록 거꾸로 계산 (20~80문제)
+    const DAILY = () => { try { const m = +localStorage.getItem('reb_daily'); if (m) return m; } catch (e) {} return planDaily().n; };
+    function planDaily() {
+      let D = 300; try { const d = todayPlan().dday; if (d > 0) D = d; } catch (e) {}
+      const R0 = roundInfo(), left = Math.max(1, 3 - (R0.r - 1)), per = Math.max(1, Math.floor(D / left));
+      const n = Math.max(20, Math.min(80, Math.ceil((R0.total - R0.done) / per)));
+      return { n, goal: Math.max(3, R0.r + left - 1), per, D };
+    }
     function roundInfo() {
       const G = Q.filter(q => !q.ocr && graded(q)), att = q => P[q.id] ? (P[q.id][2] || 1) : 0;
       let r = Infinity; G.forEach(q => { r = Math.min(r, att(q)); }); r = (isFinite(r) ? r : 0) + 1;
@@ -2183,7 +2191,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
         <div class="abar"><em style="width:${Math.round(R.pct * 100)}%"></em></div>
         <button class="go agp" id="ago">▶ 문제 풀기<small>${(() => { const n = againDue().length; return n ? `카드 ${n} + ` : ''; })()}${S0.rev.length ? `틀린 ${S0.rev.length} + ` : ''}새 기출 ${S0.fresh.length}</small></button>
         <div class="arow"><button class="btn" id="alis">🎧 암기 듣기</button><button class="btn" id="aexm">⏱ 모의고사</button></div>
-        <div class="atd">오늘 ${t.q || 0}문제 풀었어요${t.ox ? ` · 🎧 ${t.ox}지문` : ''}</div></div>
+        <div class="atd">오늘 ${t.q || 0}문제 풀었어요${t.ox ? ` · 🎧 ${t.ox}지문` : ''}${(() => { try { const pd = planDaily(); return localStorage.getItem('reb_daily') ? '' : `<br>📆 하루 ${pd.n}문제씩이면 시험 전 ${pd.goal}회독`; } catch (e) { return ''; } })()}</div></div>
         <div class="muted ahow">틀린 문제는 1일·3일·7일 뒤에 다시 나와요. 밖에서는 🎧 암기 듣기로 공식만 외워요.</div>`;
       document.getElementById('ago').onclick = () => {
         const L = sessionList(); if (!L.list.length) return window.__toast && __toast('오늘 몫을 다 했어요 👏');
@@ -2240,6 +2248,13 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     function memoItems() {
       cnBuild(); const out = [];
       Object.keys(AG()).forEach(id => { const c = CN.cards[id]; if (!c) return; if (c.kind === 'cloze') out.push([SUBS[c.th ? CN.byTheme[c.th].s : 0], c.f.replace('［　？　］', '무엇') + '?', c.b]); else if (c.f.length <= 40 && c.b.length <= 70) out.push([SUBS[CN.byTheme[c.th].s], c.f + '?', c.b]); });
+      // 내가 틀린 문제의 핵심 1줄도 자동으로 (최근 틀린 것부터 20개)
+      const seenC = new Set(out.map(x => x[1]));
+      Object.keys(P).filter(k => P[k][1] === 0 && BYID[k]).sort((a, b) => P[b][4] - P[a][4]).slice(0, 60).forEach(k => {
+        if (out.length >= 25) return; const c = cardFor(BYID[k]); if (!c) return;
+        const it = c.kind === 'cloze' ? [SUBS[BYID[k].s], c.f.replace('［　？　］', '무엇') + '?', c.b] : (c.f.length <= 40 && c.b.length <= 70 ? [SUBS[BYID[k].s], c.f + '?', c.b] : null);
+        if (it && !seenC.has(it[1])) { seenC.add(it[1]); out.push(it); }
+      });
       const W = new Set(Object.keys(P).filter(k => P[k][1] === 0).map(k => BYID[k] && BYID[k].s));
       const base = (MEMO || []).slice().sort((a, b) => (W.has(SUBS.indexOf(b[0])) ? 1 : 0) - (W.has(SUBS.indexOf(a[0])) ? 1 : 0));
       return out.concat(base).slice(0, 60);
@@ -2315,6 +2330,119 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
         });
       } catch (e) {}
     }, 400);
+
+    // ── ⏱ 시간 재기 · 🔗 비슷한 기출 이어 풀기 · ❓ 헷갈린 보기 · ⚠ 함정 표현 · ✍ 지문 위 필기 ──
+    const QT = () => LSJ('reb_qt', {}), CF = () => LSJ('reb_conf2', {});
+    let qt0 = { id: null, t: 0 };
+    const TRAP = /(할 수 없다|할 수 있다|하여야 한다|해야 한다|아니한다|않는다|없다|모든|반드시|언제나|항상|오직|에 한하여|에 한한다|이상|이하|초과|미만|이내|지체 없이|즉시)/g;
+    function trapMark(root) {
+      const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement.closest('.trap,.khint,button') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT }), ns = []; let n;
+      while ((n = tw.nextNode())) if (TRAP.test(n.nodeValue)) ns.push(n);
+      ns.forEach(n => { TRAP.lastIndex = 0; const f = document.createDocumentFragment(); let last = 0, m; const t = n.nodeValue;
+        while ((m = TRAP.exec(t))) { if (m.index > last) f.appendChild(document.createTextNode(t.slice(last, m.index))); const e = document.createElement('em'); e.className = 'trap'; e.textContent = m[0]; f.appendChild(e); last = m.index + m[0].length; }
+        if (last < t.length) f.appendChild(document.createTextNode(t.slice(last))); n.parentNode.replaceChild(f, n); });
+      TRAP.lastIndex = 0;
+    }
+    const _rec3 = window.record;
+    window.record = function (q, c) {
+      const wasNew = !(P[q.id]);
+      const r = _rec3.apply(this, arguments);
+      try {
+        if (qt0.id === q.id && qt0.t) { const T2 = QT(), sec = Math.round((Date.now() - qt0.t) / 1000); if (sec > 2 && sec < 1800) { T2[q.id] = sec; LSS('reb_qt', T2); } qt0.t = 0;
+          setTimeout(() => { const fb = document.querySelector('#view .fb'); if (fb && !fb.querySelector('.qtm')) fb.insertAdjacentHTML('beforeend', ` <small class="qtm">⏱ ${sec}초</small>`); }, 90); }
+        const wrong = !String(q.a).split(',').includes(String(c));
+        if (wrong && typeof S !== 'undefined' && S && (S.from === 'home' || S.from === 'wrong') && Array.isArray(S.list)) {
+          S.sim = S.sim || {}; if (!S.sim[q.id]) {
+            S.sim[q.id] = 1; const k = tkey(q), inL = new Set(S.list.map(x => x.id));
+            const cand = Q.filter(x => !x.ocr && x.id !== q.id && !inL.has(x.id) && tkey(x) === k && graded(x) && !(P[x.id] && Date.now() - P[x.id][4] < 3 * 86400000));
+            if (cand.length) { const sim = cand[Math.random() * cand.length | 0]; S.list.splice(S.i + 1, 0, sim); S.sim[sim.id] = 1;
+              setTimeout(() => { const fb = document.querySelector('#view .fb'); if (fb && !fb.querySelector('.qsim')) fb.insertAdjacentHTML('beforeend', `<div class="qsim">🔗 같은 주제 기출(${sim.n}회 ${sim.no}번)이 바로 다음에 이어져요</div>`); }, 100); }
+          }
+        }
+      } catch (e) {}
+      return r;
+    };
+    setInterval(() => {
+      try {
+        if (cur === 'quiz' && typeof S !== 'undefined' && S && S.list) {
+          const q = S.list[S.i]; if (!q) return;
+          if (qt0.id !== q.id) { qt0 = { id: q.id, t: document.querySelector('#view .fb') ? 0 : Date.now() }; }
+          const qtx = document.querySelector('#view .qtext');
+          if (qtx && qtx.dataset.trap !== q.id) { qtx.dataset.trap = q.id; trapMark(qtx); }
+          const cf = CF()[q.id] || [];
+          document.querySelectorAll('#view .qtext .elc').forEach(el => {
+            const n = +el.dataset.n; el.classList.toggle('cfz', cf.includes(n));
+            if (!el.dataset.cf) { el.dataset.cf = 1; let lt = 0, lx = 0, ly = 0; el.addEventListener('pointerup', ev => { const t = performance.now(), dbl = t - lt < 320 && Math.abs(ev.clientX - lx) + Math.abs(ev.clientY - ly) < 24; lt = dbl ? 0 : t; lx = ev.clientX; ly = ev.clientY; if (!dbl) return; ev.preventDefault(); const A = CF(), L = A[q.id] || [], i = L.indexOf(n); i >= 0 ? L.splice(i, 1) : L.push(n); if (L.length) A[q.id] = L; else delete A[q.id]; LSS('reb_conf2', A); el.classList.toggle('cfz', L.includes(n)); try { haptic && haptic(); } catch (x) {} }); }
+          });
+          if (!document.getElementById('ovb') && qtx) { qtx.insertAdjacentHTML('beforebegin', `<button class="btn sm" id="ovb" title="지문 위에 바로 밑줄·동그라미">✍ 지문 위 필기</button>`); document.getElementById('ovb').onclick = () => ovToggle(q); }
+          ovPaint(q);
+        }
+        if (cur === 'wrong' && !document.getElementById('cfb')) {
+          const A = CF(), ids = Object.keys(A).filter(k => BYID[k]), slow = Object.entries(QT()).filter(([k, v]) => BYID[k] && v >= 90).map(([k]) => k);
+          const at = document.getElementById('wrev'); const box = at ? at.parentElement : document.querySelector('#view .card');
+          if (box) { box.insertAdjacentHTML('afterend', `<div class="cfrow"><button class="btn" id="cfb">❓ 헷갈린 보기 ${ids.length}문제</button><button class="btn" id="slb">⏱ 오래 걸린 ${slow.length}문제</button></div>`);
+            document.getElementById('cfb').onclick = () => ids.length ? startQuiz(ids.map(k => BYID[k]), { from: 'wrong', title: '❓ 헷갈린 보기' }) : window.__toast && __toast('보기를 두 번 톡톡 누르면 ❓ 표시가 돼요');
+            document.getElementById('slb').onclick = () => slow.length ? startQuiz(slow.map(k => BYID[k]), { from: 'wrong', title: '⏱ 오래 걸린 문제' }) : window.__toast && __toast('1분 30초 넘게 걸린 문제가 여기 모여요'); }
+        }
+      } catch (e) {}
+    }, 400);
+    // ✍ 지문 위 필기: 문제 카드 위에 투명한 층 (문제마다 저장, 화면과 같이 스크롤)
+    const OV = { on: false, q: null };
+    function ovCanvas() {
+      const card = document.querySelector('#view .card'); if (!card) return null;
+      let c = card.querySelector('canvas.ovc'); if (!c) { card.style.position = 'relative'; card.insertAdjacentHTML('beforeend', '<canvas class="ovc"></canvas>'); c = card.querySelector('canvas.ovc'); ovBind(c); }
+      return c;
+    }
+    function ovPaint(q) {
+      const c = ovCanvas(); if (!c) return; const card = c.parentElement, w = card.scrollWidth, h = card.scrollHeight, d = devicePixelRatio || 1;
+      const L = LSJ('reb_ov_' + q.id, []); if (!L.length && !OV.on) { c.style.display = 'none'; return; } c.style.display = '';
+      c.style.pointerEvents = OV.on ? 'auto' : 'none'; c.classList.toggle('on', OV.on);
+      if (c.width !== Math.round(w * d) || c.height !== Math.round(h * d) || c.dataset.n !== String(L.length) + (OV.cur ? 'x' + OV.cur.p.length : '')) {
+        c.width = Math.round(w * d); c.height = Math.round(h * d); c.style.width = w + 'px'; c.style.height = h + 'px'; c.dataset.n = String(L.length) + (OV.cur ? 'x' + OV.cur.p.length : '');
+        const g = c.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.lineCap = g.lineJoin = 'round';
+        L.concat(OV.cur ? [OV.cur] : []).forEach(st => { g.strokeStyle = st.c; g.globalAlpha = st.hl ? .35 : 1; g.lineWidth = st.hl ? 14 : 2.5; g.beginPath(); st.p.forEach((pt, i) => i ? g.lineTo(pt[0] * w, pt[1]) : g.moveTo(pt[0] * w, pt[1])); g.stroke(); });
+        g.globalAlpha = 1;
+      }
+    }
+    function ovBind(c) {
+      const P2 = e => { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, e.clientY - r.top]; };
+      c.addEventListener('pointerdown', e => { if (!OV.on) return; c.setPointerCapture(e.pointerId); OV.cur = { c: OV.col || '#ef4444', hl: OV.hl, p: [P2(e)] }; e.preventDefault(); });
+      c.addEventListener('pointermove', e => { if (!OV.cur) return; (e.getCoalescedEvents ? e.getCoalescedEvents() : [e]).forEach(ce => OV.cur.p.push(P2(ce))); ovPaint(OV.q); });
+      const end = () => { if (!OV.cur) return; const L = LSJ('reb_ov_' + OV.q.id, []); if (OV.cur.p.length > 1) L.push(OV.cur); OV.cur = null; LSS('reb_ov_' + OV.q.id, L); ovPaint(OV.q); };
+      c.addEventListener('pointerup', end); c.addEventListener('pointercancel', end);
+    }
+    function ovToggle(q) {
+      OV.on = !OV.on; OV.q = q; const b = document.getElementById('ovb'); if (b) b.classList.toggle('on', OV.on);
+      document.getElementById('ovbar')?.remove();
+      if (OV.on) {
+        document.body.insertAdjacentHTML('beforeend', `<div id="ovbar"><button data-c="#ef4444" class="on">🔴</button><button data-c="#3b82f6">🔵</button><button data-h="1">🖍</button><button data-u="1">↶</button><button data-z="1">🗑</button><button data-x="1">✓ 끝</button></div>`);
+        const bar = document.getElementById('ovbar');
+        bar.onclick = e => { const t = e.target.closest('button'); if (!t) return; const L = LSJ('reb_ov_' + q.id, []);
+          if (t.dataset.c) { OV.col = t.dataset.c; OV.hl = false; } if (t.dataset.h) { OV.hl = true; OV.col = '#facc15'; }
+          if (t.dataset.c || t.dataset.h) bar.querySelectorAll('[data-c],[data-h]').forEach(x => x.classList.toggle('on', x === t));
+          if (t.dataset.u) { L.pop(); LSS('reb_ov_' + q.id, L); } if (t.dataset.z) LSS('reb_ov_' + q.id, []);
+          if (t.dataset.x) return ovToggle(q); const c = ovCanvas(); if (c) c.dataset.n = '-'; ovPaint(q); };
+      }
+      const c = ovCanvas(); if (c) c.dataset.n = '-'; ovPaint(q);
+    }
+    // 📅 이번 주 리포트 (기록 → 점수 맨 아래)
+    function weekCard() {
+      const now = new Date(), d0 = new Date(now); d0.setHours(0, 0, 0, 0); d0.setDate(d0.getDate() - ((d0.getDay() + 6) % 7)); const w0 = d0.getTime(), p0 = w0 - 7 * 86400000;
+      let n = 0, ok = 0, pn = 0; const bs = [0, 0, 0, 0, 0, 0], bw = [0, 0, 0, 0, 0, 0];
+      Object.keys(P).forEach(k => { const r = P[k], q = BYID[k]; if (!q || !r[4]) return; if (r[4] >= w0) { n++; if (r[1] === 1) ok++; bs[q.s]++; if (r[1] === 0) bw[q.s]++; } else if (r[4] >= p0) pn++; });
+      const PD = predict(), NM = ['부동산학개론', '민법', '중개사법', '공법', '공시법·세법'], wi = PD.s5.indexOf(Math.min(...PD.s5));
+      const T2 = Object.entries(QT()).filter(([k]) => P[k] && P[k][4] >= w0).map(([, v]) => v), avg = T2.length ? Math.round(T2.reduce((a, b) => a + b, 0) / T2.length) : null;
+      const pd = planDaily();
+      return `<div class="card wk"><h3>📅 이번 주</h3>
+        <div class="wkg"><div><b>${n}</b><small>푼 문제${pn ? ` (지난주 ${pn})` : ''}</small></div><div><b>${n ? Math.round(ok / n * 100) + '%' : '-'}</b><small>정답률</small></div><div><b>${avg != null ? avg + '초' : '-'}</b><small>문제당 평균</small></div></div>
+        <div class="wkn">👉 다음 주엔 <b>${NM[wi]}</b>(예상 ${Math.round(PD.s5[wi])}점)을 더 챙겨요 · 하루 ${pd.n}문제 목표</div></div>`;
+    }
+    window.weekCard = weekCard;
+    // 💾 백업·복원 (구글 드라이브 등에 파일로)
+    function backupJSON() { const o = {}; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/key|token|secret/i.test(k)) continue; const v = localStorage.getItem(k); if (v && v.length < 2e6) o[k] = v; } return JSON.stringify({ app: 'realtor-ox', at: new Date().toISOString(), data: o }); }
+    window.backupNow = () => { const j = backupJSON(); if (window.NativeBridge && NativeBridge.backupShare) NativeBridge.backupShare(j); else { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([j], { type: 'application/json' })); a.download = 'realtor-backup.json'; a.click(); } };
+    window.backupRestore = () => { if (window.NativeBridge && NativeBridge.backupPick) NativeBridge.backupPick(); else window.__toast && __toast('앱에서만 돼요'); };
+    window.__restore = txt => { try { const j = JSON.parse(txt); if (!j || j.app !== 'realtor-ox' || !j.data) throw 0; if (!confirm(`${(j.at || '').slice(0, 10)} 백업으로 되돌릴까요? 지금 기록은 백업 내용으로 바뀌어요.`)) return; Object.entries(j.data).forEach(([k, v]) => { try { localStorage.setItem(k, v); } catch (e) {} }); location.reload(); } catch (e) { window.__toast && __toast('백업 파일을 읽지 못했어요'); } };
     // 아래 탭 3개
     function navA() {
       const nav = document.getElementById('tabs'); if (!nav) return;

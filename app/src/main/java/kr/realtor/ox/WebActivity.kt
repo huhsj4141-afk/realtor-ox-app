@@ -105,6 +105,12 @@ class WebActivity : Activity() {
     private fun js(code: String) = runOnUiThread { web.evaluateJavascript(code, null) }
     private fun done(ev: String) { val id = speakId ?: return; speakId = null; js("__nbt('$id','$ev')") }
 
+    override fun onActivityResult(rc: Int, res: Int, data: Intent?) {
+        super.onActivityResult(rc, res, data)
+        if (rc == 91 && res == RESULT_OK) data?.data?.let { u ->
+            io.execute { try { val t = contentResolver.openInputStream(u)!!.bufferedReader().readText(); js("window.__restore&&__restore(${q(t)})") } catch (e: Exception) { js("window.__toast&&__toast('파일을 읽지 못했어요')") } }
+        }
+    }
     /* 누르고 있는 동안 음성 인식 → 떼면 글자로 */
     private var stt: SpeechRecognizer? = null
     private var sttText = ""
@@ -136,6 +142,20 @@ class WebActivity : Activity() {
     }
 
     inner class Bridge {
+        /** 💾 기록 백업: 파일로 만들어 공유 창(구글 드라이브 등)으로 */
+        @JavascriptInterface fun backupShare(json: String) {
+            try {
+                val dir = java.io.File(cacheDir, "backup").apply { mkdirs() }
+                val f = java.io.File(dir, "공인중개사_기록_" + java.text.SimpleDateFormat("yyyyMMdd_HHmm", java.util.Locale.KOREA).format(java.util.Date()) + ".json")
+                f.writeText(json)
+                val uri = androidx.core.content.FileProvider.getUriForFile(this@WebActivity, packageName + ".files", f)
+                val i = Intent(Intent.ACTION_SEND).setType("application/json").putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                runOnUiThread { startActivity(Intent.createChooser(i, "백업 저장할 곳 (구글 드라이브 추천)")) }
+            } catch (e: Exception) { js("window.__toast&&__toast('백업을 만들지 못했어요')") }
+        }
+        @JavascriptInterface fun backupPick() {
+            runOnUiThread { try { startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*"), 91) } catch (e: Exception) {} }
+        }
         @JavascriptInterface fun sttStart() { runOnUiThread { sttBegin() } }
         @JavascriptInterface fun sttStop() { runOnUiThread { stt?.stopListening() } }
         @JavascriptInterface fun key(name: String): String = Net.key(this@WebActivity, name)
