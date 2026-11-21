@@ -3,18 +3,19 @@
     "method": "semantic-quality-v4",
     "questions": 1999,
     "withExplanation": 1999,
-    "covered": 10,
-    "cards": 19,
+    "covered": 3,
+    "cards": 10,
     "reviewed": 10,
     "pendingReview": 0,
     "skippedOCR": 0,
     "types": {
-      "개념 카드": 15,
-      "공식 카드": 4
+      "개념 카드": 9,
+      "공식 카드": 1
     },
     "rejected": 470,
     "candidates": 4277,
     "pendingSemantic": 4251,
+    "pendingEditorial": 9,
     "rejectedByAudit": 7
   },
   "items": [
@@ -92,7 +93,7 @@
     },
     {
       "id": "mem-2f1b26b90fe2ffd7",
-      "status": "active",
+      "status": "pending-editorial",
       "reasons": [],
       "sourceRevision": "df7bd9a24b146a73"
     },
@@ -602,19 +603,19 @@
     },
     {
       "id": "mem-38b239d02fabdfe3",
-      "status": "active",
+      "status": "pending-editorial",
       "reasons": [],
       "sourceRevision": "646f009cc3dfb56a"
     },
     {
       "id": "mem-190ce5095721b2c1",
-      "status": "active",
+      "status": "pending-editorial",
       "reasons": [],
       "sourceRevision": "b26349e51371669a"
     },
     {
       "id": "mem-7225c28697e8d8fb",
-      "status": "active",
+      "status": "pending-editorial",
       "reasons": [],
       "sourceRevision": "d347d58f7b503fdd"
     },
@@ -1546,7 +1547,7 @@
     },
     {
       "id": "mem-2ae9cde7c695af09",
-      "status": "active",
+      "status": "pending-editorial",
       "reasons": [],
       "sourceRevision": "cad835ac7a12c252"
     },
@@ -2062,13 +2063,13 @@
     },
     {
       "id": "mem-ce091692ec4e0365",
-      "status": "active",
+      "status": "pending-editorial",
       "reasons": [],
       "sourceRevision": "be11fd121514d198"
     },
     {
       "id": "mem-ba6baf8b00b4ace0",
-      "status": "active",
+      "status": "pending-editorial",
       "reasons": [],
       "sourceRevision": "6eac70608b66a6aa"
     },
@@ -2310,7 +2311,7 @@
     },
     {
       "id": "mem-b6585179c27c6679",
-      "status": "active",
+      "status": "pending-editorial",
       "reasons": [
         "세목과 과세 조건 누락"
       ],
@@ -2318,7 +2319,7 @@
     },
     {
       "id": "mem-546c8e793f4c4b08",
-      "status": "active",
+      "status": "pending-editorial",
       "reasons": [
         "세목과 과세 조건 누락"
       ],

@@ -69,11 +69,13 @@ function build(mc,ex,ox,oxex,vars,blocked={},reviewed=[],audits={}){
   if(accepted)accepted.revision=hash('quality-v4:'+JSON.stringify(accepted));
   const reported=blocked[c.id]?.revision===c.revision||blocked[c.id]?.answer===c.answer||accepted&&(blocked[c.id]?.revision===accepted.revision||blocked[c.id]?.answer===accepted.answer);
   if(reported){accepted=null;coverage.pendingReview++;}
-  const status=accepted?'active':reported?'reported':c.reviewed?'needs-fix':audits[c.id]?.policy===4&&audits[c.id]?.sourceRevision===c.revision&&audits[c.id]?.valid===false?'rejected':'pending-semantic';
+  const editorial=!!accepted&&!c.reviewed;
+  if(editorial)accepted=null;
+  const status=editorial?'pending-editorial':accepted?'active':reported?'reported':c.reviewed?'needs-fix':audits[c.id]?.policy===4&&audits[c.id]?.sourceRevision===c.revision&&audits[c.id]?.valid===false?'rejected':'pending-semantic';
   audit.push({id:c.id,status,reasons,sourceRevision:c.revision});
   if(accepted)active.push(accepted);
  }
- const seen=new Set();active.forEach(c=>{c.sources.forEach(s=>seen.add(s.id));coverage.types[c.kind]=(coverage.types[c.kind]||0)+1;if(c.reviewed)coverage.reviewed++;});coverage.covered=seen.size;coverage.cards=active.length;coverage.candidates=candidates.length;coverage.pendingSemantic=audit.filter(a=>a.status==='pending-semantic').length;coverage.rejectedByAudit=audit.filter(a=>a.status==='rejected'||a.status==='needs-fix').length;
+ const seen=new Set();active.forEach(c=>{c.sources.forEach(s=>seen.add(s.id));coverage.types[c.kind]=(coverage.types[c.kind]||0)+1;if(c.reviewed)coverage.reviewed++;});coverage.covered=seen.size;coverage.cards=active.length;coverage.candidates=candidates.length;coverage.pendingSemantic=audit.filter(a=>a.status==='pending-semantic').length;coverage.pendingEditorial=audit.filter(a=>a.status==='pending-editorial').length;coverage.rejectedByAudit=audit.filter(a=>a.status==='rejected'||a.status==='needs-fix').length;
  return {cards:active,questions,coverage,candidates,audit};
 }
 function main(){const read=p=>JSON.parse(fs.readFileSync(path.join(ROOT,p),'utf8').replace(/^\uFEFF/,''));const d=build(read('data/mc.json'),read('gen/mc_exp.json'),[],{},{},fs.existsSync(path.join(ROOT,'gen/memory-blocked.json'))?read('gen/memory-blocked.json'):{},read('data/memory-reviewed.json'),fs.existsSync(path.join(ROOT,'gen/memory-audit.json'))?read('gen/memory-audit.json'):{});
