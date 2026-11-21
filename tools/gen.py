@@ -329,7 +329,9 @@ def main():
         pron_redo(tmp)
         return
     if mode == 'sounds':
-        os.makedirs(GEN, exist_ok=True); print(sounds()); return
+        os.makedirs(GEN, exist_ok=True); print(sounds())
+        subprocess.run(['node', os.path.join(ROOT, 'tools', 'memory-build.cjs')], check=True)
+        return
     if not KEY and not GKEY:
         sys.exit('GEMINI_API_KEY 가 없어요 (저장소 Settings > Secrets > Actions)')
     os.makedirs(GEN, exist_ok=True)

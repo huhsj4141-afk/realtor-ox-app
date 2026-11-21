@@ -822,7 +822,7 @@
       opt('listen', '🎧', '듣기로 진도 빼기', '복습·약점 지문부터 들려줘요. 화면 꺼도 돼요 · 지문 2개 = 1문제로 쳐요'),
       opt('short', '⚡', '10분만', '바쁠 땐 복습·약점 10문제만')];
     if (rec === 'listen') o.unshift(o.splice(1, 1)[0]);
-    if (window.Memory) o.push(opt('memory', '🧠', '필수 암기 · 샘플 2개', '복습할 카드 ' + Memory.dueCount() + '개 · 빈칸·직접 답하기·기출 적용'));
+    if (window.Memory) o.push(opt('memory', '🧠', '필수 암기 · 전체 목록', '복습할 카드 ' + Memory.dueCount() + '개 · 빈칸·직접 답하기·기출 적용'));
     const el = document.createElement('div'); el.className = 'kc csheet';
     el.innerHTML = `<div><div class="row"><h3 class="grow">오늘 어떻게 할까요?</h3><button class="btn sm" id="csx">닫기</button></div>
       <div class="muted" style="font-size:13px;margin:2px 0 10px">${why}</div>${o.join('')}
@@ -1774,10 +1774,10 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
   }, 50));
 })();
 
-// 검토한 암기 샘플만 읽어요. 새로운 암기 내용을 자동으로 만들거나 API를 호출하지 않아요.
+// 전체 자료에서 추출한 암기 후보를 읽어요. 학습 중 추가 AI 호출은 없어요.
 (() => {
   const load = (src, done) => { const s=document.createElement('script'); s.src=src; s.onload=done; document.head.appendChild(s); };
-  load('memory-samples.js', () => load('memory.js', () => {
+  load('memory-data.js', () => load('memory.js', () => {
     const original = window.record;
     if (typeof original === 'function') window.record = function(q, c) {
       const r=original.apply(this,arguments);
