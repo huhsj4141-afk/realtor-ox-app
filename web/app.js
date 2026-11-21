@@ -104,6 +104,17 @@
     @keyframes apf{from{opacity:0}} @keyframes app{from{transform:scale(.6);opacity:0}}
     .qdock #qf,.qdock #qs{flex:1;font-size:17px}
     .lgue{font-size:12.5px;margin-top:8px} .hero .lgue .hok{color:#bbf7d0} .hero .lgue .hno{color:#fecaca} #ftc{padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:700;font-size:13px}
+    .cnh .cnq{width:100%;margin-top:10px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:14px;box-sizing:border-box}
+    .cns summary{display:flex;align-items:baseline;gap:8px;font-size:16px;cursor:pointer} .cns summary small{color:var(--sub2,#9aa3b5);font-size:12px} .cnu{font-size:12.5px;font-weight:700;color:var(--sub2,#9aa3b5);margin:12px 0 4px}
+    .cnt{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 4px;border:0;border-bottom:1px solid var(--line);background:transparent;color:inherit;font:inherit} .cnt span{flex:1;display:flex;flex-direction:column;min-width:0} .cnt small{font-size:12px;color:var(--sub2,#9aa3b5)}
+    .cnm{flex:none;width:54px;height:6px;border-radius:3px;background:var(--line);overflow:hidden;display:block} .cnm em{display:block;height:100%;background:linear-gradient(90deg,var(--pri),#22c55e)}
+    .cnb{font-size:12.5px;color:var(--sub2,#9aa3b5)} .cnb a{color:var(--pri);cursor:pointer} .cnbtn{display:flex;gap:8px;margin-top:10px} .cnbtn .go{flex:2;margin:0} .cnbtn .btn{flex:1}
+    .cnl{padding-left:2px;list-style:none;margin:6px 0 0;font-size:14.5px;line-height:1.6} .cnl li{padding:5px 0;border-bottom:1px dashed var(--line)} .cnsrc{font-size:12px;color:var(--pri);cursor:pointer;margin-left:4px}
+    .cnn{width:100%;min-height:120px;padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6;box-sizing:border-box}
+    .ccard .cbar{height:5px;border-radius:3px;background:var(--line);margin:8px 0 14px;overflow:hidden} .ccard .cbar em{display:block;height:100%;background:var(--pri)}
+    .cth{font-size:12px;color:var(--sub2,#9aa3b5)} .cfront{font-size:22px;font-weight:700;line-height:1.5;margin:10px 0 18px;min-height:70px} .cback{font-size:18px;line-height:1.6;padding:14px;border-radius:14px;background:color-mix(in srgb,var(--pri) 10%,transparent);margin-bottom:8px}
+    .crts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px} .crt{display:flex;flex-direction:column;align-items:center;padding:10px 0;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit} .crt small{font-size:11px;color:var(--sub2,#9aa3b5)}
+    .crt.r1 b{color:#ef4444} .crt.r2 b{color:#f59e0b} .crt.r3 b{color:#22c55e} .crt.r4 b{color:#3b82f6}
     #pscore{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:2px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0;line-height:1.25}
     #pscore small{font-size:10.5px;color:var(--sub2,#9aa3b5)} #pscore span{font-size:13.5px;white-space:nowrap} #pscore b{font-size:16px} #pscore b.ok{color:#16a34a} #pscore b.no{color:#ef4444}
     #pscore i{font-style:normal;font-size:10.5px;margin-left:2px} #pscore i.up{color:#16a34a} #pscore i.dn{color:#ef4444}
@@ -567,6 +578,7 @@
   const LVN = ['입문', '새싹', '수험생', '꾸준러', '실력자', '고수', '합격권', '달인', '마스터', '전설'];
   function xpNow() { let x = 0; for (const k in P) { const r = P[k], a = r[2] || 1, w = r[3] || 0; x += a * 3 + Math.max(0, a - w) * 7; }
     try { for (const k in LJ.d) { const d = LJ.d[k]; x += (d.ox || 0) * 2 + Math.floor((d.lsec || 0) / 60); } } catch (e) {}   // 🎧 지문 하나 2 XP + 1분에 1 XP
+    try { const L = JSON.parse(localStorage.getItem('reb_cardlog') || '{}'); for (const k in L) x += L[k] * 2; } catch (e) {}   // 🃏 카드 한 장 2 XP
     return x; }
   function lvOf(x) { let n = 1, need = 100, acc = 0; while (x >= acc + need) { acc += need; n++; need = 100 + (n - 1) * 60; } return { n, name: LVN[Math.min(LVN.length - 1, Math.floor((n - 1) / 3))], cur: x - acc, need }; }
   function achStats() {
@@ -771,6 +783,7 @@
       return qs.length ? [{ t: '⚡ 10분 집중', sub: '복습·약점 위주', qs }] : [{ t: '⚡ 10분 집중', ad: { qs: Q, n: 10 } }];
     }
     const st = [];
+    try { const cf = dueFaces(); if (cf.length) st.push({ t: '🃏 카드 복습', sub: '잊기 직전 개념부터', cards: cf.slice(0, 20) }); } catch (e) {}
     // 최근에 틀린 문제는 다음 날 코스 첫 단계에 꼭 (맞힐 때까지 계속 나옴)
     const wrongRecent = Object.keys(P).filter(k => P[k][1] === 0 && BYID[k] && Date.now() - P[k][4] > 6 * 3600000).sort((a, b) => P[b][4] - P[a][4]).map(k => BYID[k]);
     const r = take(wrongRecent.concat(due, uns), 10); if (r.length) st.push({ t: '🔁 복습', sub: '틀린 문제·잊기 직전 문제부터', qs: r });
@@ -796,7 +809,7 @@
   function courseRun() {
     const st = COURSE.steps[COURSE.i]; if (!st) return courseDone();
     const title = `${st.t} · ${COURSE.i + 1}/${COURSE.steps.length}단계`;
-    if (st.ad) startAdaptive(st.ad.qs, st.ad.n, { from: 'home', title }); else startQuiz(st.qs, { from: 'home', title });
+    if (st.cards) startCards(st.cards, title); else if (st.ad) startAdaptive(st.ad.qs, st.ad.n, { from: 'home', title }); else startQuiz(st.qs, { from: 'home', title });
     COURSE.active = true;
   }
   function courseDone() {
@@ -812,7 +825,7 @@
   function courseSheet() {
     const [rec, why, sl] = courseRecommend(), st = buildCourse(false), t = todayLog();
     const opt = (k, ic, ttl, sub) => `<button class="cso ${k === rec ? 'rec' : ''}" data-m="${k}"><b>${ic}</b><span><b>${ttl}${k === rec ? ' <em>추천</em>' : ''}</b><small>${sub}</small></span></button>`;
-    const o = [opt('solve', '📖', '보면서 풀기', st.map(x => x.t.split(' ')[1]).join(' → ') + ` · ${st.reduce((a, x) => a + (x.qs ? x.qs.length : x.ad.n), 0)}문제`),
+    const o = [opt('solve', '📖', '보면서 풀기', st.map(x => x.t.split(' ')[1]).join(' → ') + ` · ${st.reduce((a, x) => a + (x.qs ? x.qs.length : x.ad ? x.ad.n : 0), 0)}문제`),
       opt('listen', '🎧', '듣기로 진도 빼기', '복습·약점 지문부터 들려줘요. 화면 꺼도 돼요 · 지문 2개 = 1문제로 쳐요'),
       opt('short', '⚡', '10분만', '바쁠 땐 복습·약점 10문제만')];
     if (rec === 'listen') o.unshift(o.splice(1, 1)[0]);
@@ -830,7 +843,7 @@
     const nx = COURSE.steps[COURSE.i + 1], dots = COURSE.steps.map((x, k) => `<i class="${k <= COURSE.i ? 'on' : ''}">${x.t.split(' ')[0]}</i>`).join('');
     const cheer = ['좋아요! 리듬 탔어요 💪', '잘하고 있어요 👏', '한 단계 끝! 🔥', '꾸준함이 합격을 만들어요 🌱'][COURSE.i % 4];
     v.insertAdjacentHTML('afterbegin', `<div class="card" id="cnext"><div class="cdots">${dots}</div><b style="font-size:17px">${cheer}</b>
-      ${nx ? `<div class="muted" style="font-size:13.5px;margin:4px 0 10px">다음: <b>${nx.t}</b> · ${nx.sub || ''} ${nx.qs ? nx.qs.length + '문제' : ''}</div><button class="go" id="cgo">▶ 계속하기</button>`
+      ${nx ? `<div class="muted" style="font-size:13.5px;margin:4px 0 10px">다음: <b>${nx.t}</b> · ${nx.sub || ''} ${nx.qs ? nx.qs.length + '문제' : nx.cards ? nx.cards.length + '장' : ''}</div><button class="go" id="cgo">▶ 계속하기</button>`
            : `<div class="muted" style="font-size:13.5px;margin:4px 0 10px">오늘 코스를 다 끝냈어요!</div><button class="go" id="cgo">🎉 마치기</button>`}
       <button class="btn full" id="cstop" style="margin-top:8px">오늘은 여기까지</button></div>`);
     [...v.querySelectorAll('.card')].forEach(c => { if (/오늘 수준 체크/.test(c.textContent) && c.id !== 'cnext') c.remove(); });   // 코스 중엔 딴 길 안 보이게
@@ -838,6 +851,193 @@
     document.getElementById('cstop').onclick = () => { COURSE.active = false; go('home'); };
   }
   setInterval(courseNext, 400);
+
+  /* ================= 🌳 개념 (렘노트 방식) =================
+     과목 → 단원 → 테마 → 개념 나무. 노트(해설의 암기 줄·용어·내 메모)가 그대로 카드가 됨.
+     - '개념: 설명' 꼴은 양방향 카드(개념→설명, 설명→개념), 숫자가 든 줄은 빈칸 카드
+     - 내 메모: 'A >> B'(앞→뒤) 'A << B'(뒤→앞) 'A :: B' 또는 'A <> B'(양방향) '…{{빈칸}}…'
+     - 간격 복습(다시·어려움·알맞음·쉬움), 오늘 코스 첫 단계로 들어감
+     - 문제를 틀리면 그 테마 카드가 바로 복습 차례로 (문제 ↔ 개념 연결) */
+  const CN = { tree: null, cards: null, byTheme: null };
+  const tkey = q => q.s + '|' + (q.u || '기타') + '|' + (q.t || '기타');
+  const hsh = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+  const LSJ = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
+  const LSS = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  function cnBuild() {
+    if (CN.tree) return;
+    const tree = {}, byTheme = {}, cards = {};
+    Q.filter(q => !q.ocr).forEach(q => {
+      const k = tkey(q); (byTheme[k] = byTheme[k] || { k, s: q.s, u: q.u || '기타', t: q.t || '기타', qs: [], cards: [] }).qs.push(q);
+      ((tree[q.s] = tree[q.s] || {})[q.u || '기타'] = tree[q.s][q.u || '기타'] || new Set()).add(k);
+    });
+    const add = (th, c) => { const id = c.kind[0] + hsh(c.f + '|' + c.b); if (cards[id]) return; c.id = id; c.th = th; cards[id] = c; byTheme[th].cards.push(id); };
+    // 1) 해설의 암기 줄
+    Object.values(byTheme).forEach(T => T.qs.forEach(q => {
+      const e = window.__mcx ? window.__mcx(q.id) : null; if (!e || !Array.isArray(e.memo)) return;
+      e.memo.forEach(line => {
+        line = String(line).trim(); if (line.length < 4 || line.length > 120) return;
+        const m = line.match(/^([^:：]{2,30})[:：]\s*(.{2,})$/);
+        if (m && /^(주의|팁|암기|참고|핵심|포인트|비교|예시|예|정리|함정|요약|결론|공식|※)/.test(m[1].trim())) return;   // '주의: …' 같은 꼬리표는 카드로 안 만듦
+        if (m) add(T.k, { kind: 'both', f: m[1].trim(), b: m[2].trim(), src: q.id });
+        else { const n = line.match(/\d+(?:\.\d+)?\s*(?:일|년|월|개월|%|㎡|억\s*원|만\s*원|원|배|분의\s*\d+|층|명|회|시간)/); if (n) add(T.k, { kind: 'cloze', f: line.replace(n[0], '［　？　］'), b: n[0], full: line, src: q.id }); }
+      });
+    }));
+    // 2) 용어 풍선말: 가장 많이 나오는 테마에 붙임
+    try {
+      const G = window.__GLOSS || (() => { try { return GL; } catch (e) { return {}; } })(); const cnt = {};
+      Object.values(byTheme).forEach(T => { const txt = T.qs.map(q => q.x).join(' '); Object.keys(G).forEach(w => { if (w.length >= 2 && txt.includes(w)) { const n = txt.split(w).length - 1; if (!cnt[w] || cnt[w][1] < n) cnt[w] = [T.k, n]; } }); });
+      Object.entries(cnt).forEach(([w, [th]]) => add(th, { kind: 'both', f: w, b: G[w], gl: 1 }));
+    } catch (e) {}
+    // 3) 내 메모
+    Object.keys(byTheme).forEach(k => cnNoteCards(k).forEach(c => add(k, c)));
+    CN.tree = tree; CN.byTheme = byTheme; CN.cards = cards;
+  }
+  function cnNoteCards(k) {
+    const out = [];
+    String(LSJ('reb_note_' + k, '') || '').split('\n').forEach(l => {
+      l = l.replace(/^\s*[-•*]\s*/, '').trim(); let m;
+      if ((m = l.match(/^(.+?)\s*(::|<>)\s*(.+)$/))) out.push({ kind: 'both', f: m[1], b: m[3], mine: 1 });
+      else if ((m = l.match(/^(.+?)\s*>>\s*(.+)$/))) out.push({ kind: 'fwd', f: m[1], b: m[2], mine: 1 });
+      else if ((m = l.match(/^(.+?)\s*<<\s*(.+)$/))) out.push({ kind: 'fwd', f: m[2], b: m[1], mine: 1 });
+      else if ((m = l.match(/\{\{(.+?)\}\}/))) out.push({ kind: 'cloze', f: l.replace(m[0], '［　？　］').replace(/\{\{|\}\}/g, ''), b: m[1], full: l.replace(/\{\{|\}\}/g, ''), mine: 1 });
+    });
+    return out;
+  }
+  // 카드 한 장 = 방향 하나 (양방향 카드는 두 장)
+  const faces = c => c.kind === 'both' ? [c.id + '>', c.id + '<'] : [c.id + '>'];
+  function face(fid) { const c = CN.cards[fid.slice(0, -1)]; if (!c) return null; const rev = fid.endsWith('<'); return { c, front: rev ? c.b : c.f, back: rev ? c.f : (c.kind === 'cloze' ? c.b : c.b), rev }; }
+  // 간격 복습 (SM-2 줄인 판): [다음 때(ms), 간격(일), 쉬움 정도, 맞힌 횟수, 잊은 횟수]
+  const SRS = () => LSJ('reb_srs', {});
+  const DAYMS = 86400000;
+  function nextIvl(r, s) { const [, ivl = 0, ease = 2.5, reps = 0] = s || []; if (r === 1) return 0; if (r === 2) return Math.max(1, ivl * 1.2); if (r === 3) return reps === 0 ? 1 : reps === 1 ? 3 : ivl * ease; return Math.max(4, (reps === 0 ? 3 : ivl * ease * 1.3)); }
+  function rate(fid, r) {
+    const S2 = SRS(), s = S2[fid] || [0, 0, 2.5, 0, 0]; const ivl = nextIvl(r, s);
+    let ease = s[2] + (r === 1 ? -.2 : r === 2 ? -.15 : r === 4 ? .15 : 0); ease = Math.max(1.3, Math.min(3, ease));
+    S2[fid] = [Date.now() + (r === 1 ? 10 * 60000 : ivl * DAYMS), ivl, ease, r === 1 ? 0 : s[3] + 1, s[4] + (r === 1 ? 1 : 0)];
+    LSS('reb_srs', S2); const L = LSJ('reb_cardlog', {}); L[dkey()] = (L[dkey()] || 0) + 1; LSS('reb_cardlog', L);
+  }
+  const ivlTxt = d => d <= 0 ? '10분' : d < 1.5 ? '1일' : d < 30 ? Math.round(d) + '일' : Math.round(d / 30) + '달';
+  // 오늘 볼 카드: 복습 차례 + 새 카드(공부한 테마부터, 하루 20장)
+  function dueFaces(theme) {
+    cnBuild(); const S2 = SRS(), now = Date.now(), due = [], fresh = [];
+    const studied = new Set(Object.keys(P).map(k => BYID[k]).filter(Boolean).map(tkey));
+    const newToday = LSJ('reb_cardnew', {})[dkey()] || 0, cap = theme ? 999 : Math.max(0, 20 - newToday);
+    const ths = theme ? [theme] : Object.keys(CN.byTheme).filter(k => studied.has(k));
+    ths.forEach(k => CN.byTheme[k].cards.forEach(id => faces(CN.cards[id]).forEach(f => { const s = S2[f]; if (s) { if (s[0] <= now) due.push(f); } else fresh.push(f); })));
+    due.sort((a, b) => S2[a][0] - S2[b][0]);
+    return due.concat(fresh.slice(0, cap));
+  }
+  function themeMastery(k) { cnBuild(); const S2 = SRS(), ids = CN.byTheme[k].cards.flatMap(id => faces(CN.cards[id])); if (!ids.length) return null; return Math.round(100 * ids.filter(f => S2[f] && S2[f][1] >= 7).length / ids.length); }
+  // 문제를 틀리면 그 테마의 이미 본 카드를 바로 복습 차례로
+  function linkWrong(q) { try { cnBuild(); const T = CN.byTheme[tkey(q)]; if (!T) return; const S2 = SRS(); T.cards.forEach(id => faces(CN.cards[id]).forEach(f => { if (S2[f]) S2[f][0] = Math.min(S2[f][0], Date.now()); })); LSS('reb_srs', S2); } catch (e) {} }
+  window.cnLinkWrong = linkWrong;
+
+  /* ---- 화면 ---- */
+  const V2 = () => document.getElementById('view');
+  function navOn(v) { document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v)); }
+  function conceptView(qry) {
+    cnBuild(); cur = 'concept'; navOn('concept'); window.scrollTo(0, 0);
+    const n = dueFaces().length, S2 = SRS();
+    const q = (qry || '').trim();
+    let body = '';
+    if (q) {   // 찾기: 테마 이름·개념·용어
+      const hits = Object.values(CN.byTheme).filter(T => (T.t + T.u).includes(q) || T.cards.some(id => (CN.cards[id].f + CN.cards[id].b).includes(q))).slice(0, 40);
+      body = `<div class="card">${hits.length ? hits.map(T => trow(T)).join('') : '<div class="muted">찾는 개념이 없어요</div>'}</div>`;
+    } else {
+      body = Object.keys(CN.tree).sort().map(s => {
+        const units = CN.tree[s]; const ths = Object.values(units).flatMap(x => [...x]);
+        const nc = ths.reduce((a, k) => a + CN.byTheme[k].cards.length, 0);
+        return `<details class="card cns"><summary><b>${SUBS[s]}</b><small>${ths.length}테마 · 개념 ${nc}</small></summary>
+          ${Object.keys(units).sort().map(u => `<div class="cnu">${esc(u)}</div>${[...units[u]].sort((a, b) => CN.byTheme[b].qs.length - CN.byTheme[a].qs.length).map(k => trow(CN.byTheme[k])).join('')}`).join('')}</details>`;
+      }).join('');
+    }
+    V2().innerHTML = `<div class="card cnh"><h2>🌳 개념 노트</h2><div class="muted" style="font-size:13px">과목 → 단원 → 테마로 정리된 노트예요. 노트가 그대로 카드가 되어 잊기 직전에 다시 나와요.</div>
+      <button class="go" id="cnrev" style="margin-top:10px">🃏 오늘 카드 ${n}장 복습</button>
+      <input id="cnq" class="cnq" placeholder="🔍 개념·용어 찾기 (예: 대항력, 건폐율)" value="${esc(q)}"></div>${body}`;
+    document.getElementById('cnrev').onclick = () => startCards(dueFaces(), '🃏 오늘 카드');
+    const inp = document.getElementById('cnq'); inp.onchange = () => conceptView(inp.value);
+    V2().querySelectorAll('[data-th]').forEach(b => b.onclick = () => themeView(b.dataset.th));
+  }
+  function trow(T) {
+    const m = themeMastery(T.k);
+    return `<button class="cnt" data-th="${esc(T.k)}"><span><b>${esc(T.t)}</b><small>문제 ${T.qs.length} · 개념 ${T.cards.length}</small></span><i class="cnm"><em style="width:${m || 0}%"></em></i></button>`;
+  }
+  function themeView(k) {
+    cnBuild(); const T = CN.byTheme[k]; if (!T) return conceptView(); cur = 'cnode'; navOn('concept'); window.scrollTo(0, 0);
+    const S2 = SRS(), dot = id => { const f = faces(CN.cards[id]), sc = f.map(x => S2[x]); return sc.every(Boolean) ? (sc.every(x => x[1] >= 7) ? '🟢' : '🟡') : '⚪'; };
+    const cs = T.cards.map(id => CN.cards[id]);
+    const memo = cs.filter(c => !c.gl && !c.mine), gl = cs.filter(c => c.gl), mine = cs.filter(c => c.mine);
+    const li = c => `<li>${dot(c.id)} ${c.kind === 'cloze' ? esc(c.full) : `<b>${esc(c.f)}</b> — ${esc(c.b)}`}${c.src ? ` <a class="cnsrc" data-q="${c.src}">문제</a>` : ''}</li>`;
+    const acc = (() => { const g = T.qs.filter(q => P[q.id]); return g.length ? Math.round(100 * g.filter(q => P[q.id][1] === 1).length / g.length) + '%' : '아직'; })();
+    V2().innerHTML = `<div class="card"><div class="cnb"><a id="cnup">🌳 ${SUBS[T.s]}</a> › ${esc(T.u)}</div><h2>${esc(T.t)}</h2>
+      <div class="muted" style="font-size:13px">문제 ${T.qs.length}개 · 정답률 ${acc} · 외운 정도 ${themeMastery(k) ?? 0}%</div>
+      <div class="cnbtn"><button class="go" id="cnc">🃏 이 테마 카드 (${dueFaces(k).length})</button><button class="btn" id="cnp">✏️ 문제 풀기 ${T.qs.length}</button></div></div>
+      ${memo.length ? `<div class="card"><h3>📌 핵심 개념</h3><ul class="cnl">${memo.map(li).join('')}</ul></div>` : ''}
+      ${gl.length ? `<details class="card"><summary><b>📖 용어</b> <small>${gl.length}</small></summary><ul class="cnl">${gl.map(li).join('')}</ul></details>` : ''}
+      <div class="card"><h3>📝 내 노트</h3><div class="muted" style="font-size:12px;margin-bottom:6px">줄마다 하나씩. <b>개념 :: 설명</b> (양방향 카드) · <b>질문 &gt;&gt; 답</b> · <b>…{{빈칸}}…</b> 처럼 쓰면 카드가 돼요</div>
+      <textarea id="cnn" class="cnn" placeholder="예) 대항력 :: 주택 인도 + 전입신고 다음 날 0시에 생김&#10;임대차 존속기간 최소 >> 2년&#10;주택임대차 최단기간은 {{2년}}">${esc(LSJ('reb_note_' + k, '') || '')}</textarea>
+      ${mine.length ? `<ul class="cnl">${mine.map(li).join('')}</ul>` : ''}</div>`;
+    document.getElementById('cnup').onclick = () => conceptView();
+    document.getElementById('cnc').onclick = () => startCards(dueFaces(k), '🃏 ' + T.t);
+    document.getElementById('cnp').onclick = () => startQuiz(shuffle(T.qs.slice()), { from: 'concept', title: '✏️ ' + T.t });
+    const ta = document.getElementById('cnn'); let tm;
+    ta.oninput = () => { clearTimeout(tm); tm = setTimeout(() => { LSS('reb_note_' + k, ta.value); CN.tree = null; }, 700); };
+    ta.onblur = () => { LSS('reb_note_' + k, ta.value); CN.tree = null; themeView(k); };
+    V2().querySelectorAll('.cnsrc').forEach(a => a.onclick = () => { const q = BYID[a.dataset.q]; if (q) startQuiz([q], { from: 'concept', title: '📄 원문 문제' }); });
+    CN.last = k;
+  }
+  /* ---- 카드 복습 ---- */
+  const CS = { list: [], i: 0, title: '', ok: 0, n: 0 };
+  function startCards(list, title) {
+    if (!list.length) { window.__toast && __toast('지금 복습할 카드가 없어요 👍 문제를 풀면 그 테마 카드가 생겨요'); return; }
+    Object.assign(CS, { list: list.slice(0, 40), i: 0, title, ok: 0, n: 0, x0: xpNow() }); cardView(false);
+  }
+  window.startCards = startCards;
+  function cardView(show) {
+    cur = 'cards'; navOn(COURSE.active ? 'home' : 'concept'); window.scrollTo(0, 0);
+    const fid = CS.list[CS.i]; if (!fid) return cardsDone();
+    const F = face(fid); if (!F) { CS.i++; return cardView(false); }
+    const s = SRS()[fid], T = CN.byTheme[F.c.th];
+    const btn = (r, l, cls) => `<button class="crt ${cls}" data-r="${r}"><b>${l}</b><small>${ivlTxt(r === 1 ? 0 : nextIvl(r, s))}</small></button>`;
+    V2().innerHTML = `<div class="card ccard"><div class="row"><div class="grow muted" style="font-size:12.5px">${esc(CS.title)} · ${CS.i + 1}/${CS.list.length}${s ? '' : ' · <b style="color:var(--pri)">새 카드</b>'}</div><button class="btn sm" id="cx">그만</button></div>
+      <div class="cbar"><em style="width:${Math.round(CS.i / CS.list.length * 100)}%"></em></div>
+      <div class="cth">${SUBS[T.s]} › ${esc(T.t)}</div>
+      <div class="cfront">${esc(F.front)}</div>
+      ${show ? `<div class="cback">${esc(F.c.kind === 'cloze' ? F.c.full : F.back)}</div>${F.c.src ? `<a class="cnsrc" id="csrc">📄 이 개념이 나온 문제 보기</a>` : ''}
+        <div class="crts">${btn(1, '다시', 'r1')}${btn(2, '어려움', 'r2')}${btn(3, '알맞음', 'r3')}${btn(4, '쉬움', 'r4')}</div>`
+             : `<button class="go" id="cshow">정답 보기</button><div class="muted" style="font-size:12px;text-align:center;margin-top:6px">${F.rev ? '설명 → 무슨 개념일까요?' : F.c.kind === 'cloze' ? '빈칸에 들어갈 말은?' : '뜻을 떠올려 보세요'}</div>`}</div>`;
+    document.getElementById('cx').onclick = () => cardsDone(true);
+    if (!show) document.getElementById('cshow').onclick = () => cardView(true);
+    else {
+      V2().querySelectorAll('.crt').forEach(b => b.onclick = () => {
+        const r = +b.dataset.r; if (!s) { const L = LSJ('reb_cardnew', {}); L[dkey()] = (L[dkey()] || 0) + 1; LSS('reb_cardnew', L); }
+        rate(fid, r); CS.n++; if (r >= 3) CS.ok++; if (r === 1) CS.list.push(fid);   // 다시 → 이번 판 끝에 한 번 더
+        CS.i++; cardView(false);
+      });
+      const sl = document.getElementById('csrc'); if (sl) sl.onclick = () => { const q = BYID[F.c.src]; if (q) startQuiz([q], { from: 'concept', title: '📄 원문 문제' }); };
+    }
+  }
+  function cardsDone(stopped) {
+    const g = xpNow() - CS.x0;
+    if (COURSE.active && !stopped) { cur = 'result'; V2().innerHTML = `<div class="card" style="text-align:center"><b style="font-size:20px">🃏 카드 ${CS.n}장 끝!</b><div class="muted">기억 ${CS.ok}/${CS.n} · +${g} XP</div></div>`; return; }   // 코스: 다음 단계 안내가 붙음
+    if (CS.n >= 5 && !stopped) celebrate('🃏 카드 복습 끝!', `${CS.n}장 · 기억 ${CS.ok}장 · +${g} XP`);
+    CN.last ? themeView(CN.last) : conceptView();
+  }
+  // 이동: 개념 탭·테마·카드
+  const _goC = window.go;
+  window.go = go = function (v, a) {
+    if (v === 'concept') { COURSE.active = false; return conceptView(); }
+    const r = _goC.apply(this, arguments);
+    if ((v === 'quiz' || v === 'result') && window.S && S.from === 'concept') navOn('concept');
+    return r;
+  };
+  (function cnTab() {
+    const nav = document.getElementById('tabs'); if (!nav || nav.querySelector('[data-v=concept]')) return;
+    nav.querySelector('[data-v=setup]')?.insertAdjacentHTML('afterend', '<button data-v="concept"><b>🌳</b>개념</button>');
+    nav.querySelector('[data-v=concept]').onclick = e => { e.stopPropagation(); window.go('concept'); };
+  })();
+  try { fetch('glossary.json').then(r => r.json()).then(g => { window.__GLOSS = g; CN.tree = null; }).catch(() => {}); } catch (e) {}
+
   function setPanel(v) {
     let p = document.getElementById('setp'); if (p) { p.remove(); return; }
     const nz = document.getElementById('nzp'); if (nz) nz.remove();
@@ -1560,9 +1760,9 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
     // 틀렸거나 헷갈렸으면: 그 테마 핵심 카드로 바로 (개념을 다시 잡을 때)
     const okA = String(q.a).split(',').map(Number).includes(+S.ans[q.id]);
     const fbx = card.querySelector('.fb'), uns = (() => { try { const v = conf()[q.id]; return !!v && v !== 'sure'; } catch (e) { return false; } })();
-    if (fbx && (!okA || uns) && !document.getElementById('fbk') && document.getElementById('qk')) {
-      fbx.insertAdjacentHTML('beforeend', '<button class="btn fbk" id="fbk">📇 이 테마 핵심 카드로 개념 잡기</button>');
-      document.getElementById('fbk').onclick = () => document.getElementById('qk')?.click();
+    if (fbx && (!okA || uns) && !document.getElementById('fbk')) {
+      fbx.insertAdjacentHTML('beforeend', '<button class="btn fbk" id="fbk">🌳 이 테마 개념 노트로 다시 잡기</button>');
+      document.getElementById('fbk').onclick = () => themeView(tkey(q));
     }
     // 더 자세히: 내용이 펼쳐지면 버튼은 숨김
     const mOpen = mb.textContent.trim().length > 20;
@@ -1756,7 +1956,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
     const _sq = window.startQuiz; window.startQuiz = function () { window.__xp0 = xpNow(); COURSE.active = false; return _sq.apply(this, arguments); };
     setTimeout(achCheck, 1500);
     setTimeout(scoreChip, 300);
-    const _rec = window.record; window.record = function (q, c) { const r = _rec.apply(this, arguments); logAnswer(q, c); try { scoreChip(); } catch (e) {} return r; }; wrap('home', decorateHome); wrap('setup', decorateSetup); wrap('wrong', decorateWrong); wrap('themes', decorateThemes);
+    const _rec = window.record; window.record = function (q, c) { const r = _rec.apply(this, arguments); logAnswer(q, c); try { if (!String(q.a).split(',').includes(String(c))) linkWrong(q); } catch (e) {} try { scoreChip(); } catch (e) {} return r; }; wrap('home', decorateHome); wrap('setup', decorateSetup); wrap('wrong', decorateWrong); wrap('themes', decorateThemes);
     const v = document.querySelector('#tabs button.on')?.dataset.v;
     if (v === 'home') decorateHome();
   }, 50));
