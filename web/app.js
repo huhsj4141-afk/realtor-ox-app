@@ -2060,11 +2060,11 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`;
       const T = window.__tts, items = memoItems(), V = document.getElementById('view');
       if (!items.length) return window.__toast && __toast('암기 목록을 불러오는 중이에요. 잠시 후 다시 눌러 주세요');
       cur = 'memo'; window.scrollTo(0, 0); navA();
-      const lines = []; items.forEach(([, q, a], k) => { lines.push({ text: q + ' [pause long] [pause long]', k }); lines.push({ text: a + '.', k }); lines.push({ text: a + '.', k }); });
-      V.innerHTML = `<div class="card a1q"><small>🎧 암기 듣기 · ${items.length}개 · 묻고 3초 쉬고 답</small><div class="a1f" id="mq">${esc(items[0][1])}</div><div class="a1b" id="ma"></div><div class="muted" id="mn" style="font-size:12px">1 / ${items.length}</div><button class="btn" id="mst" style="width:100%">■ 그만</button><div class="muted" style="font-size:12px;margin-top:8px">화면을 꺼도 계속 읽어요.</div></div>`;
+      const lines = []; items.forEach(([, q, a, tip], k) => { lines.push({ text: q + ' [pause long] [pause long]', k, s: 0 }); lines.push({ text: a + '.', k, s: 1 }); if (tip) lines.push({ text: '팁, ' + tip + '.', k, s: 2 }); lines.push({ text: a + '.', k, s: 1 }); });
+      V.innerHTML = `<div class="card a1q"><small>🎧 암기 듣기 · ${items.length}개 · 묻고 3초 쉬고 답</small><div class="a1f" id="mq">${esc(items[0][1])}</div><div class="a1b" id="ma"></div><div class="muted" id="mt" style="font-size:14px;min-height:20px;margin-bottom:6px"></div><div class="muted" id="mn" style="font-size:12px">1 / ${items.length}</div><button class="btn" id="mst" style="width:100%">■ 그만</button><div class="muted" style="font-size:12px;margin-top:8px">화면을 꺼도 계속 읽어요.</div></div>`;
       document.getElementById('mst').onclick = () => { try { T && T.stop(); } catch (e) {} home(); };
       if (!T) return;
-      T.onLine(({ line }) => { if (cur !== 'memo') return; const L = lines[line]; if (!L) return; const it = items[L.k]; const q = document.getElementById('mq'), a = document.getElementById('ma'), n = document.getElementById('mn'); if (!q) return; q.textContent = it[1]; a.textContent = line % 3 ? it[2] : ''; n.textContent = (L.k + 1) + ' / ' + items.length; });
+      T.onLine(({ line }) => { if (cur !== 'memo') return; const L = lines[line]; if (!L) return; const it = items[L.k]; const q = document.getElementById('mq'), a = document.getElementById('ma'), n = document.getElementById('mn'); if (!q) return; q.textContent = it[1]; a.textContent = L.s ? it[2] : ''; const t = document.getElementById('mt'); if (t) t.textContent = L.s === 2 || (L.s === 1 && t.textContent) ? (it[3] ? '💡 ' + it[3] : '') : ''; n.textContent = (L.k + 1) + ' / ' + items.length; });
       try { const lg = LSJ('reb_memolog', {}); lg[dkey()] = (lg[dkey()] || 0) + items.length; LSS('reb_memolog', lg); } catch (e) {}
       T.speak(lines.map(l => ({ text: l.text })), {}).catch(e => { if (e && e.code !== 'viewer_stopped' && window.__toast) __toast(e.message); });
     }
