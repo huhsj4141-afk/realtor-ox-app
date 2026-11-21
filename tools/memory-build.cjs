@@ -65,10 +65,11 @@ function build(mc,ex,ox,oxex,vars,blocked={},reviewed=[],audits={}){
  const active=[],audit=[];
  for(const c of candidates){
   const reasons=inspect(c);let accepted=null;
-  if(c.reviewed&&!reasons.length)accepted=c;else if(!c.reviewed)accepted=acceptAudit(c,audits[c.id]);
+  if(c.reviewed&&!reasons.length)accepted={...c};else if(!c.reviewed)accepted=acceptAudit(c,audits[c.id]);
   if(accepted)accepted.revision=hash('quality-v4:'+JSON.stringify(accepted));
-  if(blocked[c.id]?.revision===c.revision||blocked[c.id]?.answer===c.answer||accepted&&(blocked[c.id]?.revision===accepted.revision||blocked[c.id]?.answer===accepted.answer))accepted=null;
-  const status=accepted?'active':c.reviewed?'needs-fix':audits[c.id]?.policy===4&&audits[c.id]?.sourceRevision===c.revision&&audits[c.id]?.valid===false?'rejected':'pending-semantic';
+  const reported=blocked[c.id]?.revision===c.revision||blocked[c.id]?.answer===c.answer||accepted&&(blocked[c.id]?.revision===accepted.revision||blocked[c.id]?.answer===accepted.answer);
+  if(reported){accepted=null;coverage.pendingReview++;}
+  const status=accepted?'active':reported?'reported':c.reviewed?'needs-fix':audits[c.id]?.policy===4&&audits[c.id]?.sourceRevision===c.revision&&audits[c.id]?.valid===false?'rejected':'pending-semantic';
   audit.push({id:c.id,status,reasons,sourceRevision:c.revision});
   if(accepted)active.push(accepted);
  }

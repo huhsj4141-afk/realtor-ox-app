@@ -93,7 +93,7 @@ class WebActivity : Activity() {
 
     @Deprecated("back")
     override fun onBackPressed() {
-        web.evaluateJavascript("(typeof cur!=='undefined'&&cur!=='home')?(go('home'),1):0") { r ->
+        web.evaluateJavascript("(window.Memory&&Memory.isOpen())?(Memory.close(),1):(typeof cur!=='undefined'&&cur!=='home')?(go('home'),1):0") { r ->
             if (r != "1") @Suppress("DEPRECATION") super.onBackPressed()
         }
     }

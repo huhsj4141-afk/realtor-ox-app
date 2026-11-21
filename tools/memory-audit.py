@@ -16,43 +16,62 @@ context에는 원래 문제와 정답 번호가 있다. 보기에는 틀린 문�
 원문이 없거나 불명확하거나 정답 여부를 판단할 수 없으면 valid=false. 원문에 없는 법령·예외를 보태지 않는다.
 각 입력 id에 대해 JSON 배열만 반환: {"id":"...","valid":true/false,"kind":"개념 카드 또는 공식 카드","front":"구체적인 질문","back":"짧은 답","cloze":null,"blank":null,"evidence":"제공된 근거에서 그대로 인용한 문장 또는 구절","reason":"검토 이유"}.
 '''
-def request(endpoint,body=None):
+def request(endpoint,body=None,deadline=None):
     url='https://generativelanguage.googleapis.com/v1beta/'+endpoint
     r=urllib.request.Request(url,data=None if body is None else json.dumps(body).encode(),headers={'Content-Type':'application/json','x-goog-api-key':KEY})
     for attempt in range(2):
+        remaining=45 if deadline is None else deadline-time.monotonic()
+        if remaining<=0:raise TimeoutError('audit deadline')
         try:
-            with urllib.request.urlopen(r,timeout=45) as f:return json.load(f)
+            with urllib.request.urlopen(r,timeout=min(45,remaining)) as f:return json.load(f)
         except urllib.error.HTTPError as error:
             if error.code != 429 or attempt:raise
             details=error.read().decode('utf8','replace')
             if re.search(r'per.?day|daily|PerDay',details,re.I):raise
             retry=re.search(r'"retryDelay"\s*:\s*"(\d+)',details)
-            time.sleep(max(15,int(retry.group(1))+2 if retry else 60))
+            delay=max(15,int(retry.group(1))+2 if retry else 60)
+            if deadline is not None and time.monotonic()+delay>=deadline:raise TimeoutError('audit deadline')
+            time.sleep(delay)
+
+def valid_item(item,by):
+    if not isinstance(item,dict) or not isinstance(item.get('id'),str) or item['id'] not in by or not isinstance(item.get('valid'),bool):return False
+    if not item['valid']:return True
+    if not all(isinstance(item.get(k),str) and item[k].strip() for k in ('front','back','evidence')):return False
+    if any(item.get(k) is not None and not isinstance(item[k],str) for k in ('cloze','blank')):return False
+    return len(item['evidence'])>=6 and any(item['evidence'] in s['quote'] for s in by[item['id']]['sources'])
 def main():
     if not KEY:print('암기 의미 검사: 키 없음, 기존 검토 결과 유지');return
+    out=ROOT/'gen/memory-audit.json'
+    try:
+        ledger=json.loads(out.read_text(encoding='utf8')) if out.exists() else {}
+        if not isinstance(ledger,dict) or not all(isinstance(v,dict) for v in ledger.values()):raise ValueError('invalid ledger')
+    except (ValueError,OSError):
+        print('암기 의미 검사: 기존 검토 파일 형식 오류, 원본 보존');return
     subprocess.run(['node',str(ROOT/'tools/memory-build.cjs')],check=True,cwd=ROOT)
     candidates=json.loads((ROOT/'gen/memory-candidates.json').read_text(encoding='utf8'))
-    out=ROOT/'gen/memory-audit.json';ledger=json.loads(out.read_text(encoding='utf8')) if out.exists() else {}
     pending=[c for c in candidates if not c.get('reviewed') and not (ledger.get(c['id'],{}).get('policy')==4 and ledger[c['id']].get('sourceRevision')==c['revision'])]
     # 각 과목을 번갈아 검토해 한 과목만 앞서 검토하지 않아요.
     groups={subject:[c for c in pending if c.get('subject')==subject] for subject in range(6)}
     pending=[groups[subject][i] for i in range(max((len(v) for v in groups.values()),default=0)) for subject in range(6) if i<len(groups[subject])]
-    limit=int(os.environ.get('MEMORY_MAX','16'));stop=time.time()+int(os.environ.get('MEMORY_SECONDS','150'));done=0
+    limit=int(os.environ.get('MEMORY_MAX','16'));stop=time.monotonic()+int(os.environ.get('MEMORY_SECONDS','150'));done=0
+    if limit<=0 or not pending:return
     try:
-        models=request('models?pageSize=200').get('models',[])
+        models=request('models?pageSize=200',deadline=stop).get('models',[])
         names=[m['name'].split('/')[-1] for m in models if 'generateContent' in m.get('supportedGenerationMethods',[]) and re.fullmatch(r'gemini-\d+(?:\.\d+)?-flash-lite',m['name'].split('/')[-1])]
         names.sort(key=lambda s:float(re.search(r'\d+(?:\.\d+)?',s)[0]),reverse=True)
         if not names:print('암기 의미 검사: 사용 가능한 Lite 모델 없음');return
         model=names[0]
         for i in range(0,min(len(pending),limit),8):
-            if time.time()>stop:break
+            if time.monotonic()>stop:break
             batch=pending[i:min(i+8,limit)];by={c['id']:c for c in batch}
             payload=[{'id':c['id'],'front':c['prompt'],'back':c['answer'],'cloze':c.get('cloze'),'blank':c.get('blankAnswer'),'context':c.get('context'),'sources':[s['quote'] for s in c['sources'][:3]]} for c in batch]
-            r=request('models/'+model+':generateContent',{'contents':[{'parts':[{'text':PROMPT+'\n검토 자료:\n'+json.dumps(payload,ensure_ascii=False)}]}],'generationConfig':{'responseMimeType':'application/json','temperature':0.1,'maxOutputTokens':8192}})
+            r=request('models/'+model+':generateContent',{'contents':[{'parts':[{'text':PROMPT+'\n검토 자료:\n'+json.dumps(payload,ensure_ascii=False)}]}],'generationConfig':{'responseMimeType':'application/json','temperature':0.1,'maxOutputTokens':8192}},deadline=stop)
             text=''.join(p.get('text','') for p in r.get('candidates',[{}])[0].get('content',{}).get('parts',[]));items=json.loads(text)
             if not isinstance(items,list):continue
+            seen=set()
             for item in items:
-                if not isinstance(item,dict) or item.get('id') not in by or not isinstance(item.get('valid'),bool):continue
+                if not valid_item(item,by) or item['id'] in seen:continue
+                seen.add(item['id'])
                 c=by[item['id']]
                 if item['valid'] and (not isinstance(item.get('evidence'),str) or len(item['evidence']) < 6 or not any(item['evidence'] in s['quote'] for s in c['sources'])):continue
                 if item['valid'] and (not isinstance(item.get('front'),str) or not isinstance(item.get('back'),str)):continue
@@ -67,7 +86,7 @@ def main():
             temporary.parent.mkdir(parents=True,exist_ok=True)
             temporary.write_text(json.dumps(ledger,ensure_ascii=False,indent=2),encoding='utf8')
             temporary.replace(out)
-            if i+8<min(len(pending),limit):time.sleep(15)
+            if i+8<min(len(pending),limit):time.sleep(max(0,min(15,stop-time.monotonic())))
     except urllib.error.HTTPError as e:print('암기 의미 검사: HTTP',e.code,'다음 실행에서 이어서')
     except Exception as e:print('암기 의미 검사:',type(e).__name__,'다음 실행에서 이어서')
     print('암기 의미 검사 저장:',done,'개')

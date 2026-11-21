@@ -6,3 +6,4 @@ app/src/main/assets/
 gen/tmp/
 __pycache__/
 *.pyc
+node_modules/

@@ -74,6 +74,13 @@ jobs:
         with: { distribution: temurin, java-version: '17' }
       - uses: gradle/actions/setup-gradle@v4
         with: { gradle-version: '8.11.1' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '24', cache: 'npm' }
+      - name: 기능 회귀 검사
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm test
+          python3 tools/test_memory_audit.py
       - name: 자료 넣기
         run: |
           python3 tools/gen.py sounds
@@ -95,7 +102,7 @@ jobs:
           PY
       - name: 빌드
         env: { VCODE: '${{ github.run_number }}' }
-        run: gradle assembleRelease --no-daemon --stacktrace
+        run: gradle testDebugUnitTest assembleRelease --no-daemon --stacktrace
       - name: 올리기
         env: { GH_TOKEN: '${{ github.token }}' }
         run: |

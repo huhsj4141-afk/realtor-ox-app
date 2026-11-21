@@ -846,9 +846,10 @@
     const st = COURSE.steps[COURSE.i]; if (!st) return courseDone();
     if (st.memo && window.Memory) { COURSE.active = false; return Memory.open({ onDone: () => { COURSE.i++; courseRun(); } }); }
     const title = `${st.t} · ${COURSE.i + 1}/${COURSE.steps.length}단계`;
+    const previous = S;
     if (st.ad) startAdaptive(st.ad.qs, st.ad.n, { from: 'home', title }); else startQuiz(st.qs, { from: 'home', title });
-    COURSE.session = S;
-    COURSE.active = true;
+    COURSE.session = S !== previous && cur === 'quiz' ? S : null;
+    COURSE.active = !!COURSE.session;
   }
   function courseDone() {
     COURSE.active = false; const t = todayLog();
@@ -890,7 +891,7 @@
            : `<div class="muted" style="font-size:13.5px;margin:4px 0 10px">오늘 코스를 다 끝냈어요!</div><button class="go" id="cgo">🎉 마치기</button>`}
       <button class="btn full" id="cstop" style="margin-top:8px">오늘은 여기까지</button></div>`);
     [...v.querySelectorAll('.card')].forEach(c => { if (/오늘 수준 체크/.test(c.textContent) && c.id !== 'cnext') c.remove(); });   // 코스 중엔 딴 길 안 보이게
-    document.getElementById('cgo').onclick = () => { COURSE.i++; courseRun(); };
+    document.getElementById('cgo').onclick = e => { e.currentTarget.disabled = true; COURSE.active = false; COURSE.i++; courseRun(); };
     document.getElementById('cstop').onclick = () => { COURSE.active = false; go('home'); };
   }
   setInterval(courseNext, 400);

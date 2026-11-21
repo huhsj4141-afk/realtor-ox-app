@@ -24,6 +24,7 @@ android {
     androidResources { noCompress += listOf("ogg", "json") }
 }
 dependencies {
+    testImplementation("junit:junit:4.13.2")
     implementation("androidx.media3:media3-exoplayer:1.5.1")
     implementation("androidx.core:core-ktx:1.13.1")
 }

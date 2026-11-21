@@ -146,14 +146,16 @@
       for (const k in st) {
         const n = st[k], a = ap[k] || { lsec: 0, ox: 0, oxs: {} };
         const x = LJ.d[k] || (LJ.d[k] = { sec: 0, lsec: 0, q: 0, ok: 0, s: {}, ox: 0, oxs: {}, ex: 0, ses: [], seq: [] });
-        const dl = (n.lsec || 0) - (a.lsec || 0), dx = (n.ox || 0) - (a.ox || 0);
+        const delta=(v,old)=>{v=Number(v);old=Number(old)||0;return Number.isFinite(v)&&v>=0?v<old?v:v-old:0;};
+        const dl = delta(n.lsec, a.lsec), dx = delta(n.ox, a.ox);
         if (dl > 0) { x.lsec = (x.lsec || 0) + dl; x.sec = (x.sec || 0) + dl; ch = true; }
         if (dx > 0) { x.ox = (x.ox || 0) + dx; ch = true; }
         x.oxs = x.oxs || {};
-        for (const s in (n.oxs || {})) { const d = n.oxs[s] - ((a.oxs || {})[s] || 0); if (d > 0) { x.oxs[s] = (x.oxs[s] || 0) + d; ch = true; } }
+        for (const s in (n.oxs || {})) { const d = delta(n.oxs[s], (a.oxs || {})[s]); if (d > 0) { x.oxs[s] = (x.oxs[s] || 0) + d; ch = true; } }
         ap[k] = n;
       }
-      if (ch) { localStorage.setItem('reb_journal', JSON.stringify({ v: 1, days: LJ.d })); localStorage.setItem('nat_applied', JSON.stringify(ap)); }
+      if (ch) { localStorage.setItem('reb_journal', JSON.stringify({ v: 1, days: LJ.d })); }
+      localStorage.setItem('nat_applied', JSON.stringify(ap));
       return ch;
     } catch (e) {}
   }
