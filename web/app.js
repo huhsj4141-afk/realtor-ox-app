@@ -561,13 +561,13 @@
     lines.slice(idx).forEach(l => { const m = /^\s*([①②③④⑤])/.exec(l); if (m) ch.push({ n: MK5.indexOf(m[1]) + 1, t: l.trim() }); else if (ch.length) ch[ch.length - 1].t += '\n' + l; });
     if (ch.length !== 5) return;
     const ans = String(q.a).split(',').map(Number);
-    const info = {}; (e && Array.isArray(e.choices) ? e.choices : []).forEach(c => { info[+c.no] = { ox: String(c.ox).includes('O') ? 'o' : 'x', why: c.why || '', bad: c.bad || '', fix: c.fix || '' }; });
+    const info = {}; (e && Array.isArray(e.choices) ? e.choices : []).forEach(c => { info[+c.no] = { ox: (window.__choiceOx ? window.__choiceOx(c) : /^[OX]$/.test(c.ox) ? c.ox : null)?.toLowerCase(), why: c.why || '', bad: c.bad || '', fix: c.fix || '' }; });
     if (e && Array.isArray(e.steps)) e.steps.forEach(st => { const m = /([①②③④⑤])/.exec(st.title || ''); if (m) { const n = MK5.indexOf(m[1]) + 1; info[n] = info[n] || {}; if (!info[n].why) info[n].why = st.say || ''; } });
     const stmt = /①\s*[가-힣]/.test(q.x) && !/ㄱ\s*[,·]/.test(lines.slice(idx).join(' '));   // 문장형 보기일 때만 O·X 추정
     const neg = NEG.test(stem);
     qt.innerHTML = '<div class="qstem">' + h(stem) + '</div>' + ch.map(c => {
       const isAns = ans.includes(c.n), mine = c.n === pick && !isAns;
-      let ox = info[c.n] && info[c.n].ox; if (!ox && stmt) ox = (isAns === neg) ? 'x' : 'o';
+      let ox = info[c.n] && info[c.n].ox; if (!ox && stmt && isRight(q, 1) !== null) ox = (isAns === neg) ? 'x' : 'o';
       let text = h(c.t);
       const why = info[c.n] && info[c.n].why;
       const I = info[c.n] || {};

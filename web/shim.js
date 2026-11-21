@@ -5,6 +5,14 @@
    - OX 듣기 화면은 앱의 전용 듣기 화면으로 열어요. */
 (function () {
   const N = window.NativeBridge;
+  // Generated explanations sometimes use an alternative field name. Missing is unknown, never X.
+  window.__choiceOx = c => {
+    if (!c || typeof c !== 'object') return null;
+    for (const k of ['ox', 'X 또는 O', 'O', 'X']) {
+      if (typeof c[k] === 'string' && /^[OX]$/.test(c[k].trim())) return c[k].trim();
+    }
+    return null;
+  };
   let seq = 0; const waits = {};
   window.__nb = (id, ok, text) => { const w = waits[id]; if (!w) return; delete waits[id]; ok ? w.res(text) : w.rej(Object.assign(new Error(text || 'error'), { code: 'error' })); };
   const call = (fn, ...a) => new Promise((res, rej) => { const id = 'r' + (++seq); waits[id] = { res, rej }; N[fn](id, ...a); });
@@ -95,6 +103,7 @@
       if (!N.key('tts')) throw Object.assign(new Error('구글 클라우드 음성 키가 없어요'), { code: 'no_key' });
       if (cur) tts.stop();
       const me = cur = { rate: (o && o.rate) || 1, stopped: false, wait: null };
+      try {
       stateCbs.forEach(f => { try { f('speaking'); } catch (e) {} });
       if (N.speakAll) {   // 앱이 끝까지 이어 읽기 (화면 꺼져도 안 멈춤)
         const id = 'a' + (++seq);
@@ -103,8 +112,7 @@
         const ev = await new Promise(res => { me.wait = { id, res }; N.speakAll(id, JSON.stringify(L), me.rate); });
         if (ev === 'error') throw Object.assign(new Error('읽기 실패'), { code: 'error' });
         if (ev === 'stopped' || me.stopped) throw Object.assign(new Error('stopped'), { code: 'viewer_stopped' });
-        if (cur === me) cur = null;
-        stateCbs.forEach(f => { try { f('idle'); } catch (e) {} });
+
         return;
       }
       for (let i = 0; i < lines.length; i++) {
@@ -116,12 +124,11 @@
         if (ev === 'error') throw Object.assign(new Error('읽기 실패'), { code: 'error' });
         if (ev === 'stopped' || me.stopped) throw Object.assign(new Error('stopped'), { code: 'viewer_stopped' });
       }
-      if (cur === me) cur = null;
-      stateCbs.forEach(f => { try { f('idle'); } catch (e) {} });
+      } finally { if (cur === me) { cur = null; stateCbs.forEach(f => { try { f('idle'); } catch (_) {} }); } }
     },
     busy: () => !!cur,
     pause() { N.ttsPause(); }, resume() { N.ttsResume(); },
-    stop() { if (cur) { cur.stopped = true; const w = cur.wait; cur.wait = null; if (w) w.res('stopped'); cur = null; } N.ttsStop(); }
+    stop() { if (cur) { cur.stopped = true; const w = cur.wait; cur.wait = null; if (w) w.res('stopped'); cur = null; stateCbs.forEach(f => { try { f('idle'); } catch (_) {} }); } N.ttsStop(); }
   };
 
   window.__tts = tts;

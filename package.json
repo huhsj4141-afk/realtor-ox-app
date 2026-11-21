@@ -1,1 +1,10 @@
-{"name":"realtor-ox-checks","private":true,"scripts":{"test":"node --test tools/test-memory.cjs tools/test-ui.cjs"},"devDependencies":{"jsdom":"31.0.1"}}
+{
+  "name": "realtor-ox-checks",
+  "private": true,
+  "scripts": {
+    "test": "node --test tools/test-memory.cjs tools/test-ui.cjs tools/test-session.cjs"
+  },
+  "devDependencies": {
+    "jsdom": "31.0.1"
+  }
+}

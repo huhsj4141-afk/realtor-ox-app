@@ -53,6 +53,10 @@ class PlayerService : Service() {
     private var autoStopQ = -1
     private var changingQueue = false
     private var checkpointTicks = 0
+    private val detailRequests = LatestRequest()
+    private val cueRequests = LatestRequest()
+    private var cueListener: Player.Listener? = null
+    private var destroyed = false
 
     var continuous: Boolean
         get() = prefs.getBoolean("cont", false)
@@ -115,11 +119,11 @@ class PlayerService : Service() {
                     else @Suppress("DEPRECATION") i.getParcelableExtra(Intent.EXTRA_KEY_EVENT)
                     return ev != null && handleKey(ev)
                 }
-                override fun onPlay() = press("c")
-                override fun onPause() = press("c")
+                override fun onPlay() { if (!player.isPlaying) act("toggle") }
+                override fun onPause() { stopCue(); detailRequests.cancel(); player.pause() }
                 override fun onSkipToNext() = press("r")
                 override fun onSkipToPrevious() = press("l")
-                override fun onStop() { player.pause() }
+                override fun onStop() { stopCue(); detailRequests.cancel(); player.pause() }
             })
             // 앱이 꺼져 있어도 리모컨 버튼을 이 앱이 받도록
             setMediaButtonReceiver(PendingIntent.getBroadcast(this@PlayerService, 9,
@@ -148,6 +152,7 @@ class PlayerService : Service() {
         when (intent?.action) {
             "L" -> act("stepBack"); "R" -> act("stepFwd"); "C" -> act("toggle")
             "PRESET" -> {   // 상황별 학습에서: 듣는 목록·잠자기 타이머를 정하고 바로 시작
+                detailRequests.cancel(); stopCue()
                 fg()
                 val m = intent.getStringExtra("mode") ?: "mix"
                 if (mode == m && m !in setOf("bm", "wrong", "review", "today") && loadedQ in queue.indices) {
@@ -168,6 +173,8 @@ class PlayerService : Service() {
     }
 
     override fun onDestroy() {
+        destroyed = true
+        detailRequests.cancel(); stopCue()
         savePosition(); flushSeconds()
         inst = null
         h.removeCallbacksAndMessages(null)
@@ -237,6 +244,7 @@ class PlayerService : Service() {
     }
 
     fun load(ti: Int, m: String, q: Int, play: Boolean, resume: Boolean = false) {
+        detailRequests.cancel(); stopCue()
         savePosition()
         changingQueue = true
         try {
@@ -270,6 +278,7 @@ class PlayerService : Service() {
     /** q번 문항의 k칸으로 이동. 이어듣기일 때만 저장한 초를 넘겨요. */
     fun go(q: Int, k: Int, play: Boolean = true, positionMs: Long = 0L) {
         if (q !in queue.indices) return
+        detailRequests.cancel(); stopCue()
         autoStopQ = -1
         val wasChanging = changingQueue; changingQueue = true
         try {
@@ -305,23 +314,37 @@ class PlayerService : Service() {
     // ================= 안내 음성 =================
     private fun note(t: String, ms: Long = 2500) { flash = t; flashUntil = SystemClock.elapsedRealtime() + ms }
 
+    private fun stopCue() {
+        cueRequests.cancel()
+        if (::cue.isInitialized) {
+            cueListener?.let { cue.removeListener(it) }
+            cueListener = null
+            cue.stop()
+        }
+    }
+
     private fun say(name: String, text: String, then: (() -> Unit)? = null) {
+        stopCue()
+        val token = cueRequests.next()
         note(text)
         if (!voiceCue) { then?.invoke(); return }
         if (then != null && player.isPlaying) player.pause()
         cue.setMediaItem(MediaItem.fromUri(Uri.parse("asset:///cue/$name.ogg")))
         cue.setPlaybackSpeed(maxOf(1.1f, speed)); cue.prepare()
         var done = false
-        cue.addListener(object : Player.Listener {
-            private fun end() { if (!done) { done = true; cue.removeListener(this); then?.invoke() } }
+        val listener = object : Player.Listener {
+            private fun end() { if (!done) { done = true; cue.removeListener(this); cueListener = null; if (!destroyed && cueRequests.current(token)) then?.invoke() } }
             override fun onPlaybackStateChanged(s: Int) { if (s == Player.STATE_ENDED) end() }
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) = end()
-        })
+        }
+        cueListener = listener
+        cue.addListener(listener)
         cue.play()
     }
 
     // ================= 동작 =================
     fun act(a: String) {
+        detailRequests.cancel(); stopCue()
         if (queue.isEmpty()) return
         val (q, ph) = phase()
         when (a) {
@@ -352,17 +375,20 @@ class PlayerService : Service() {
                 else -> say("last", "마지막 지문이에요")
             }
             "detail" -> {
+                val token = detailRequests.next()
                 val it = currentItem() ?: return
                 if (player.isPlaying) player.pause()
                 note("🤖 더 자세히 준비 중…", 120000); detailText = ""
                 Thread {
                     try {
                         val t = Net.detail(this, it)
-                        h.post { detailText = t; detailKey = it.key; note("🤖 음성 만드는 중…", 120000) }
+                        if (!detailRequests.current(token)) return@Thread
+                        h.post { if (!destroyed && detailRequests.current(token)) { detailText = t; detailKey = it.key; note("🤖 음성 만드는 중…", 120000) } }
                         val files = Net.speech(this, t)
-                        h.post { note("")
+                        h.post { if (destroyed || !detailRequests.current(token)) return@post
+                            note("")
                             cue.setMediaItems(files.map { f -> MediaItem.fromUri(Uri.fromFile(f)) }); cue.setPlaybackSpeed(speed); cue.prepare(); cue.play() }
-                    } catch (e: Exception) { h.post { note("더 자세히 실패: " + Net.friendly(e), 15000) } }
+                    } catch (e: Exception) { h.post { if (!destroyed && detailRequests.current(token)) note("더 자세히 실패: " + Net.friendly(e), 15000) } }
                 }.start()
             }
             "bookmark" -> {
@@ -483,7 +509,7 @@ class PlayerService : Service() {
     }
 
     private fun updateSession() {
-        if (!this::session.isInitialized) return
+        if (destroyed || !this::session.isInitialized) return
         val playing = player.isPlaying
         session.setPlaybackState(PlaybackState.Builder()
             .setActions(PlaybackState.ACTION_PLAY or PlaybackState.ACTION_PAUSE or PlaybackState.ACTION_PLAY_PAUSE or
