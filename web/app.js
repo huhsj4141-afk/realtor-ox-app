@@ -119,7 +119,7 @@
     .abar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:8px 0 14px} .abar em{display:block;height:100%;background:linear-gradient(90deg,var(--pri),#22c55e);border-radius:4px}
     .agp{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:20px;padding:18px} .agp small{font-size:13px;font-weight:400;opacity:.85}
     .arow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px} .arow .btn{margin:0} .atd{font-size:12.5px;color:var(--sub2,#9aa3b5);margin-top:10px;text-align:center} .ahow{font-size:12.5px;text-align:center;margin:4px 12px}
-    .padsay{position:absolute;left:12px;right:12px;top:56px;z-index:5;background:#111d;color:#fff;padding:10px 14px;border-radius:12px;font-size:15px} #padmic{touch-action:none;user-select:none;-webkit-user-select:none} #padmic.on{background:#ef4444;color:#fff} u.khint{text-decoration:underline wavy #f59e0b 2px;text-underline-offset:4px;background:#f59e0b22;border-radius:3px} #sync{display:none} .moreh{font-weight:700;font-size:15px;margin:18px 0 6px;padding-top:12px;border-top:1px dashed var(--line,#e3e7ef)} .morec{white-space:pre-wrap;line-height:1.75;font-size:15px} .a1c{margin:10px 0;padding:12px 14px;border-radius:12px;background:var(--card2,#f4f6fb);border:1px solid var(--line,#e3e7ef)} .a1c small,.a1q small{display:block;font-size:12px;color:var(--sub2,#9aa3b5)} .a1c b{display:block;font-size:16px;margin:6px 0 2px;line-height:1.5} .a1q{text-align:center} .a1f{font-size:20px;font-weight:700;margin:18px 0 10px;line-height:1.5} .a1b{font-size:17px;color:var(--pri,#2563eb);min-height:26px;margin-bottom:12px;line-height:1.5}
+    .padsay{position:absolute;left:12px;right:12px;top:56px;z-index:5;background:#111d;color:#fff;padding:10px 14px;border-radius:12px;font-size:15px} #padmic{touch-action:none;user-select:none;-webkit-user-select:none} #padmic.on{background:#ef4444;color:#fff} u.khint{text-decoration:underline wavy #f59e0b 2px;text-underline-offset:4px;background:#f59e0b22;border-radius:3px} #sync{display:none} .moreh{font-weight:700;font-size:15px;margin:18px 0 6px;padding-top:12px;border-top:1px dashed var(--line,#e3e7ef)} .morec{white-space:pre-wrap;line-height:1.75;font-size:15px} .diawait{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);background:#111e;color:#fff;padding:14px 20px;border-radius:14px;z-index:300;font-size:15px} .a1c{margin:10px 0;padding:12px 14px;border-radius:12px;background:var(--bg);color:var(--ink);border:1.5px solid var(--warn,#f59e0b)} .a1c small,.a1q small{display:block;font-size:12px;color:var(--sub)} .a1c b{display:block;font-size:16px;margin:6px 0 2px;line-height:1.5} .a1q{text-align:center} .a1f{font-size:20px;font-weight:700;margin:18px 0 10px;line-height:1.5} .a1b{font-size:17px;color:var(--pri,#2563eb);min-height:26px;margin-bottom:12px;line-height:1.5}
     #pscore{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:2px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0;line-height:1.25}
     #pscore small{font-size:10.5px;color:var(--sub2,#9aa3b5)} #pscore span{font-size:13.5px;white-space:nowrap} #pscore b{font-size:16px} #pscore b.ok{color:#16a34a} #pscore b.no{color:#ef4444}
     #pscore i{font-style:normal;font-size:10.5px;margin-left:2px} #pscore i.up{color:#16a34a} #pscore i.dn{color:#ef4444}
@@ -1678,6 +1678,9 @@ ${q.x}
     const old = btn ? btn.innerHTML : '';
     if (!d) {
       if (btn) { btn.disabled = true; btn.innerHTML = '<span class="ic">⏳</span>만드는 중…'; }
+      const wt = document.createElement('div'); wt.className = 'diawait'; wt.innerHTML = '<span class="spin"></span> 🔗 관계도 그리는 중… <b>0</b>초'; document.body.appendChild(wt);
+      const t0w = Date.now(), tk = setInterval(() => { const b = wt.querySelector('b'); if (b) b.textContent = Math.round((Date.now() - t0w) / 1000); }, 1000);
+      const wdone = () => { clearInterval(tk); wt.remove(); };
       try {
         const ex = expOf(q);
         const prompt = `공인중개사 기출 문제를 한눈에 이해하게 하는 '풀이 도식'을 만들어. JSON만 출력.
@@ -1692,10 +1695,11 @@ ${pre ? `- steps 3~5줄, 한 줄 28자 이내. 문제를 푸는 순서만 안내
 정답: ${q.a}
 ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
         const raw = await window.__gem(prompt, {}, true);
-        d = JSON.parse(String(raw).replace(/^```(json)?|```$/g, '').trim());
-        if (!d || !Array.isArray(d.nodes)) throw new Error('도식을 못 만들었어요. 다시 눌러 주세요');
+        const mm = String(raw).match(/\{[\s\S]*\}/); try { d = JSON.parse(mm ? mm[0] : raw); } catch (e) { d = null; }
+        if (!d || !Array.isArray(d.nodes) || !d.nodes.length) throw new Error('관계도를 못 만들었어요. 다시 길게 눌러 주세요');
         try { localStorage.setItem(key, JSON.stringify(d)); } catch (e) {}
-      } catch (e) { window.__toast && __toast(e.message || '도식을 못 만들었어요'); if (btn) { btn.disabled = false; btn.innerHTML = old; } return; }
+      } catch (e) { wdone(); window.__toast && __toast(e.message || '관계도를 못 만들었어요'); if (btn) { btn.disabled = false; btn.innerHTML = old; } return; }
+      wdone();
       if (btn) { btn.disabled = false; btn.innerHTML = old; }
     }
     padOpen(true); padTab('draw');
