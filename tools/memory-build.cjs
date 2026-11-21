@@ -1,62 +1,69 @@
-/* 저장된 지문·해설·공식·풀이를 근거와 함께 추출. 추가 AI/음성 API 호출 없음. */
+/* 관계가 확인되는 개념만 질문→짧은 답으로 만든다. 문장 끝·임의 숫자 가리기는 하지 않는다. */
 const fs=require('fs'),path=require('path'),crypto=require('crypto');
-const ROOT=path.resolve(__dirname,'..');
-const hash=s=>crypto.createHash('sha256').update(s).digest('hex').slice(0,16);
-const clean=x=>typeof x==='string'?x.replace(/\s+/g,' ').trim():'';
+const ROOT=path.resolve(__dirname,'..'),hash=s=>crypto.createHash('sha256').update(s).digest('hex').slice(0,16);
+const clean=x=>typeof x==='string'?x.replace(/\s+/g,' ').trim():'',list=x=>Array.isArray(x)?x:[];
 function readable(x){return clean(x).replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g,'($1) ÷ ($2)').replace(/\\(?:text|mathrm)\{([^{}]*)\}/g,'$1').replace(/\\times/g,' × ').replace(/\\div/g,' ÷ ').replace(/\\(?:left|right)/g,'').replace(/\\%/g,'%');}
-function build(mc,ex,ox,oxex,vars,blocked={}){
-  const cards=[],dedup=new Map(),questions={},coverage={questions:mc.length,withExplanation:0,covered:0,skippedOCR:0,types:{},oxStatements:0};
-  const byId=new Map(mc.map(q=>[q.id,q]));
-  const list=x=>Array.isArray(x)?x:[];
-  const badOCR=q=>![0,"0",false,null,undefined,""].includes(q.ocr);
-  function add(q,field,answer,kind,quote=answer,extra={}){
-    answer=readable(answer);quote=clean(quote);
-    if(answer.length<8||answer.length>650||/^([①②③④⑤]|[1-5]번|정답은?\s*[1-5])/.test(answer))return;
-    const label='제'+q.n+'회 '+['학개론','민법','중개사법','공법','공시법','세법'][q.s]+' '+q.no+'번';
-    const source={id:q.id,label,quote,field,kind,year:q.y,...extra};
-    const key=q.s+':'+answer.replace(/\s+/g,'').replace(/[。.]$/,'');
-    const old=dedup.get(key);if(old){if(!old.sources.some(s=>s.id===q.id&&s.field===field))old.sources.push(source);return;}
-    const id='mem-'+hash(q.id+':'+field);
-    const prompt=kind==='공식'?'다음 공식의 식과 쓰임을 떠올려 보세요: '+(extra.name||q.t):kind==='틀린 지문 해설'?'이 지문은 왜 틀렸나요?\n'+extra.statement:(q.t||q.u)+'에서 기억할 '+kind+'은 무엇인가요?';
-    let cloze=answer;const nums=[...answer.matchAll(/\d+(?:\.\d+)?\s*(?:년|개월|일|시간|분|%|배|명|개|만원|억원)/g)];
-    if(nums.length){const n=nums[0];cloze=answer.slice(0,n.index)+'[        ]'+answer.slice(n.index+n[0].length);}
-    else if(answer.includes('=')){cloze=answer.split('=')[0]+'= [        ]';}
-    else {const m=/^(.{4,65}?(?:은|는|란|이란))\s+(.{4,})$/.exec(answer);cloze=m?m[1]+' [        ]':'핵심 내용 떠올리기: '+(q.t||q.u)+'\n[        ]';}
-    const c={id,title:(extra.name||q.t||q.u).slice(0,70),kind,subject:q.s,cloze,prompt,answer,
-      why:kind==='틀린 지문 해설'?'틀린 원문을 정답으로 외우지 말고, 해설에서 틀린 이유를 확인하세요.':'저장된 자료에서 자동으로 뽑은 내용입니다. 출처와 조건을 함께 확인하세요.',
-      trap:clean(ex[q.id]?.trap).slice(0,300),application:'이 핵심이 쓰인 원래 기출문제를 풀어보세요.',applicationAnswer:'원래 기출 정답: '+q.a+'번.\n'+answer,source,sources:[source]};
-    dedup.set(key,c);cards.push(c);coverage.types[kind]=(coverage.types[kind]||0)+1;
+const META=/빈출|출제자|출제\s*의도|수험생|혼동하게|유도하|유도하는|함정|정답\s*(?:도출|확정|선택)|[①②③④⑤]|[1-5]번이|[1-5]번을|이 문제|이 문항|암기해야|기억하세요|살펴보|확인한다|계산합니다|계산하면/;
+const termText=x=>clean(x).replace(/\([^)]*\)/g,'').replace(/^['"‘“]|['"’”]$/g,'').trim();
+const norm=s=>clean(s).replace(/\s+/g,'').replace(/[.。]$/,'');
+function fieldValue(q,e,field){let v=field==='question'?q.x:e;for(const k of field==='question'?[]:field.split('.'))v=v?.[k];return Array.isArray(v)?v.join(' | '):clean(v);}
+function build(mc,ex,ox,oxex,vars,blocked={},reviewed=[]){
+ const cards=[],questions={},dedup=new Map(),protectedKeys=new Set(),coverage={method:'concept-qa-v2',questions:mc.length,withExplanation:0,covered:0,cards:0,reviewed:0,pendingReview:0,skippedOCR:0,types:{},rejected:0};
+ const byId=new Map(mc.map(q=>[q.id,q]));const bad=q=>![0,'0',false,null,undefined,''].includes(q.ocr);
+ for(const q of mc)questions[q.id]={question:q.x,correct:q.a,label:'제'+q.n+'회 '+['학개론','민법','중개사법','공법','공시법','세법'][q.s]+' '+q.no+'번',year:q.y,topic:q.t};
+ function add(q,field,term,relation,front,back,options={}){
+  term=termText(term);front=clean(front);back=readable(back).replace(/[.。]$/,'');
+  const e=ex[q.id],whole=fieldValue(q,e,field),quote=clean(options.evidence||whole);
+  if(options.sourceHash&&options.sourceHash!==hash(whole)){coverage.rejected++;return;}
+  if(!whole||!quote||!whole.includes(quote)||term.length<2||term.length>42||front.length<4||front.length>100||back.length<2||back.length>150||META.test(front+' '+back)||/\\[A-Za-z]/.test(back)||/^[\d\s.,%+*/=()÷×-]+$/.test(back)){coverage.rejected++;return;}
+  if(!options.reviewed && (/^(?:자체|위탁|혼합|장점|단점|관리주체|관리기관|원칙|예외|기간|요건|종류|대상|목적|효과|기준|특징|정의|의의|의미|내용|비율|계산식|계산법|공식)$/.test(term)||/[+·=]/.test(term)||/(?:한다|된다|낸다|구입|불가|가능|필요)$/.test(term)||(term.match(/\(/g)||[]).length!==(term.match(/\)/g)||[]).length)){coverage.rejected++;return;}
+  const relationKey=q.s+':'+norm(term)+':'+relation;
+  if(!options.reviewed&&protectedKeys.has(relationKey))return;
+  const source={id:q.id,field,quote};const key=relationKey+':'+norm(back),existing=dedup.get(key);
+  if(existing){if(!existing.sources.some(s=>s.id===q.id&&s.field===field))existing.sources.push(source);return;}
+  if(options.reviewed)protectedKeys.add(relationKey);
+  const id='mem-'+hash('qa-v2:'+q.id+':'+field+':'+relation+':'+norm(term));
+  const c={id,title:term,kind:relation==='공식'?'공식 카드':'개념 카드',subject:q.s,prompt:front,answer:back,
+   cloze:options.cloze||front+' [        ]',blankAnswer:options.blank||back,
+   why:clean(options.explanation||''),reviewed:!!options.reviewed,sources:[source]};
+  dedup.set(key,c);cards.push(c);
+ }
+ // 직접 대조한 핵심 카드를 먼저 배치. 원문 근거가 달라지면 누락/검토 대상으로 남김.
+ for(const n of reviewed){const q=byId.get(n.qid);if(q&&!bad(q))add(q,n.field,n.term,n.relation,n.front,n.back,{...n,reviewed:true});}
+ for(const q of mc){
+  if(bad(q)){coverage.skippedOCR++;continue;}const e=ex[q.id];if(!e)continue;coverage.withExplanation++;
+  // 요약·출제 의도·풀이 순서·오답 보기·숫자 계산 예제는 카드로 만들지 않는다.
+  list(e.memo).forEach((raw,i)=>{
+   const text=readable(raw);if(META.test(text))return;
+   const m=/^(.{2,42}?)\s*[:：=]\s*(.{2,150})$/.exec(text);if(!m||/vs|비교|핵심|요령|주의/.test(m[1])||/[,;]|\s+vs\s+/.test(m[2]))return;
+   const term=termText(m[1]);add(q,'memo.'+i,term,'정의',term+'의 의미는?',m[2]);
+  });
+  list(e.formulas).forEach((f,i)=>{
+   const text=readable(f.tex),m=/^(.{1,42}?)\s*=\s*(.{2,130})$/.exec(text);if(!m||/\d/.test(m[1])||/\d/.test(m[2])||/\\[A-Za-z]/.test(m[2]))return;
+   const term=termText(f.name||m[1]);add(q,'formulas.'+i+'.tex',term,'공식',term+'의 식은?',m[2],{cloze:m[1]+' = [        ]',blank:m[2]});
+  });
+  for(const key of ['diagram','diagram2']){
+   const d=e[key];if(d?.type!=='table'||!Array.isArray(d.head))continue;
+   list(d.rows).forEach((row,i)=>{
+    if(!Array.isArray(row)||row.length<2)return;const term=termText(String(row[0]));if(/\d|단계|산출|계산|정답|결과/.test(term))return;
+    row.slice(1).forEach((v,j)=>{const header=clean(d.head[j+1]);if(!/의미|정의|개념|특징|요건|대상|효과|기간|비율|방법|가능 여부|종류/.test(header))return;
+     const definition=/의미|정의|개념/.test(header),relation=definition?'정의':header;
+     add(q,key+'.rows.'+i,term,relation,definition?term+'란?':term+' — '+header+'?',String(v));
+    });
+   });
   }
-  for(const q of mc){
-    questions[q.id]={question:q.x,correct:q.a,label:'제'+q.n+'회 '+['학개론','민법','중개사법','공법','공시법','세법'][q.s]+' '+q.no+'번',year:q.y,topic:q.t,trap:clean(ex[q.id]?.trap).slice(0,300)};
-    if(badOCR(q)){coverage.skippedOCR++;continue;}
-    const e=ex[q.id];if(!e)continue;coverage.withExplanation++;
-    if(e.summary)add(q,'summary',e.summary,'해설 요약');
-    if(e.warn)add(q,'warn',e.warn,'기준·개정 유의');
-    for(const key of ['diagram','diagram2']){const d=e[key];if(d?.type==='table'&&Array.isArray(d.rows))d.rows.forEach((row,i)=>{if(Array.isArray(row))add(q,key+'.rows.'+i,row.map((v,j)=>(d.head?.[j]?d.head[j]+': ':'')+String(v)).join(' · '),'풀이 표');});}
-    list(e.memo).forEach((s,i)=>add(q,'memo.'+i,s,'암기 요약'));
-    list(e.formulas).forEach((f,i)=>{add(q,'formulas.'+i,f.tex,'공식',f.tex,{name:clean(f.name)});if(f.note)add(q,'formulas.'+i+'.note',f.note,'공식 설명');});
-    list(e.steps).forEach((f,i)=>{add(q,'steps.'+i+'.say',f.say,'풀이',f.say,{name:clean(f.title)});if(f.tex)add(q,'steps.'+i+'.tex',f.tex,'계산식',f.tex,{name:clean(f.title)});});
-    if(e.concept)clean(e.concept).split(/(?<=[.!?])\s+/).forEach((s,i)=>add(q,'concept.'+i,s,'개념 해설'));
-    list(e.choices).forEach((c,i)=>{if(c.ox==='O')add(q,'choices.'+i,c.why,'지문 해설');else if(c.fix)add(q,'choices.'+i+'.fix',c.fix,'정정 지문',c.fix);});
-    if(!/틀린|옳지|아닌/.test((q.k||'')+' '+q.x.split('①')[0])){
-      const choices=[...q.x.matchAll(/[①②③④⑤]([^①②③④⑤]*)/g)];
-      if(/^[1-5]$/.test(q.a)){const choice=choices[+q.a-1]?.[1];if(choice)add(q,'correct-choice',choice,'정답 지문');}
-    }
-  }
-  list(ox).forEach((track,ti)=>list(track.items).forEach((it,i)=>{
-    const q=byId.get(it.ref);if(!q||badOCR(q))return;coverage.oxStatements++;
-    if(it.o===1||it.o===true)add(q,'ox.'+ti+'_'+i,it.s,'OX 지문',it.s,{ox:ti+'_'+i});
-    else if(oxex[ti+'_'+i])add(q,'ox.'+ti+'_'+i,oxex[ti+'_'+i],'틀린 지문 해설',oxex[ti+'_'+i],{ox:ti+'_'+i,statement:it.s});
-  }));
-  Object.entries(vars||{}).forEach(([key,v])=>{const m=/^(.+)_([1-5])$/.exec(key),q=m&&byId.get(m[1]);if(!q||badOCR(q))return;if(v.o===1||v.o===true)add(q,'variation.'+key,v.s,'OX 변형 지문');else if(v.fix&&v.bad&&v.s.includes(v.bad))add(q,'variation.'+key,v.s.replace(v.bad,v.fix),'정정 OX 지문');});
-  const seen=new Set();cards.forEach(c=>{c.sources.forEach(s=>seen.add(s.id));c.revision=hash(c.answer+JSON.stringify(c.sources)+JSON.stringify(c.sources.map(s=>questions[s.id])));});coverage.covered=seen.size;coverage.cards=cards.length;
-  const compact=cards.map(c=>({id:c.id,title:c.title,kind:c.kind,subject:c.subject,answer:c.answer,revision:c.revision,sources:c.sources.map(s=>{
-    const {label,year,kind,...o}=s;if(o.quote===clean(c.answer))delete o.quote;return o;
-  })}));
-  const active=compact.filter(c=>blocked[c.id]?.revision!==c.revision&&blocked[c.id]?.answer!==c.answer);coverage.pendingReview=compact.length-active.length;coverage.cards=active.length;return {cards:active,questions,coverage};
+  // 문장 전체가 아니라 명시적인 정의 관계만: 주어와 정의를 함께 유지한다.
+  clean(e.concept).split(/(?<=[다요])\.\s+/).forEach((sentence,i)=>{
+   if(META.test(sentence)||/^(이는|따라서|반면|그러나|또한|이때|특히|여기서)/.test(sentence))return;
+   const m=/^(.{2,42}?)(?:이란|란|은|는)\s+(.{4,145}?)(?:을|를)?\s*(?:뜻합니다|의미합니다|말합니다|뜻한다|의미한다|말한다)[.]?$/.exec(sentence);if(!m)return;
+   const term=termText(m[1]);if(/[,·]|\s(?:및|또는)\s/.test(term))return;
+   add(q,'concept',term,'정의',term+'란?',m[2],{evidence:sentence});
+  });
+ }
+ const active=cards.filter(c=>{c.revision=hash('qa-v2:'+JSON.stringify(c)+JSON.stringify(c.sources.map(s=>questions[s.id])));return blocked[c.id]?.revision!==c.revision&&blocked[c.id]?.answer!==c.answer;});
+ const seen=new Set();active.forEach(c=>{c.sources.forEach(s=>seen.add(s.id));coverage.types[c.kind]=(coverage.types[c.kind]||0)+1;if(c.reviewed)coverage.reviewed++;});coverage.covered=seen.size;coverage.cards=active.length;coverage.pendingReview=cards.length-active.length;
+ return {cards:active,questions,coverage};
 }
-function main(){const read=p=>JSON.parse(fs.readFileSync(path.join(ROOT,p),'utf8'));const d=build(read('data/mc.json'),read('gen/mc_exp.json'),read('data/ox.json'),read('gen/exp.json'),read('gen/ox_var.json'),fs.existsSync(path.join(ROOT,'gen/memory-blocked.json'))?read('gen/memory-blocked.json'):{});
-  fs.writeFileSync(path.join(ROOT,'web/memory-data.js'),'window.MEMORY_META = '+JSON.stringify(d.coverage)+';\nwindow.MEMORY_QUESTIONS = '+JSON.stringify(d.questions)+';\nwindow.MEMORY_CARDS = '+JSON.stringify(d.cards)+';\n');console.log(JSON.stringify(d.coverage));return d;
-}
-if(require.main===module)main();module.exports={build,readable};
+function main(){const read=p=>JSON.parse(fs.readFileSync(path.join(ROOT,p),'utf8').replace(/^\uFEFF/,''));const d=build(read('data/mc.json'),read('gen/mc_exp.json'),[],{},{},fs.existsSync(path.join(ROOT,'gen/memory-blocked.json'))?read('gen/memory-blocked.json'):{},read('data/memory-reviewed.json'));
+ fs.writeFileSync(path.join(ROOT,'web/memory-data.js'),'window.MEMORY_META = '+JSON.stringify(d.coverage)+';\nwindow.MEMORY_QUESTIONS = '+JSON.stringify(d.questions)+';\nwindow.MEMORY_CARDS = '+JSON.stringify(d.cards)+';\n');console.log(JSON.stringify(d.coverage));return d;}
+if(require.main===module)main();module.exports={build,readable,META};
