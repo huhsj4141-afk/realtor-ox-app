@@ -1384,7 +1384,7 @@
           <button class="pc" data-c="ink" style="--c:var(--ink)"></button><button class="pc" data-c="#ef4444" style="--c:#ef4444"></button><button class="pc" data-c="#3b82f6" style="--c:#3b82f6"></button><button class="pc" data-c="#22c55e" style="--c:#22c55e"></button><button class="pc" data-c="#f59e0b" style="--c:#f59e0b"></button>
           <input id="padw" type="range" min="1" max="14" step="1" title="굵기"><i id="padwv"></i>
           <button id="pads" title="그린 선을 곧은 선·네모·동그라미로 맞춰요. 끝에서 펜을 잠깐 멈춰도 맞춰져요">📐</button><button id="padg" title="모눈 맞춤: 곧은 선·네모·동그라미·화살표·글자가 모눈 칸에 딱 맞춰져요">▦</button><button id="padp" title="손바닥이 닿아도 선이 안 그어져요">✋</button></div>
-          <div class="pcw"><canvas id="padc"></canvas><div class="pzm"><button id="padzo" aria-label="축소">－</button><button id="padzl" title="100%로">100%</button><button id="padzi" aria-label="확대">＋</button></div></div></div>
+          <div class="pcw"><canvas id="padc"></canvas><div class="pzm"><button id="padzo" aria-label="축소">－</button><button id="padzl" title="그린 것이 화면에 꽉 차게">100%</button><button id="padzi" aria-label="확대">＋</button></div></div></div>
         <textarea id="padt" placeholder="풀이 메모를 적어 두세요. 문제마다 따로 저장돼요."></textarea></div>`);
       p = document.getElementById('pad');
       // 🎤 누르고 있는 동안 음성 인식 → 떼면 입력
@@ -1462,7 +1462,14 @@
       const cv = p.querySelector('#padc');
       const pos = e => { const r = cv.getBoundingClientRect(), V = PAD.v; return [(e.clientX - r.left) / (r.width * V.s) + V.ox, (e.clientY - r.top) / (r.height * V.s) + V.oy]; };
       p.querySelector('#padzi').onclick = () => padZoom(1.25); p.querySelector('#padzo').onclick = () => padZoom(.8);
-      p.querySelector('#padzl').onclick = () => { Object.assign(PAD.v, { ox: 0, oy: 0, s: 1 }); padDraw(); };
+      p.querySelector('#padzl').onclick = () => {   // % 누르면 그린 것이 화면에 꽉 차게 (확대·축소 둘 다)
+        const r = cv.getBoundingClientRect(), W = r.width || 360, H = r.height || 500; let x0 = 9, y0 = 9, x1 = -9, y1 = -9;
+        PAD.strokes.forEach(st => { if (st.k === 'text') { const fs = st.w || 14, L = String(st.t || '').split('\n'), w = Math.max(...L.map(l => [...l].reduce((v, ch) => v + (/[\x00-\x7f]/.test(ch) ? .6 : 1) * fs, 0))) / W, h = L.length * fs * 1.25 / H, x = st.p[0][0], y = st.p[0][1], a = st.al === 'center' ? x - w / 2 : st.al === 'right' ? x - w : x; x0 = Math.min(x0, a); x1 = Math.max(x1, a + w); y0 = Math.min(y0, y - h / 2); y1 = Math.max(y1, y + h / 2); }
+          else st.p.forEach(q => { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); }); });
+        if (x0 > x1) { Object.assign(PAD.v, { ox: 0, oy: 0, s: 1 }); return padDraw(); }
+        const m = .04, sc = Math.max(.2, Math.min(5, 1 / ((x1 - x0) + m * 2), 1 / ((y1 - y0) + m * 2)));
+        PAD.v = { s: sc, ox: (x0 + x1) / 2 - .5 / sc, oy: (y0 + y1) / 2 - .5 / sc }; padDraw();
+      };
       const T = new Map(); let pinch = null;   // 두 손가락: 벌리면 확대, 모으면 축소, 끌면 이동
       const R4 = v => Math.round(v * 10000) / 10000;
       const palmy = e => PAD.palm && e.pointerType === 'touch' && ((e.width || 0) > 38 || (e.height || 0) > 38);
