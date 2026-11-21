@@ -223,8 +223,8 @@
       mk(document.getElementById('qb'), BM[q.id] ? '★' : '☆', BM[q.id] ? '북마크됨' : '북마크');
       mk(pdfA, '📄', '원본');
       row.insertAdjacentHTML('beforeend', '<button id="qk"></button><button id="qr"></button>');
-      { const k = document.getElementById('qk'); if (k) k.style.display = 'none'; } mk(document.getElementById('qr'), '🚩', '신고');
-      document.getElementById('qk').onclick = () => card(q.t);
+      { const k = document.getElementById('qk'); if (k) k.remove(); } mk(document.getElementById('qr'), '🚩', '신고');
+      { const k2 = document.getElementById('qk'); if (k2) k2.onclick = () => card(q.t); }
       document.getElementById('qr').onclick = () => report(q);
       if (ai) { ai.className = 'btn pri bigai'; row.parentElement.insertBefore(ai, row); if (!pickd) ai.style.display = 'none'; }
       if (calc) { calc.className = 'btn full'; calc.style.marginTop = '8px'; row.parentElement.insertBefore(calc, row); if (!pickd) calc.style.display = 'none'; }
@@ -1686,7 +1686,7 @@ ${q.x}
         const prompt = `공인중개사 기출 문제를 한눈에 이해하게 하는 '풀이 도식'을 만들어. JSON만 출력.
 형식: {"title":"12자 이내 제목","nodes":[{"id":"a","label":"甲\\n매도인","x":15,"y":20}],"edges":[{"from":"a","to":"b","label":"매매계약"}],"steps":["① …","② …","→ 정답 ③ …"]}
 규칙:
-- nodes 2~7개. x·y는 0~100, 서로 25 이상 떨어지게 넓게 배치. label은 한 줄 9자 이내, 최대 두 줄(\\n).
+- nodes 2~7개. x·y는 0~100, 서로 25 이상 떨어지게 넓게 배치. label은 짧게: 한 줄 7자 이내, 최대 두 줄(\\n). 날짜·긴 설명은 label 말고 steps에.
 - edges는 관계·흐름·계산 방향. label은 8자 이내.
 - 사람(甲·乙)·물건·권리·금액 관계가 있으면 그 관계도. 계산 문제면 값 → 계산 → 결과 흐름. 개념 문제면 핵심 개념을 분류 트리로.
 ${pre ? `- steps 3~5줄, 한 줄 28자 이내. 문제를 푸는 순서만 안내하고 정답 번호와 결론은 절대 쓰지 말 것.
@@ -1694,7 +1694,7 @@ ${pre ? `- steps 3~5줄, 한 줄 28자 이내. 문제를 푸는 순서만 안내
 문제: ${q.x}
 정답: ${q.a}
 ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
-        const raw = await window.__gem(prompt, {}, true);
+        const raw = await window.__gem(prompt, { modelTier: 'quick' }, true);
         const mm = String(raw).match(/\{[\s\S]*\}/); try { d = JSON.parse(mm ? mm[0] : raw); } catch (e) { d = null; }
         if (!d || !Array.isArray(d.nodes) || !d.nodes.length) throw new Error('관계도를 못 만들었어요. 다시 길게 눌러 주세요');
         try { localStorage.setItem(key, JSON.stringify(d)); } catch (e) {}
@@ -1709,13 +1709,28 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     const out = [], NF = 14, LF = 12;
     const T = (x, y, t, o = {}) => out.push({ k: 'text', g: 'dia', c: o.c || 'ink', w: o.f || NF, b: o.b ? 1 : 0, al: o.al || 'center', t, p: [[x, y]] });
     if (d.title) T(.05, .05, '🧭 ' + d.title, { al: 'left', f: 16, b: 1, c: '#f59e0b' });
-    const nodes = {}; (d.nodes || []).slice(0, 8).forEach(n => {
-      const lines = String(n.label || n.id).split('\n').slice(0, 2), wpx = Math.max(...lines.map(l => l.length)) * NF * .95 + 18, hpx = lines.length * NF * 1.25 + 12;
-      const x = .1 + Math.min(100, Math.max(0, +n.x || 50)) / 100 * .8, y = .14 + Math.min(100, Math.max(0, +n.y || 50)) / 100 * .44;
-      const hw = wpx / 2 / W, hh = hpx / 2 / H; nodes[n.id] = { x, y, hw, hh };
-      out.push({ k: 'pen', g: 'dia', c: 'ink', w: 2, p: [[x - hw, y - hh], [x + hw, y - hh], [x + hw, y + hh], [x - hw, y + hh], [x - hw, y - hh]], s: 'rect' });
-      T(x, y, lines.join('\n'), { b: 1 });
+    // 자동 배치: AI 좌표는 줄 순서만 참고, 겹치지 않게 줄마다 고르게 나눠 놓음
+    const NF2 = 13, cw = ch => /[\x00-\x7f]/.test(ch) ? NF2 * .62 : NF2 * 1.02;
+    const tw = t => [...t].reduce((v, ch) => v + cw(ch), 0);
+    const wrap = (t, max) => { const out2 = []; String(t).split('\n').forEach(l => { let cur2 = ''; for (const w of l.split(/(\s+)/)) { if (tw(cur2 + w) > max && cur2.trim()) { out2.push(cur2.trim()); cur2 = w.trimStart(); } else cur2 += w; while (tw(cur2) > max) { let k = 1; while (k < cur2.length && tw(cur2.slice(0, k + 1)) <= max) k++; out2.push(cur2.slice(0, k)); cur2 = cur2.slice(k); } } if (cur2.trim()) out2.push(cur2.trim()); }); return out2.slice(0, 3); };
+    const NL = (d.nodes || []).slice(0, 7).map(n => ({ n, y: +n.y || 50, x: +n.x || 50 }));
+    NL.sort((a, b) => a.y - b.y || a.x - b.x);
+    const rows = []; NL.forEach(o => { const r = rows[rows.length - 1]; if (r && Math.abs(r[0].y - o.y) < 18 && r.length < 3) r.push(o); else rows.push([o]); });
+    rows.forEach(r => r.sort((a, b) => a.x - b.x));
+    const nodes = {}; let yTop = 48;
+    rows.forEach(r => {
+      const slot = W / r.length, maxw = Math.min(140, slot - 44);
+      const boxes = r.map(o => { const lines = wrap(o.n.label || o.n.id, maxw - 14); return { o, lines, wpx: Math.min(maxw, Math.max(...lines.map(tw)) + 18), hpx: lines.length * NF2 * 1.3 + 12 }; });
+      const rh = Math.max(...boxes.map(b => b.hpx));
+      boxes.forEach((b, i) => {
+        const x = (slot * (i + .5)) / W, y = (yTop + rh / 2) / H, hw = b.wpx / 2 / W, hh = b.hpx / 2 / H;
+        nodes[b.o.n.id] = { x, y, hw, hh };
+        out.push({ k: 'pen', g: 'dia', c: 'ink', w: 2, p: [[x - hw, y - hh], [x + hw, y - hh], [x + hw, y + hh], [x - hw, y + hh], [x - hw, y - hh]], s: 'rect' });
+        T(x, y, b.lines.join('\n'), { b: 1, f: NF2 });
+      });
+      yTop += rh + 64;
     });
+    const stepY = (yTop - 30) / H;
     const clip = (a, b) => {   // a 상자 가장자리에서 b 쪽으로 나가는 점
       const dx = b.x - a.x, dy = b.y - a.y; const t = Math.min(Math.abs(dx) > 1e-6 ? a.hw / Math.abs(dx) : 9, Math.abs(dy) > 1e-6 ? a.hh / Math.abs(dy) : 9);
       return [a.x + dx * t * 1.08, a.y + dy * t * 1.08];
@@ -1724,9 +1739,13 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
       const a = nodes[e.from], b = nodes[e.to]; if (!a || !b) return;
       const p1 = clip(a, b), p2 = clip(b, a);
       out.push({ k: 'arrow', g: 'dia', c: '#3b82f6', w: 2, p: [p1, p2], s: 'line' });
-      if (e.label) T((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2 - 10 / H, e.label, { c: '#3b82f6', f: LF, b: 1 });
+      if (e.label) {   // 선 옆(수직 방향)으로 살짝 띄워 글자와 안 겹치게
+        const mx = (p1[0] + p2[0]) / 2 * W, my = (p1[1] + p2[1]) / 2 * H, dx = (p2[0] - p1[0]) * W, dy = (p2[1] - p1[1]) * H, L2 = Math.hypot(dx, dy) || 1;
+        let nx = -dy / L2, ny = dx / L2; if (ny > 0) { nx = -nx; ny = -ny; }
+        const off = Math.abs(dy) < 8 && L2 < 70 ? 22 : 15; T((mx + nx * off) / W, (my + ny * off) / H, String(e.label).slice(0, 10), { c: '#3b82f6', f: LF, b: 1 });
+      }
     });
-    (d.steps || []).slice(0, 7).forEach((t, i) => T(.05, .66 + i * 24 / H, String(t), { al: 'left', f: 13 }));
+    (d.steps || []).slice(0, 7).forEach((t, i) => T(.05, stepY + i * 24 / H, String(t), { al: 'left', f: 13 }));
     PAD.hist.push(JSON.stringify(PAD.strokes)); PAD.redo = [];
     PAD.strokes = PAD.strokes.filter(st => st.g !== 'dia').concat(out);
     Object.assign(PAD.v, { ox: 0, oy: 0, s: 1 }); padDraw(); padSave(); if (PAD.paint) PAD.paint();
@@ -2131,7 +2150,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
         window.__toast && __toast('🔎 힌트 찾는 중…');
         const ops = bs.map((b, i) => `${i + 1}. ${b.innerText.replace(/^\s*[①-⑤\d]+[.)]?\s*/, '').split('\n')[0]}`).join('\n');
         try {
-          const raw = await window.__gem(`공인중개사 기출 문제의 각 보기에서, 그 보기가 옳은지 틀린지를 결정하는 핵심 낱말(숫자·기간·주체·요건 등)을 찾아. 보기 원문에 그대로 있는 2~12자 부분만 골라. 정답이나 옳고 그름은 절대 쓰지 말 것. JSON만: {"k":["보기1 핵심","보기2 핵심",...]}\n문제: ${q.x}\n보기:\n${ops}`, {}, true);
+          const raw = await window.__gem(`공인중개사 기출 문제의 각 보기에서, 그 보기가 옳은지 틀린지를 결정하는 핵심 낱말(숫자·기간·주체·요건 등)을 찾아. 보기 원문에 그대로 있는 2~12자 부분만 골라. 정답이나 옳고 그름은 절대 쓰지 말 것. JSON만: {"k":["보기1 핵심","보기2 핵심",...]}\n문제: ${q.x}\n보기:\n${ops}`, { modelTier: 'quick' }, true);
           d = JSON.parse(String(raw).replace(/^```(json)?|```$/g, '').trim()); if (!d || !Array.isArray(d.k)) throw 0;
           try { localStorage.setItem(K, JSON.stringify(d)); } catch (e) {}
         } catch (e) { return window.__toast && __toast('힌트를 못 찾았어요. 잠시 후 다시 길게 눌러 주세요'); }
