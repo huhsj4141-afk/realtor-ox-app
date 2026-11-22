@@ -1,0 +1,18 @@
+name: law
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  law:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 법 개정 확인 (현행 조문 원문 대조)
+        env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', MINUTES: '25', LAW_MAX: '60' }
+        run: python3 tools/law_audit.py || true
+      - name: 저장
+        run: |
+          git config user.name "ox-bot"; git config user.email "ox-bot@users.noreply.github.com"
+          git add gen/law_audit.json 2>/dev/null || true
+          if ! git diff --cached --quiet; then git commit -m "법 개정 확인 [skip ci]"; git stash -u -q 2>/dev/null || true; for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done; gh workflow run build.yml --ref main; fi
+        env: { GH_TOKEN: '${{ github.token }}' }
