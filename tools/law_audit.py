@@ -68,6 +68,7 @@ def main():
     todo = [q for q in pool if not (q['id'] in out and out[q['id']].get('d', '') >= old)][:MAX]
     print('법 개정 확인할 것', len(todo), '/ 남은 전체', sum(1 for q in pool if q['id'] not in out))
     ms, mi, n = models(), 0, 0
+    busy = [0]
     for q in todo:
         if time.time() > DEADLINE or mi >= len(ms): break
         e = ex.get(q['id'])
@@ -80,7 +81,7 @@ def main():
         try:
             # 1) 관련 조문 찾기 → 2) 국가법령정보센터에서 현행 원문 → 3) 원문과 대조
             refs_t, _ = ask_plain(ms[mi], '아래 공인중개사 기출문제를 판단하는 데 필요한 한국 법령 조문을 최대 4개 골라. 시행령·시행규칙 조문이 핵심이면 그것도. JSON만: {"refs":[{"law":"공인중개사법 시행령","jo":"제24조"}]}\n' + base, True)
-            refs = (json.loads(re.sub(r'^```(json)?|```$', '', refs_t.strip())).get('refs') or [])[:4]
+            rj = json.loads(re.sub(r'^```(json)?|```$', '', refs_t.strip())); refs = (rj if isinstance(rj, list) else rj.get('refs') or [])[:4]
             arts = []
             for r_ in refs:
                 try:
@@ -97,12 +98,15 @@ def main():
 {law_txt[:7000]}
 {base}""", False)
         except urllib.error.HTTPError as err:
-            print(' ', ms[mi], err.code); mi += 1; continue
+            print(' ', ms[mi], err.code)
+            if err.code in (500, 502, 503, 504):   # 잠깐 붐빔: 같은 모델로 조금 뒤 다시 (3번까지), 그래도 안 되면 다음 모델
+                busy[0] += 1; time.sleep(20)
+                if busy[0] % 3 == 0: mi += 1
+            else: mi += 1
+            continue
         except Exception as err:
             print('  조문 대조 실패', err)
-        if not t:
-            pass
-        if not t: continue
+        if not t or not src: continue   # 원문 대조를 못 했으면 저장하지 않고 다음에 다시
         t = t.strip(); first = t.split('\n')[0]
         v = 'changed' if '바뀜' in first else 'ok' if '같음' in first else 'unsure'
         lm = re.search(r'법령\s*[:：]\s*([^\n]+)', t)
