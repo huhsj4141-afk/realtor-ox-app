@@ -8,4 +8,4 @@ L = s['LawSearch']['law']; L = L if isinstance(L, list) else [L]
 for l in L[:3]: print(l['법령명한글'], l['법령일련번호'], l['현행연혁코드'])
 mst = [l for l in L if l['법령명한글'] == '공인중개사법 시행령'][0]['법령일련번호']
 b = get(f'https://www.law.go.kr/DRF/lawService.do?OC={OC}&target=law&type=JSON&MST={mst}&JO=002400')
-print(len(b)); print(b[:1500])
+print(len(b)); print(b.replace(chr(10)," ")[:2600])
