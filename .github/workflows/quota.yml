@@ -1,0 +1,9 @@
+name: quota
+on: workflow_dispatch
+jobs:
+  q:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/quota_check.py
+        env: { GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}', GEMINI_API_KEY_2: '${{ secrets.GEMINI_API_KEY_2 }}' }
