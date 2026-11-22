@@ -1,5 +1,5 @@
 import json, os, urllib.request, urllib.parse
-OC = os.environ.get('LAW_OC', '')
+OC = os.environ.get('LAW_OC') or open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'law_oc.txt')).read().strip()
 def get(u):
     req = urllib.request.Request(u, headers={'User-Agent': 'Mozilla/5.0'})
     with urllib.request.urlopen(req, timeout=30) as r: return r.status, r.read().decode('utf8', 'ignore')
