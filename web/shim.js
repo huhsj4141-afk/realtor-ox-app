@@ -55,6 +55,7 @@
     if (!N.key('gemini')) throw Object.assign(new Error('Gemini 키가 없어요 — 귀로 듣기 화면의 🔑 키 설정에서 넣어 주세요'), { code: 'no_key' });
     const body = { contents: [{ parts: [{ text: String(prompt) }] }], generationConfig: { temperature: 0.4 } };
     if (asJson) body.generationConfig.responseMimeType = 'application/json';
+    if (opts && opts.search) body.tools = [{ google_search: {} }];   // 구글 검색으로 최신 정보 확인
     const tier = (opts && opts.modelTier) === 'quick' ? 'quick' : 'default';
     let last = null, busy = false; const t0 = Date.now();
     for (let pass = 0; pass < 2; pass++) {   // 서버가 잠깐 붐벼서(503 등) 실패하면 2.5초 뒤 한 번 더 자동으로
@@ -65,8 +66,9 @@
       try {
         // 한 모델이 45초 넘게 답이 없으면 다음 모델로
         const raw = await Promise.race([call('gemini', m, JSON.stringify(body)), new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT')), 45000))]);
-        const r = JSON.parse(raw);
-        return (((r.candidates || [])[0] || {}).content || { parts: [] }).parts.map(p => p.text || '').join('');
+        const r = JSON.parse(raw), cand = (r.candidates || [])[0] || {};
+        gemini.src = ((cand.groundingMetadata || {}).groundingChunks || []).map(c => c.web).filter(Boolean);
+        return (cand.content || { parts: [] }).parts.map(p => p.text || '').join('');
       } catch (e) {
         last = e; const msg = String(e.message || '');
         if (/HTTP 429/.test(msg)) { if (/PerDay|per ?day|daily/i.test(msg)) localStorage.setItem(skipKey(m), today()); else busy = true; continue; }   // 분당 한도(잠깐 몰림)는 다시 시도, 하루 한도만 오늘 건너뜀
@@ -82,6 +84,7 @@
       throw Object.assign(new Error('지금 AI가 붐벼서 답이 늦어요. 조금 뒤 다시 눌러 주세요. (해설이 없는 문제는 매일 저녁 자동으로 채워져요)'), { code: 'quota', cause: last });
     throw Object.assign(new Error('오늘 무료 AI 사용량을 다 썼어요. 오후 5시 이후에 다시 쓸 수 있어요. (해설이 없는 문제는 매일 저녁 자동으로 채워져요)'), { code: 'quota', cause: last });
   }
+  window.__gemSearch = async prompt => { gemini.src = []; const text = await gemini(prompt, { modelTier: 'default', search: true }, false); return { text, sources: gemini.src || [] }; };
   const sample = async (prompt, opts) => ({ text: await gemini(prompt, opts, false) });
   sample.json = async (prompt, opts) => { const t = await gemini(prompt, opts, true); const m = t.match(/[\[{][\s\S]*[\]}]/); return JSON.parse(m ? m[0] : t); };
 
