@@ -1,0 +1,9 @@
+name: lawapi
+on: workflow_dispatch
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/law_api_test.py
+        env: { LAW_OC: '${{ secrets.LAW_OC }}' }
