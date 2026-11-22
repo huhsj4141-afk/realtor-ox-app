@@ -1238,7 +1238,7 @@
 
   /* ---------- 📝 필기장: 문제마다 따로 저장되는 그리기·메모 (화면 한쪽 작은 버튼) ---------- */
   const PAD = window.__PAD = { open: false, key: '', strokes: [], cur: null, color: 'ink', w: 3, tool: 'pen', snap: true, hist: [], redo: [], tab: 'draw', v: { s: 1, ox: 0, oy: 0 } };
-  const padKey = () => { const q = (cur === 'quiz' && typeof S !== 'undefined' && S && S.list) ? S.list[S.i] : null; return q ? q.id : 'free'; };
+  const padKey = () => { if (cur === 'variant' && window.__vqid) return window.__vqid; const q = (cur === 'quiz' && typeof S !== 'undefined' && S && S.list) ? S.list[S.i] : null; return q ? q.id : 'free'; };
   const padLoad = k => { try { return JSON.parse(localStorage.getItem('reb_pad_' + k) || '[]'); } catch (e) { return []; } };
   function padSave() {
     try {
@@ -1362,7 +1362,7 @@
     if (PAD.key) padSave();
     PAD.key = k; PAD.strokes = padLoad(k); PAD.cur = null; PAD.hist = []; PAD.redo = []; Object.assign(PAD.v, { ox: 0, oy: 0, s: 1 }); if (PAD.paint) PAD.paint();
     const t = document.getElementById('padt'); if (t) { try { t.value = localStorage.getItem('reb_padt_' + k) || ''; } catch (e) { t.value = ''; } }
-    const lb = document.getElementById('padk'); if (lb) lb.textContent = k === 'free' ? '자유 필기' : k.replace(/^(\d+)-(\d)(\d)-(\d+)$/, '$1회 $4번') + ' 필기';
+    const lb = document.getElementById('padk'); if (lb) lb.textContent = k === 'free' ? '자유 필기' : /_v/.test(k) ? k.replace(/^(\d+)-(\d)(\d)-(\d+)_v.*$/, '$1회 $4번 변형') + ' 필기' : k.replace(/^(\d+)-(\d)(\d)-(\d+)$/, '$1회 $4번') + ' 필기';
     padDraw();
   }
   function padTab(t) {
@@ -1849,7 +1849,7 @@ ${q.x}
       const t0w = Date.now(), tk = setInterval(() => { const b = wt.querySelector('b'); if (b) b.textContent = Math.round((Date.now() - t0w) / 1000); }, 1000);
       const wdone = () => { clearInterval(tk); wt.remove(); };
       try {
-        const ex = expOf(q);
+        const ex = q.ex || expOf(q);   // 숫자 바꾼 문제는 그 문제의 풀이를 그대로 넘김
         const prompt = `공인중개사 기출 문제를 한눈에 이해하게 하는 '풀이 도식'을 만들어. JSON만 출력.
 형식: {"title":"12자 이내 제목","calc":[],"nodes":[{"id":"a","label":"甲\\n매도인","x":15,"y":20}],"edges":[{"from":"a","to":"b","label":"매매계약"}],"steps":["① …","② …","→ 정답 ③ …"]}
 규칙:
@@ -2421,6 +2421,19 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
           { const lw2 = lawGet(q.id), ch = document.querySelector('#view .card .chips'); if (ch && lw2 && lw2.v === 'changed' && !ch.querySelector('.lawchip')) { ch.insertAdjacentHTML('beforeend', '<span class="chip lawchip">⚠️ 법 개정</span>'); ch.querySelector('.lawchip').onclick = () => lawCheck(q); } }
           if (!document.getElementById('ovb') && qtx) { qtx.insertAdjacentHTML('beforebegin', `<button class="btn sm" id="ovb" title="지문 위에 바로 밑줄·동그라미">✍ 지문 위 필기</button>`); document.getElementById('ovb').onclick = () => ovToggle(q); }
           ovPaint(q);
+        }
+        // 🔁 숫자 바꾼 문제에서도 관계도·계산식 (버튼 + 문제 글 길게 누르기)
+        if (cur === 'variant' && typeof VAR !== 'undefined' && VAR && VAR.data && !VAR.loading) {
+          const d = VAR.data, b = VAR.base, hid = [...String(d.question)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7).toString(36);
+          const vq = { id: b.id + '_v' + hid, n: b.n, no: b.no, s: b.s, t: b.t, a: String(d.answer), x: d.question + '\n' + (d.choices || []).map((c, i) => '①②③④⑤'[i] + ' ' + c).join('\n'), ex: { formulas: d.formulas, steps: d.steps, memo: d.memo, trap: d.trap } };
+          window.__vqid = vq.id;
+          const vch = document.querySelector('#view .vch');
+          if (vch && !document.getElementById('vdia')) { vch.insertAdjacentHTML('afterend', `<button class="btn" id="vdia" style="width:100%;margin-top:10px">🔗 관계도·계산식 필기장에 그리기</button>`); document.getElementById('vdia').onclick = e => window.makeDiagram(vq, e.currentTarget, true); }
+          const qt2 = document.querySelector('#view .qtext');
+          if (qt2 && qt2.dataset.lpv !== vq.id) { qt2.dataset.lpv = vq.id; let tm = null, x0 = 0, y0 = 0;
+            qt2.addEventListener('pointerdown', e => { x0 = e.clientX; y0 = e.clientY; clearTimeout(tm); tm = setTimeout(() => window.makeDiagram(vq, null, true), 550); });
+            qt2.addEventListener('pointermove', e => { if (Math.abs(e.clientX - x0) + Math.abs(e.clientY - y0) > 12) clearTimeout(tm); });
+            ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => qt2.addEventListener(ev, () => clearTimeout(tm))); }
         }
         if (cur === 'wrong' && !document.getElementById('cfb')) {
           const A = CF(), ids = Object.keys(A).filter(k => BYID[k]), slow = Object.entries(QT()).filter(([k, v]) => BYID[k] && v >= 90).map(([k]) => k);
