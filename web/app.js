@@ -2484,7 +2484,8 @@ ${ex ? '[해설]\n' + JSON.stringify(ex).slice(0, 2500) : ''}`;
       try {
         const r = await window.__gemSearch(prompt), t = String(r.text || '').trim(), first = t.split('\n')[0];
         const v = /바뀜/.test(first) ? 'changed' : /같음/.test(first) ? 'ok' : 'unsure', lm = t.match(/법령\s*[:：]\s*([^\n]+)/);
-        d = { v, law: lm ? lm[1].trim() : '', t: t.split('\n').slice(1).filter(l => !/^법령\s*[:：]/.test(l)).join('\n').trim(), src: (r.sources || []).map(x => ({ uri: x.uri, title: x.title })), at: new Date().toLocaleDateString('ko-KR') };
+        if (r.offline) t = t;
+        d = { v, law: lm ? lm[1].trim() : '', t: t.split('\n').slice(1).filter(l => !/^법령\s*[:：]/.test(l)).join('\n').trim(), src: (r.sources || []).map(x => ({ uri: x.uri, title: x.title })), at: new Date().toLocaleDateString('ko-KR') + (r.offline ? ' (검색 없이 AI 지식으로 — 국가법령정보센터로 꼭 확인)' : '') };
         try { localStorage.setItem(K, JSON.stringify(d)); } catch (e) {}
         if (document.getElementById('lawp')) show(d);
       } catch (e) { document.getElementById('lawp')?.remove(); window.__toast && __toast(e.message || '확인하지 못했어요'); }

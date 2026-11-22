@@ -46,6 +46,7 @@
      한도 초과한 모델은 그날 하루 건너뛰어요. */
   const CHAIN = {
     quick: ['gemini-3.5-flash-lite', 'gemini-2.5-flash-lite', 'gemini-3.5-flash', 'gemini-2.5-flash'],
+    search: ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-3.6-flash'],   // 구글 검색 붙인 요청: 빠르고 검색 한도 넉넉한 순
     default: ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash-lite']
   };
   const today = () => new Date().toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' });   // 무료 한도는 미국 서부 자정(한국 오후 5시)에 다시 채워짐
@@ -56,16 +57,16 @@
     const body = { contents: [{ parts: [{ text: String(prompt) }] }], generationConfig: { temperature: 0.4 } };
     if (asJson) body.generationConfig.responseMimeType = 'application/json';
     if (opts && opts.search) body.tools = [{ google_search: {} }];   // 구글 검색으로 최신 정보 확인
-    const tier = (opts && opts.modelTier) === 'quick' ? 'quick' : 'default';
+    const tier = (opts && opts.modelTier) === 'quick' ? 'quick' : (opts && opts.modelTier) === 'search' ? 'search' : 'default';
     let last = null, busy = false; const t0 = Date.now();
     for (let pass = 0; pass < 2; pass++) {   // 서버가 잠깐 붐벼서(503 등) 실패하면 2.5초 뒤 한 번 더 자동으로
-    if (pass) { if (!busy) break; busy = false; await new Promise(r => setTimeout(r, 4000)); }
+    if (pass) { if (!busy || (opts && opts.noRetry)) break; busy = false; await new Promise(r => setTimeout(r, 4000)); }
     for (const m of CHAIN[tier]) {
       if (localStorage.getItem(skipKey(m)) === today()) continue;
       if (Date.now() - t0 > 100000) break;             // 전체로 너무 오래 걸리면 그만(무한 대기 방지)
       try {
         // 한 모델이 45초 넘게 답이 없으면 다음 모델로
-        const raw = await Promise.race([call('gemini', m, JSON.stringify(body)), new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT')), 45000))]);
+        const raw = await Promise.race([call('gemini', m, JSON.stringify(body)), new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT')), (opts && opts.timeout) || 45000))]);
         const r = JSON.parse(raw), cand = (r.candidates || [])[0] || {};
         gemini.src = ((cand.groundingMetadata || {}).groundingChunks || []).map(c => c.web).filter(Boolean);
         return (cand.content || { parts: [] }).parts.map(p => p.text || '').join('');
@@ -84,7 +85,15 @@
       throw Object.assign(new Error('지금 AI가 붐벼서 답이 늦어요. 조금 뒤 다시 눌러 주세요. (해설이 없는 문제는 매일 저녁 자동으로 채워져요)'), { code: 'quota', cause: last });
     throw Object.assign(new Error('오늘 무료 AI 사용량을 다 썼어요. 오후 5시 이후에 다시 쓸 수 있어요. (해설이 없는 문제는 매일 저녁 자동으로 채워져요)'), { code: 'quota', cause: last });
   }
-  window.__gemSearch = async prompt => { gemini.src = []; const text = await gemini(prompt, { modelTier: 'default', search: true }, false); return { text, sources: gemini.src || [] }; };
+  // 법령 확인: 검색 전용 모델 순서로, 한 번에 90초까지 기다림 → 그래도 안 되면 검색 없이 AI 지식으로라도 답 (표시)
+  window.__gemSearch = async prompt => {
+    gemini.src = [];
+    try { const text = await gemini(prompt, { modelTier: 'search', search: true, timeout: 90000, noRetry: true }, false); return { text, sources: gemini.src || [] }; }
+    catch (e) {
+      const text = await gemini(prompt + '\n(검색을 못 썼어. 네가 아는 최신 법령 지식으로 답하되, 확실하지 않으면 [불확실]로)', { modelTier: 'quick', timeout: 60000 }, false);
+      return { text, sources: [], offline: true };
+    }
+  };
   const sample = async (prompt, opts) => ({ text: await gemini(prompt, opts, false) });
   sample.json = async (prompt, opts) => { const t = await gemini(prompt, opts, true); const m = t.match(/[\[{][\s\S]*[\]}]/); return JSON.parse(m ? m[0] : t); };
 
