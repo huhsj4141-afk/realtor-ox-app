@@ -2384,6 +2384,12 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
             const n = +el.dataset.n; el.classList.toggle('cfz', cf.includes(n));
             if (!el.dataset.cf) { el.dataset.cf = 1; let lt = 0, lx = 0, ly = 0; el.addEventListener('pointerup', ev => { const t = performance.now(), dbl = t - lt < 320 && Math.abs(ev.clientX - lx) + Math.abs(ev.clientY - ly) < 24; lt = dbl ? 0 : t; lx = ev.clientX; ly = ev.clientY; if (!dbl) return; ev.preventDefault(); const A = CF(), L = A[q.id] || [], i = L.indexOf(n); i >= 0 ? L.splice(i, 1) : L.push(n); if (L.length) A[q.id] = L; else delete A[q.id]; LSS('reb_conf2', A); el.classList.toggle('cfz', L.includes(n)); try { haptic && haptic(); } catch (x) {} }); }
           });
+          // 🔗 연관 문제: 더보기 안 + 답한 뒤 해설 위에
+          const relN = relList(q).length;
+          const tb2 = document.querySelector('.qdock .qmore .qtb');
+          if (tb2 && !tb2.querySelector('#qrel2')) { tb2.insertAdjacentHTML('afterbegin', `<button class="btn" id="qrel2"><span class="ic">🔗</span>연관 문제 ${relN}</button>`); tb2.querySelector('#qrel2').onclick = () => relAdd(S.list[S.i]); }
+          else if (tb2) { const b3 = tb2.querySelector('#qrel2'); if (b3 && b3.dataset.q !== q.id) { b3.dataset.q = q.id; b3.innerHTML = `<span class="ic">🔗</span>연관 문제 ${relN}`; } }
+          const fbx2 = document.querySelector('#view .fb'); if (fbx2 && relN && !document.getElementById('qrel3')) { fbx2.insertAdjacentHTML('afterend', `<button class="btn" id="qrel3" style="width:100%;margin:8px 0">🔗 이 문제와 같은 주제 ${Math.min(3, relN)}문제 이어 풀기 <small>(전체 ${relN})</small></button>`); document.getElementById('qrel3').onclick = () => relAdd(q); }
           if (!document.getElementById('ovb') && qtx) { qtx.insertAdjacentHTML('beforebegin', `<button class="btn sm" id="ovb" title="지문 위에 바로 밑줄·동그라미">✍ 지문 위 필기</button>`); document.getElementById('ovb').onclick = () => ovToggle(q); }
           ovPaint(q);
         }
@@ -2396,6 +2402,21 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
         }
       } catch (e) {}
     }, 400);
+    // 🔗 연관 문제: 같은 주제(테마) 기출 → 모자라면 같은 단원 제목
+    function relList(q) {
+      const inL = new Set((S && S.list || []).map(x => x.id)), k = tkey(q);
+      let L = Q.filter(x => !x.ocr && x.id !== q.id && !inL.has(x.id) && graded(x) && tkey(x) === k);
+      if (L.length < 3) L = L.concat(Q.filter(x => !x.ocr && x.id !== q.id && !inL.has(x.id) && graded(x) && x.s === q.s && x.t === q.t && !L.includes(x)));
+      return L.sort((a, b) => (P[a.id] ? 1 : 0) - (P[b.id] ? 1 : 0) || b.n - a.n);   // 안 푼 것·최근 회차 먼저
+    }
+    function relAdd(q) {
+      const L = relList(q).slice(0, 3); if (!L.length) return window.__toast && __toast('같은 주제 기출이 더 없어요');
+      S.list.splice(S.i + 1, 0, ...L); S.sim = S.sim || {}; L.forEach(x => S.sim[x.id] = 1);
+      window.__toast && __toast(`🔗 같은 주제 ${L.length}문제가 바로 다음에 이어져요`);
+      const b = document.getElementById('qrel3'); if (b) { b.disabled = true; b.textContent = `✓ 다음에 ${L.length}문제 이어져요`; }
+      document.querySelector('.qdock')?.classList.remove('open');
+      try { const h = document.querySelector('#view .qhead, #view .ttl'); } catch (e) {}
+    }
     // ✍ 지문 위 필기: 문제 카드 위에 투명한 층 (문제마다 저장, 화면과 같이 스크롤)
     const OV = { on: false, q: null };
     function ovCanvas() {
