@@ -2446,7 +2446,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     }, 400);
     // ⚖ 최신 법령 확인: 구글 검색으로 지금 법과 맞는지 (문제마다 결과 저장)
     let LAWDB = null; const lawDB = () => { if (LAWDB === null) { LAWDB = asset('law_audit.json') || {}; if (!Object.keys(LAWDB).length) try { fetch('law_audit.json').then(r => r.json()).then(j => { LAWDB = j || {}; }).catch(() => {}); } catch (e) {} } return LAWDB; };
-    const lawGet = id => { let d = null; try { d = JSON.parse(localStorage.getItem('reb_law_' + id)); } catch (e) {} if (!d) { const a = lawDB()[id]; if (a) d = { v: a.v, law: a.law, t: a.t, src: a.src || [], at: (a.d || '') + ' 자동' }; } return d; };
+    const lawGet = id => { let d = null; try { d = JSON.parse(localStorage.getItem('reb_law_' + id)); } catch (e) {} if (!d) { const a = lawDB()[id]; if (a) d = { v: a.v, law: a.law, t: a.t, src: a.src || [], at: (a.d || '') + ' 자동' + (a.web === false ? ' (검색 없이 AI 지식으로 — 국가법령정보센터로 꼭 확인)' : '') }; } return d; };
     window.lawGet = lawGet;
     async function lawCheck(q) {
       const K = 'reb_law_' + q.id; let d = lawGet(q.id);

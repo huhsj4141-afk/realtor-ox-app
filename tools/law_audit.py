@@ -24,8 +24,22 @@ def models():
     return (fx[:2] + fl[:2]) or ['gemini-2.5-flash', 'gemini-2.5-flash-lite']
 
 
+SEARCH = {'ok': True}   # 무료 키는 구글 검색 붙이기가 막혀 있을 수 있음 → 한 번 막히면 그날은 검색 없이
+
+
 def ask(model, text):
-    body = json.dumps({'contents': [{'parts': [{'text': text}]}], 'tools': [{'google_search': {}}], 'generationConfig': {'temperature': 0.2}}).encode()
+    if SEARCH['ok']:
+        try:
+            return _ask(model, text, True)
+        except urllib.error.HTTPError as e:
+            if e.code != 429: raise
+            SEARCH['ok'] = False; print('  구글 검색 한도 없음 → 검색 없이 AI 지식으로 확인')
+    t, _ = _ask(model, text + '\n(검색 없이 네가 아는 최신 법령 지식으로. 확실하지 않으면 [불확실])', False)
+    return t, []
+
+
+def _ask(model, text, search):
+    body = json.dumps({'contents': [{'parts': [{'text': text}]}], **({'tools': [{'google_search': {}}]} if search else {}), 'generationConfig': {'temperature': 0.2}}).encode()
     req = urllib.request.Request(f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={KEY}', body, {'Content-Type': 'application/json'})
     with urllib.request.urlopen(req, timeout=120) as r:
         j = json.load(r)
@@ -75,7 +89,7 @@ def main():
         v = 'changed' if '바뀜' in first else 'ok' if '같음' in first else 'unsure'
         lm = re.search(r'법령\s*[:：]\s*([^\n]+)', t)
         body = '\n'.join(l for l in t.split('\n')[1:] if not re.match(r'^\s*법령\s*[:：]', l)).strip()
-        out[q['id']] = {'v': v, 'law': lm.group(1).strip()[:40] if lm else '', 't': body[:900], 'src': src, 'd': today, 'm': ms[mi]}
+        out[q['id']] = {'v': v, 'law': lm.group(1).strip()[:40] if lm else '', 't': body[:900], 'src': src, 'd': today, 'm': ms[mi], 'web': bool(src)}
         n += 1
         print(q['id'], v)
         json.dump(out, open(OUT, 'w', encoding='utf8'), ensure_ascii=False, separators=(',', ':'))

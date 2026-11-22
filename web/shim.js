@@ -72,7 +72,7 @@
         return (cand.content || { parts: [] }).parts.map(p => p.text || '').join('');
       } catch (e) {
         last = e; const msg = String(e.message || '');
-        if (/HTTP 429/.test(msg)) { if (/PerDay|per ?day|daily/i.test(msg)) localStorage.setItem(skipKey(m), today()); else busy = true; continue; }   // 분당 한도(잠깐 몰림)는 다시 시도, 하루 한도만 오늘 건너뜀
+        if (/HTTP 429/.test(msg)) { if (opts && opts.search) continue; if (/PerDay|per ?day|daily/i.test(msg)) localStorage.setItem(skipKey(m), today()); else busy = true; continue; }   // 검색 한도 초과는 일반 요청 한도와 따로   // 분당 한도(잠깐 몰림)는 다시 시도, 하루 한도만 오늘 건너뜀
         if (/HTTP (500|502|503|504)|TIMEOUT/.test(msg)) { busy = true; continue; }
         if (/HTTP 404/.test(msg)) continue;
         if (/resolve host|UnknownHost|Failed to connect|Network|ENOTFOUND|timeout|No address|connection/i.test(msg))
