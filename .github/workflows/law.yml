@@ -1,7 +1,6 @@
 name: law
 on: workflow_dispatch
-permissions:
-  contents: write
+permissions: { contents: write, actions: write }
 jobs:
   law:
     runs-on: ubuntu-latest
