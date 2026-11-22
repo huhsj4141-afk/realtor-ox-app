@@ -184,6 +184,19 @@ class WebActivity : Activity() {
         @JavascriptInterface fun setToday(json: String) { this@WebActivity.getSharedPreferences("ox", android.content.Context.MODE_PRIVATE).edit().putString("today", json).apply() }
         @JavascriptInterface fun openOx() = runOnUiThread { startActivity(Intent(this@WebActivity, MainActivity::class.java)); @Suppress("DEPRECATION") overridePendingTransition(0, 0) }
 
+        /** 국가법령정보센터 조문 가져오기 (law.go.kr 만 허용) */
+        @JavascriptInterface fun httpGet(id: String, url: String) {
+            io.execute {
+                val (ok, text) = try {
+                    val u = java.net.URL(url)
+                    if (u.host != "www.law.go.kr" && u.host != "law.go.kr") throw Exception("허용 안 된 주소")
+                    val c = u.openConnection() as java.net.HttpURLConnection
+                    c.connectTimeout = 15000; c.readTimeout = 30000; c.setRequestProperty("User-Agent", "Mozilla/5.0")
+                    true to c.inputStream.bufferedReader().readText()
+                } catch (e: Exception) { false to (e.message ?: "실패") }
+                js("__nb('$id',$ok,${JSONObject.quote(text)})")
+            }
+        }
         @JavascriptInterface fun gemini(id: String, model: String, body: String) {
             io.execute {
                 val (ok, text) = try { true to Net.gemini(this@WebActivity, model, body) } catch (e: Exception) { false to (e.message ?: "실패") }

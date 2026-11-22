@@ -2446,7 +2446,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     }, 400);
     // ⚖ 최신 법령 확인: 구글 검색으로 지금 법과 맞는지 (문제마다 결과 저장)
     let LAWDB = null; const lawDB = () => { if (LAWDB === null) { LAWDB = asset('law_audit.json') || {}; if (!Object.keys(LAWDB).length) try { fetch('law_audit.json').then(r => r.json()).then(j => { LAWDB = j || {}; }).catch(() => {}); } catch (e) {} } return LAWDB; };
-    const lawGet = id => { let d = null; try { d = JSON.parse(localStorage.getItem('reb_law_' + id)); } catch (e) {} if (!d) { const a = lawDB()[id]; if (a) d = { v: a.v, law: a.law, t: a.t, src: a.src || [], at: (a.d || '') + ' 자동' + (a.web === false ? ' (검색 없이 AI 지식으로 — 국가법령정보센터로 꼭 확인)' : '') }; } return d; };
+    const lawGet = id => { let d = null; try { d = JSON.parse(localStorage.getItem('reb_law_' + id)); } catch (e) {} if (!d) { const a = lawDB()[id]; if (a) d = { v: a.v, law: a.law, t: a.t, src: a.src || [], at: (a.d || '') + ' 자동' + (a.basis === 'law' ? ' · 현행 원문과 대조' : a.web === false ? ' (검색 없이 AI 지식으로 — 국가법령정보센터로 꼭 확인)' : '') }; } return d; };
     window.lawGet = lawGet;
     async function lawCheck(q) {
       const K = 'reb_law_' + q.id; let d = lawGet(q.id);
@@ -2454,12 +2454,12 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
         document.getElementById('lawp')?.remove();
         const v = d && d.v, col = v === 'ok' ? 'var(--ok)' : v === 'changed' ? 'var(--no)' : 'var(--warn)', lab = v === 'ok' ? '✅ 지금 법과 같아요' : v === 'changed' ? '⚠️ 법이 바뀌었어요' : '❓ 확인이 더 필요해요';
         document.body.insertAdjacentHTML('beforeend', `<div id="lawp"><div class="hpb"><div class="hph"><b>⚖ 최신 법령 확인 · ${q.n}회 ${q.no}번</b><button id="lwx" aria-label="닫기">✕</button></div>
-          ${loading ? `<div class="ai"><div class="spin"></div>법령·개정 소식을 찾아보는 중… (10~40초)</div>` : `
+          ${loading ? `<div class="ai"><div class="spin"></div>현행 조문 원문을 가져와 대조하는 중… (10~40초)</div>` : `
           <div class="lwv" style="color:${col}">${lab}</div>
           <div class="lwt">${esc(d.t || '').replace(/\n/g, '<br>')}</div>
-          ${(d.src || []).length ? `<h4>찾아본 곳</h4>${d.src.slice(0, 5).map(x => `<a class="lws" href="${esc(x.uri)}" target="_blank" rel="noopener">🔗 ${esc(x.title || x.uri)}</a>`).join('')}` : ''}
+          ${(d.src || []).length ? `<h4>근거 조문·찾아본 곳</h4>${d.src.slice(0, 5).map(x => `<a class="lws" href="${esc(x.uri)}" target="_blank" rel="noopener">🔗 ${esc(x.title || x.uri)}</a>`).join('')}` : ''}
           <a class="lws" href="https://www.law.go.kr/LSW/lsSc.do?query=${encodeURIComponent((d.law || SUBS[q.s] || '').split(/[,·]/)[0])}" target="_blank" rel="noopener">📜 국가법령정보센터에서 직접 보기</a>
-          <div class="muted" style="font-size:12px;margin-top:10px">${esc(d.at || '')} 확인 · AI가 검색해 정리한 결과라 중요한 건 법령 원문으로 한 번 더 확인하세요</div>
+          <div class="muted" style="font-size:12px;margin-top:10px">${esc(d.at || '')} 확인 · AI가 정리한 결과라 중요한 건 아래 원문 링크로 한 번 더 확인하세요</div>
           <div class="arow" style="margin-top:10px"><button class="btn" id="lwre">🔄 다시 확인</button>${v === 'changed' ? '<button class="btn" id="lwrp">🚩 신고에 남기기</button>' : ''}</div>`}</div></div>`);
         if (d && !loading) { const b2 = document.getElementById('qlaw2'); if (b2) b2.textContent = v === 'ok' ? '✅ 최신 법령 확인됨' : v === 'changed' ? '⚠️ 법이 바뀐 문제 — 보기' : '❓ 법령 확인 결과 보기'; }
         const p2 = document.getElementById('lawp'); p2.onclick = e => { if (e.target === p2 || e.target.id === 'lwx') p2.remove(); };
@@ -2482,10 +2482,30 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
 ${q.x}
 ${ex ? '[해설]\n' + JSON.stringify(ex).slice(0, 2500) : ''}`;
       try {
-        const r = await window.__gemSearch(prompt), t = String(r.text || '').trim(), first = t.split('\n')[0];
+        // 1) 관련 조문 고르기 → 2) 국가법령정보센터 현행 원문 → 3) 원문과 대조 (안 되면 검색/AI 지식)
+        let r = null;
+        try {
+          if (window.__lawArticle) {
+            const base = prompt.split('[출제]')[1] ? '[출제]' + prompt.split('[출제]')[1] : prompt;
+            const rj = JSON.parse(await window.__gem('아래 공인중개사 기출문제를 판단하는 데 필요한 한국 법령 조문을 최대 4개 골라. 시행령·시행규칙 조문이 핵심이면 그것도. JSON만: {"refs":[{"law":"공인중개사법 시행령","jo":"제24조"}]}\n' + base, { modelTier: 'quick' }, true));
+            const arts = (await Promise.all((rj.refs || []).slice(0, 4).map(x => window.__lawArticle(x.law, x.jo).catch(() => null)))).filter(Boolean);
+            if (arts.length) {
+              const t2 = await window.__gem(`오늘은 ${today2}이야. 아래 [현행 조문 원문](국가법령정보센터에서 방금 가져온 오늘 시행 중인 법)과 기출문제·해설을 대조해 줘.
+- 원문과 문제·해설의 숫자·기간·금액·요건이 다르면 [바뀜], 같으면 [같음], 원문만으로 판단이 어려우면 [불확실].
+- 첫 줄에 판정 하나만, 둘째 줄: 법령: ○○법
+- 그 아래 쉬운 말로 3~6문장: 원문 어느 조문 기준으로 무엇이 같은지/다른지, 지금 법 기준으로 정답이 달라지는지. 해요체.
+[현행 조문 원문]
+${arts.map(a => '■ ' + a.law + ' ' + a.jo + '\n' + a.text).join('\n\n').slice(0, 7000)}
+${base}`, { modelTier: 'default' }, false);
+              r = { text: t2, sources: arts.map(a => ({ uri: a.uri, title: a.law + ' ' + a.jo + ' (현행 원문)' })), law: true };
+            }
+          }
+        } catch (e) {}
+        if (!r) r = await window.__gemSearch(prompt);
+        const t = String(r.text || '').trim(), first = t.split('\n')[0];
         const v = /바뀜/.test(first) ? 'changed' : /같음/.test(first) ? 'ok' : 'unsure', lm = t.match(/법령\s*[:：]\s*([^\n]+)/);
         if (r.offline) t = t;
-        d = { v, law: lm ? lm[1].trim() : '', t: t.split('\n').slice(1).filter(l => !/^법령\s*[:：]/.test(l)).join('\n').trim(), src: (r.sources || []).map(x => ({ uri: x.uri, title: x.title })), at: new Date().toLocaleDateString('ko-KR') + (r.offline ? ' (검색 없이 AI 지식으로 — 국가법령정보센터로 꼭 확인)' : '') };
+        d = { v, law: lm ? lm[1].trim() : '', t: t.split('\n').slice(1).filter(l => !/^법령\s*[:：]/.test(l)).join('\n').trim(), src: (r.sources || []).map(x => ({ uri: x.uri, title: x.title })), at: new Date().toLocaleDateString('ko-KR') + (r.law ? ' · 국가법령정보센터 현행 원문과 대조' : r.offline ? ' (검색 없이 AI 지식으로 — 국가법령정보센터로 꼭 확인)' : '') };
         try { localStorage.setItem(K, JSON.stringify(d)); } catch (e) {}
         if (document.getElementById('lawp')) show(d);
       } catch (e) { document.getElementById('lawp')?.remove(); window.__toast && __toast(e.message || '확인하지 못했어요'); }

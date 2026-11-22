@@ -3,6 +3,8 @@
 - 순서: 개정이 잦은 과목(중개사법 → 공법 → 세법 → 공시법 → 민법) · 오래된 회차부터 · 180일 지나면 다시 확인
 - LAW_MAX(기본 40)개 또는 MINUTES 안에서만, 하루 한도(429)면 다음 모델 → 다 막히면 그만"""
 import json, os, re, sys, time, urllib.request, urllib.error
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lawsrc
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KEY = os.environ['GEMINI_API_KEY']
 OUT = os.path.join(ROOT, 'gen', 'law_audit.json')
@@ -38,6 +40,14 @@ def ask(model, text):
     return t, []
 
 
+def ask_plain(model, text, as_json):
+    body = json.dumps({'contents': [{'parts': [{'text': text}]}], 'generationConfig': {'temperature': 0.2, **({'responseMimeType': 'application/json'} if as_json else {})}}).encode()
+    req = urllib.request.Request(f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={KEY}', body, {'Content-Type': 'application/json'})
+    with urllib.request.urlopen(req, timeout=120) as r:
+        j = json.load(r)
+    return ''.join(p.get('text', '') for p in j['candidates'][0]['content']['parts']), []
+
+
 def _ask(model, text, search):
     body = json.dumps({'contents': [{'parts': [{'text': text}]}], **({'tools': [{'google_search': {}}]} if search else {}), 'generationConfig': {'temperature': 0.2}}).encode()
     req = urllib.request.Request(f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={KEY}', body, {'Content-Type': 'application/json'})
@@ -61,35 +71,43 @@ def main():
     for q in todo:
         if time.time() > DEADLINE or mi >= len(ms): break
         e = ex.get(q['id'])
-        prompt = f"""오늘은 {today}이야. 아래 공인중개사 기출문제와 해설이 오늘 시행 중인 법령·판례와 맞는지 구글 검색으로 확인해 줘.
-- 출제 당시 이후 개정된 조문·금액·기간·요건이 있는지 특히 찾아봐. 확실한 근거가 없으면 [불확실].
-- 첫 줄에 판정 하나만: [같음] 또는 [바뀜] 또는 [불확실]
-- 둘째 줄: 법령: ○○법
-- 그 아래 쉬운 말로 3~6문장: 무엇이 바뀌었는지(언제부터, 근거 조문), 지금 법 기준으로 정답이 달라지는지. 해요체.
-[출제] 제{q.get('n')}회 {SUBS[q['s']]}
+        base = f"""[출제] 제{q.get('n')}회 {SUBS[q['s']]}
 [정답] {q['a']}번
 [문제]
 {q['x'][:1800]}
-{('[해설]' + chr(10) + json.dumps(e, ensure_ascii=False)[:2200]) if e else ''}"""
-        while mi < len(ms):
-            try:
-                t, src = ask(ms[mi], prompt); break
-            except urllib.error.HTTPError as err:
-                body = err.read().decode('utf8', 'ignore')
-                qid = re.findall(r'"quotaId":\s*"([^"]+)"', body); rd = re.findall(r'"retryDelay":\s*"([^"]+)"', body)
-                print(' ', ms[mi], err.code, (qid or [''])[0], (rd or [''])[0], re.sub(r'\s+', ' ', body)[:200])
-                if err.code in (429, 404, 400): mi += 1; continue
-                time.sleep(5); t = None; break
-            except Exception as err:
-                print(' ', err); t = None; break
-        else:
-            break
+{('[해설]' + chr(10) + json.dumps(e, ensure_ascii=False)[:2000]) if e else ''}"""
+        t = None; src = []
+        try:
+            # 1) 관련 조문 찾기 → 2) 국가법령정보센터에서 현행 원문 → 3) 원문과 대조
+            refs_t, _ = ask_plain(ms[mi], '아래 공인중개사 기출문제를 판단하는 데 필요한 한국 법령 조문을 최대 4개 골라. 시행령·시행규칙 조문이 핵심이면 그것도. JSON만: {"refs":[{"law":"공인중개사법 시행령","jo":"제24조"}]}\n' + base, True)
+            refs = (json.loads(re.sub(r'^```(json)?|```$', '', refs_t.strip())).get('refs') or [])[:4]
+            arts = []
+            for r_ in refs:
+                try:
+                    a_ = lawsrc.article(r_.get('law', ''), r_.get('jo', ''))
+                    if a_: arts.append(a_); src.append({'uri': lawsrc.link(a_[0], a_[1]), 'title': f'{a_[0]} {a_[1]} (현행 원문)'})
+                except Exception as er: print('  조문 실패', r_, er)
+            if arts:
+                law_txt = '\n\n'.join(f'■ {a_[0]} {a_[1]}\n{a_[2]}' for a_ in arts)
+                t, _ = ask_plain(ms[mi], f"""오늘은 {today}이야. 아래 [현행 조문 원문](국가법령정보센터에서 방금 가져온 오늘 시행 중인 법)과 기출문제·해설을 대조해 줘.
+- 원문과 문제·해설의 숫자·기간·금액·요건이 다르면 [바뀜], 같으면 [같음], 원문만으로 판단이 어려우면 [불확실].
+- 첫 줄에 판정 하나만, 둘째 줄: 법령: ○○법
+- 그 아래 쉬운 말로 3~6문장: 원문 어느 조문 기준으로 무엇이 같은지/다른지, 지금 법 기준으로 정답이 달라지는지. 해요체.
+[현행 조문 원문]
+{law_txt[:7000]}
+{base}""", False)
+        except urllib.error.HTTPError as err:
+            print(' ', ms[mi], err.code); mi += 1; continue
+        except Exception as err:
+            print('  조문 대조 실패', err)
+        if not t:
+            pass
         if not t: continue
         t = t.strip(); first = t.split('\n')[0]
         v = 'changed' if '바뀜' in first else 'ok' if '같음' in first else 'unsure'
         lm = re.search(r'법령\s*[:：]\s*([^\n]+)', t)
         body = '\n'.join(l for l in t.split('\n')[1:] if not re.match(r'^\s*법령\s*[:：]', l)).strip()
-        out[q['id']] = {'v': v, 'law': lm.group(1).strip()[:40] if lm else '', 't': body[:900], 'src': src, 'd': today, 'm': ms[mi], 'web': bool(src)}
+        out[q['id']] = {'v': v, 'law': lm.group(1).strip()[:40] if lm else '', 't': body[:900], 'src': src, 'd': today, 'm': ms[mi], 'web': bool(src), 'basis': 'law' if src else 'ai'}
         n += 1
         print(q['id'], v)
         json.dump(out, open(OUT, 'w', encoding='utf8'), ensure_ascii=False, separators=(',', ':'))

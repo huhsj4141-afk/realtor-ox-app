@@ -85,6 +85,29 @@
       throw Object.assign(new Error('지금 AI가 붐벼서 답이 늦어요. 조금 뒤 다시 눌러 주세요. (해설이 없는 문제는 매일 저녁 자동으로 채워져요)'), { code: 'quota', cause: last });
     throw Object.assign(new Error('오늘 무료 AI 사용량을 다 썼어요. 오후 5시 이후에 다시 쓸 수 있어요. (해설이 없는 문제는 매일 저녁 자동으로 채워져요)'), { code: 'quota', cause: last });
   }
+  // 국가법령정보센터 Open API: 현행 조문 원문
+  const LAW_OC = 'huhsj4141', _mst = {};
+  const lawJSON = async u => JSON.parse(await call('httpGet', u));
+  const nz = t => String(t || '').replace(/\s/g, '');
+  async function lawMst(name) {
+    if (_mst[name] !== undefined) return _mst[name];
+    const j = await lawJSON(`https://www.law.go.kr/DRF/lawSearch.do?OC=${LAW_OC}&target=law&type=JSON&display=20&query=${encodeURIComponent(name)}`);
+    let L = (j.LawSearch || {}).law || []; L = Array.isArray(L) ? L : [L];
+    const h = L.find(l => nz(l['법령명한글']) === nz(name)) || L.find(l => nz(l['법령명한글']).includes(nz(name)));
+    return (_mst[name] = h ? [h['법령일련번호'], h['법령명한글']] : null);
+  }
+  const flat = x => typeof x === 'string' ? x : Array.isArray(x) ? x.map(flat).join('\n') : x && typeof x === 'object' ? ['조문내용', '항내용', '호내용', '목내용', '항', '호', '목'].filter(k => k in x).map(k => flat(x[k])).filter(Boolean).join('\n') : '';
+  window.__lawArticle = async (law, jo) => {
+    if (!N || !N.httpGet) return null;
+    const m = String(jo).match(/(\d+)\s*조(?:\s*의\s*(\d+))?/); if (!m) return null;
+    const ms = await lawMst(law); if (!ms) return null;
+    const code = String(+m[1]).padStart(4, '0') + String(+(m[2] || 0)).padStart(2, '0');
+    const j = await lawJSON(`https://www.law.go.kr/DRF/lawService.do?OC=${LAW_OC}&target=law&type=JSON&MST=${ms[0]}&JO=${code}`);
+    let u = (((j['법령'] || {})['조문'] || {})['조문단위']); if (!u) return null; u = Array.isArray(u) ? u : [u];
+    const txt = u.map(flat).join('\n').replace(/<[^>]+>/g, '').trim(); if (!txt) return null;
+    const jo2 = String(jo).replace(/\s/g, '');
+    return { law: ms[1], jo: jo2, text: txt.slice(0, 3000), uri: 'https://www.law.go.kr/법령/' + encodeURIComponent(ms[1]) + '/' + encodeURIComponent(jo2) };
+  };
   // 법령 확인: 검색 전용 모델 순서로, 한 번에 90초까지 기다림 → 그래도 안 되면 검색 없이 AI 지식으로라도 답 (표시)
   window.__gemSearch = async prompt => {
     gemini.src = [];
