@@ -61,8 +61,9 @@ def main():
             try:
                 t, src = ask(ms[mi], prompt); break
             except urllib.error.HTTPError as err:
-                body = err.read().decode('utf8', 'ignore')[:300]
-                print(' ', ms[mi], err.code, body[:120])
+                body = err.read().decode('utf8', 'ignore')
+                qid = re.findall(r'"quotaId":\s*"([^"]+)"', body); rd = re.findall(r'"retryDelay":\s*"([^"]+)"', body)
+                print(' ', ms[mi], err.code, (qid or [''])[0], (rd or [''])[0], re.sub(r'\s+', ' ', body)[:200])
                 if err.code in (429, 404, 400): mi += 1; continue
                 time.sleep(5); t = None; break
             except Exception as err:
