@@ -265,7 +265,7 @@
               try {
                 const t = await gemini(`너는 공인중개사 시험 강사야. 아래 기출문제를 수험생이 완전히 이해하도록 더 자세히, 쉬운 말로 설명해 줘. 왜 그 보기가 정답인지, 헷갈리는 보기는 왜 아닌지, 관련 개념과 암기 요령까지. 해요체, 8문장 안팎. 소리 내어 읽기 좋게 괄호·한자·기호는 쓰지 마.\n[정답] ${q.a}번\n[문제]\n${q.x}`, { modelTier: 'default' }, false);
                 try { localStorage.setItem(MK, t); } catch (e) {}
-                const same = typeof S !== 'undefined' && S && S.list && S.list[S.i] && S.list[S.i].id === q.id && cur === 'quiz';   // 다른 문제로 넘어갔으면 엉뚱한 곳에 넣지 않고 알림
+                const same = typeof S !== 'undefined' && S && S.list && S.list[S.i] && S.list[S.i].id === q.id && document.getElementById('moreBox');   // 다른 문제로 넘어갔으면 엉뚱한 곳에 넣지 않고 알림
                 const nb = document.getElementById('moreBox'); if (nb && same) show(nb, t);
                 else if (window.__done) __done(`📖 ${q.n}회 ${q.no}번 자세한 해설이 완성됐어요 · 다시 풀면 바로 보여요`, () => startQuiz([q], { from: 'home', title: '해설 완성된 문제' }));
               } catch (e) {

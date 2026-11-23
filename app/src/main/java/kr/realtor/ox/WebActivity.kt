@@ -43,7 +43,14 @@ class WebActivity : Activity() {
             }
         }, 1500)
     }
-    override fun onNewIntent(i: Intent) { super.onNewIntent(i); setIntent(i); goTab(i) }
+    override fun onNewIntent(i: Intent) { super.onNewIntent(i); setIntent(i); goTab(i); takeShared(i) }
+    /** 제미나이·챗GPT에서 '공유 → 중개사 앱' 한 답을 받아 지금 문제에 붙임 */
+    private fun takeShared(i: Intent?) {
+        if (i?.action != Intent.ACTION_SEND) return
+        val t = i.getStringExtra(Intent.EXTRA_TEXT) ?: return
+        i.action = null
+        web.postDelayed({ js("window.__shared&&__shared(${JSONObject.quote(t)})") }, if (loaded) 300 else 2500)
+    }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(b: Bundle?) {
@@ -68,7 +75,7 @@ class WebActivity : Activity() {
             webChromeClient = WebChromeClient()
             // 인터넷 주소(원본 PDF·신고 등)는 앱 밖 브라우저로 열기
             webViewClient = object : android.webkit.WebViewClient() {
-                override fun onPageFinished(v: WebView, url: String) { loaded = true; goTab(intent); measureTabs() }
+                override fun onPageFinished(v: WebView, url: String) { loaded = true; goTab(intent); measureTabs(); takeShared(intent) }
                 override fun shouldOverrideUrlLoading(v: WebView, r: android.webkit.WebResourceRequest): Boolean {
                     val u = r.url
                     if (u.scheme == "http" || u.scheme == "https") {
@@ -184,6 +191,7 @@ class WebActivity : Activity() {
         @JavascriptInterface fun setToday(json: String) { this@WebActivity.getSharedPreferences("ox", android.content.Context.MODE_PRIVATE).edit().putString("today", json).apply() }
         @JavascriptInterface fun openOx() = runOnUiThread { startActivity(Intent(this@WebActivity, MainActivity::class.java)); @Suppress("DEPRECATION") overridePendingTransition(0, 0) }
 
+        @JavascriptInterface fun clipText(): String = try { (getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).primaryClip?.getItemAt(0)?.coerceToText(this@WebActivity)?.toString() ?: "" } catch (e: Exception) { "" }
         /** 제미나이·챗GPT 앱에 질문 넘기기 (내 유료 구독으로 답 받기). 앱이 없으면 공유 창 */
         @JavascriptInterface fun askApp(pkg: String, text: String) {
             runOnUiThread {
