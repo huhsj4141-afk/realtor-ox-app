@@ -103,4 +103,6 @@ jobs:
           cp app/build/outputs/apk/release/app-release.apk realtor-ox.apk
           echo ${{ github.run_number }} > version.txt
           gh release delete latest -y --cleanup-tag 2>/dev/null || true
-          gh release create latest realtor-ox.apk version.txt -t "중개사 OX 듣기 v${{ github.run_number }}" -n "폰에서 realtor-ox.apk 를 받아 설치하세요"
+          for d in $(gh api repos/${{ github.repository }}/releases -q '.[]|select(.draft)|.id'); do gh api -X DELETE repos/${{ github.repository }}/releases/$d || true; done
+          git push origin :refs/tags/latest 2>/dev/null || true
+          gh release create latest realtor-ox.apk version.txt -t "중개사 OX 듣기 v${{ github.run_number }}" -n "폰에서 realtor-ox.apk 를 받아 설치하세요" --latest
