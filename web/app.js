@@ -53,7 +53,7 @@
     .conf{display:flex;gap:6px;align-items:center;flex-wrap:nowrap} .conf .lb{flex:none!important;margin-right:4px}
     .svd{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:2px;background:rgba(22,163,74,.18);color:#16a34a} .svd.no{background:rgba(148,163,184,.2);color:#94a3b8} .bigai .svd{background:rgba(255,255,255,.25);color:#fff}
     nav.tabs button{position:relative} nav.tabs button b{width:56px;margin:0 auto;border-radius:14px} nav.tabs button.on b{background:var(--pri2)} nav.tabs button.on::before{content:'';position:absolute;top:0;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--pri)}
-    #hdrb{display:flex;gap:4px;margin-left:auto;margin-right:2px} #say,#padb,#nzb,#calcb,#helpb{position:relative;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:17px;cursor:pointer;padding:0} header.top{position:sticky;top:0;z-index:50;background:var(--bg)} #say.on{background:#ef4444;color:#fff;border-color:#ef4444} @keyframes sayp{50%{box-shadow:0 0 0 10px rgba(239,68,68,.15)}} #moreSay{display:none}
+    #hdrb{display:flex;gap:3px;margin-left:auto;padding-left:4px;margin-right:0;flex:none} #hdrb > button{width:32px!important;height:32px!important;font-size:16px!important} #hdrb #ver{font-size:18px;font-weight:400;color:var(--ink)} #pscore{min-width:0;flex:0 1 auto;overflow:hidden} #say,#padb,#nzb,#calcb,#helpb,#hdrb #ver{position:relative;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:17px;cursor:pointer;padding:0} header.top{position:sticky;top:0;z-index:50;background:var(--bg)} #say.on{background:#ef4444;color:#fff;border-color:#ef4444} @keyframes sayp{50%{box-shadow:0 0 0 10px rgba(239,68,68,.15)}} #moreSay{display:none}
         #padb.has::after{content:'';position:absolute;top:4px;right:4px;width:9px;height:9px;border-radius:50%;background:#facc15}
     #pad{position:fixed;left:0;right:0;bottom:0;height:56vh;z-index:80;background:var(--card);border-top:1px solid var(--line);border-radius:18px 18px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.4);display:flex;flex-direction:column;transform:translateY(105%);transition:transform .18s}
     #pad.show{transform:none} 
@@ -560,7 +560,8 @@
     const v = appVer(); if (!v) return;
     const top = document.querySelector('header.top'); if (!top) return;
     let el = document.getElementById('ver');
-    if (!el) { el = document.createElement('button'); el.id = 'ver'; top.appendChild(el); const sy = document.getElementById('sync'); if (sy) sy.style.display = 'none'; }
+    if (!el) { el = document.createElement('button'); el.id = 'ver'; (document.getElementById('hdrb') || top).appendChild(el); const sy = document.getElementById('sync'); if (sy) sy.style.display = 'none'; }
+    if (el.parentNode !== document.getElementById('hdrb') && document.getElementById('hdrb')) document.getElementById('hdrb').appendChild(el);
     el.textContent = '⚙'; el.title = '설정'; el.setAttribute('aria-label', '설정');
     el.onclick = () => setPanel(v);
     try { const pv = +localStorage.getItem('reb_ver') || 0; if (pv && pv < v && window.__toast) window.__toast('✅ v' + v + '로 업데이트됐어요'); localStorage.setItem('reb_ver', v); } catch (e) {}
@@ -1090,7 +1091,7 @@
   function hdrPut(b) {
     const top = document.querySelector('header.top'); if (!top) { document.body.appendChild(b); return; }
     let g = document.getElementById('hdrb'); if (!g) { g = document.createElement('div'); g.id = 'hdrb'; top.appendChild(g); }
-    const v = document.getElementById('ver'); g.appendChild(b); if (v) top.appendChild(v);
+    const v = document.getElementById('ver'); g.appendChild(b); if (v) g.appendChild(v);
   }
   /* ---------- 해설 군더더기 숨기기: 계산 문제가 아니면 '풀이 순서·공식'(보기마다 같은 말 반복)과 '보기 정리'(이미 보기 밑에 나옴), 맨 아래 안내문 ---------- */
   function trimEx() {
