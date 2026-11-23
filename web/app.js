@@ -1059,12 +1059,14 @@
     document.body.insertAdjacentHTML('beforeend', `<div id="setp" class="nzp"><div class="nzh"><b>🎨 화면 색</b><button id="spx" aria-label="닫기">✕</button></div>
       <div class="thg">${sw}</div>
       <button id="sph" class="nzoff">📳 터치 진동 ${(() => { try { return !window.NativeBridge || !NativeBridge.hapticOn || NativeBridge.hapticOn(); } catch (e) { return true; } })() ? '켬' : '끔'}</button>
+      <button class="nzoff" id="spai">${localStorage.getItem('reb_noai') === '1' ? '🤖 AI 기능: 꺼짐 (누르면 켜기)' : '🤖 AI 기능: 켜짐 (누르면 끄기)'}</button>
       <button class="nzoff" onclick="backupNow()">💾 기록 백업 (구글 드라이브에 저장)</button><button class="nzoff" onclick="backupRestore()">📂 백업에서 되돌리기</button>
       <button id="spu" class="nzoff">${nv ? '⬇ 새 버전 v' + LATEST + ' 받기' : '지금 v' + v + ' · 업데이트 확인'}</button></div>`);
     p = document.getElementById('setp');
     p.querySelector('#spx').onclick = () => p.remove();
     p.querySelectorAll('.thm').forEach(b => b.onclick = () => { applyTheme(b.dataset.t); p.querySelectorAll('.thm').forEach(x => x.classList.toggle('on', x === b)); });
     p.querySelector('#sph').onclick = e => { try { const nb = NativeBridge, v = !nb.hapticOn(); nb.setHaptic(v); e.target.textContent = '📳 터치 진동 ' + (v ? '켬' : '끔'); if (v) nb.tap(false); } catch (x) {} };
+    const sai = p.querySelector('#spai'); if (sai) sai.onclick = () => { const off = localStorage.getItem('reb_noai') === '1'; localStorage.setItem('reb_noai', off ? '0' : '1'); sai.textContent = off ? '🤖 AI 기능: 켜짐 (누르면 끄기)' : '🤖 AI 기능: 꺼짐 (누르면 켜기)'; window.__toast && __toast(off ? 'AI 기능을 켰어요' : 'AI 없이 쓰기: 관계도·기초부터·힌트는 해설과 용어 사전으로 만들어요'); };
     p.querySelector('#spu').onclick = () => { try { if (nv) NB.update(); else { if (window.__toast) window.__toast('새 버전 확인 중…'); NB.checkUpdate(); } } catch (e) {} p.remove(); };
   }
   function updBanner() {
@@ -1811,15 +1813,27 @@ ${q.x}
       box.innerHTML = '<div class="fb na" style="font-weight:400;margin-top:8px"><span class="spin"></span> <b id="begT">기초부터 설명을 만드는 중… 0초</b><div class="muted" style="font-size:13px;margin-top:4px">길게 만드느라 보통 20~60초 걸려요. 다른 문제로 넘어가도 괜찮아요.</div></div>';
       const tick = setInterval(() => { const e = document.getElementById('begT'); if (e) e.textContent = '기초부터 설명을 만드는 중… ' + Math.round((Date.now() - t0) / 1000) + '초'; else clearInterval(tick); }, 1000);
       try {
+        if (!aiOK()) throw 0;
         const t = await window.__gem(begPrompt(q), { modelTier: 'default' }, false);
         try { localStorage.setItem(K, t); } catch (e) {}
         if (document.getElementById('begBox') === box) { show(t); btn.innerHTML = '🐣 처음부터 알려줘 <span class="svd">✓ 저장됨</span>'; }
         else window.__done && __done(`🐣 ${q.n}회 ${q.no}번 '기초부터' 설명이 완성됐어요 · 다시 풀면 바로 보여요`, () => startQuiz([q], { from: 'home', title: '기초부터 완성된 문제' }));
       } catch (e) {
-        if (document.getElementById('begBox') === box) box.innerHTML = '<div class="fb no">' + (e.message || '만들지 못했어요') + '</div>';
+        if (document.getElementById('begBox') === box) show(localBeg(q));   // AI 없이도: 용어 사전 + 해설로 만든 기초 설명
       } finally { clearInterval(tick); btn.disabled = false; }
     };
   }
+  function localBeg(q) {
+    const ex = expOf(q) || {}, G = window.__GLOSS || GLX(), x = String(q.x || '');
+    const terms = Object.keys(G).filter(k => k.length >= 2 && x.includes(k)).sort((a, b) => b.length - a.length).slice(0, 8);
+    const out = ['(AI 없이 용어 사전과 해설로 만든 기초 설명이에요)'];
+    if (terms.length) out.push('🧩 먼저 알아 둘 말', ...terms.map(k => `• ${k}: ${G[k]}`), '');
+    if (ex.concept) out.push('💡 핵심 개념', String(ex.concept), '');
+    if ((ex.memo || []).length) out.push('📌 외울 것', ...ex.memo.map(m => '• ' + m), '');
+    if (ex.trap) out.push('⚠️ 함정', String(ex.trap));
+    return out.join('\n');
+  }
+  function GLX() { try { return asset('glossary.json') || {}; } catch (e) { return {}; } }
   setInterval(decorateBeg, 600);
 
   /* ---------- 이전/다음으로 넘어갈 때: 안 푼 문제는 맨 위부터, 푼 문제는 보던 자리 그대로 ---------- */
@@ -1838,6 +1852,28 @@ ${q.x}
   /* ---------- 해설 묶음: [📖 해설(+자세히) | 🐣 기초부터] 탭 하나로, 도구 버튼은 맨 아래 한 줄 ---------- */
 
   /* 🧭 풀이 도식: AI가 관계도·순서를 만들어 필기장에 그려 줌 (그 위에 바로 메모) */
+  /* ---------- AI 없이도: 쓸 수 있나 + 규칙으로 만드는 관계도 ---------- */
+  const aiOK = () => { try { return localStorage.getItem('reb_noai') !== '1' && navigator.onLine !== false && !!window.__gem; } catch (e) { return false; } };
+  window.aiOK = aiOK;
+  function localDia(q, pre) {
+    const x = String(q.x || ''), ex = q.ex || expOf(q) || {};
+    const P2 = [...new Set((x.match(/[甲乙丙丁戊己]/g) || []))].slice(0, 6);
+    const ROLE = { 甲: '', 乙: '', 丙: '', 丁: '', 戊: '', 己: '' };
+    const ACT = ['근저당권', '저당권', '전세권', '지상권', '지역권', '가등기', '임대차', '임대', '임차', '매매', '매도', '매수', '증여', '대여', '대리', '위임', '보증', '양도', '교환', '상속', '유증', '명의신탁', '경매', '소유권이전', '중개', '점유', '채무', '공사'];
+    const edges = [], seen = new Set();
+    x.split(/[.。\n]/).forEach(sen => {
+      const re = /([甲乙丙丁戊己])[은는이가]?\s*(?:[^甲乙丙丁戊己]{0,12}?)([甲乙丙丁戊己])(?:에게|으로부터|로부터|와|과|의)/g; let m;
+      while ((m = re.exec(sen))) { if (m[1] === m[2]) continue; const act = ACT.find(a => sen.includes(a)) || ''; const k = m[1] + m[2]; if (seen.has(k)) continue; seen.add(k); edges.push({ from: m[1], to: m[2], label: act }); if (act && !ROLE[m[2]]) ROLE[m[2]] = ({ 매도: '매수인', 매매: '매수인', 임대: '임차인', 임대차: '임차인', 대여: '채무자', 증여: '수증자', 근저당권: '', 저당권: '' })[act] || ''; }
+    });
+    const nodes = P2.map((p, i) => ({ id: p, label: p + (ROLE[p] ? '\n' + ROLE[p] : ''), x: 15 + (i % 3) * 35, y: 20 + Math.floor(i / 3) * 40 }));
+    const calc = (ex.formulas || []).slice(0, 2).map(f => (f.name ? f.name + ': ' : '') + String(f.tex || '').replace(/\\(times)/g, '×').replace(/\\div/g, '÷').replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g, '($1)/($2)').replace(/\\[a-z]+/g, '').replace(/[{}]/g, '')).concat((ex.steps || []).slice(0, 4).map(st => String(st.tex || '').replace(/\\times/g, '×').replace(/\\div/g, '÷').replace(/\\rightarrow/g, '→').replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g, '($1)/($2)').replace(/\\[a-z]+/g, '').replace(/[{}]/g, '')).filter(Boolean)).slice(0, 6);
+    const steps = (ex.steps || []).slice(0, 5).map((st, i) => '①②③④⑤'[i] + ' ' + String(st.title || st.say || '').slice(0, 28));
+    if (!pre && q.a) steps.push('→ 정답 ' + q.a + '번' + (ex.summary ? ' · ' + String(ex.summary).slice(0, 22) : ''));
+    if (!nodes.length) { (ex.memo || []).slice(0, 4).forEach((mm, i) => { const t = String(mm).split(/[:：]/)[0].slice(0, 12); nodes.push({ id: 'm' + i, label: t, x: 15 + (i % 2) * 60, y: 20 + Math.floor(i / 2) * 40 }); }); }
+    if (!nodes.length) nodes.push({ id: 't', label: String(q.t || '핵심').slice(0, 14), x: 50, y: 30 });
+    return { calcTitle: /계산|얼마|금액|산출|산정|\d+\s*%/.test(x) ? '🧮 계산식' : '📐 핵심 정리', title: (q.t || '풀이 도식').slice(0, 14) + ' (AI 없이)', nodes, edges, steps, calc: pre ? calc.map((c, i, A) => i === A.length - 1 && /=/.test(c) ? c.replace(/=\s*[^=]*$/, '= ?') : c) : calc };
+  }
+  window.localDia = localDia;
   async function makeDiagram(q, btn, pre) {
     const solved = !!document.querySelector('#view .fb');
     pre = pre && !solved;   // 아직 안 풀었으면 정답 없이
@@ -1864,11 +1900,12 @@ ${pre ? `- steps 3~5줄, 한 줄 28자 이내. 문제를 푸는 순서만 안내
 문제: ${q.x}
 정답: ${q.a}
 ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
+        if (!aiOK()) throw { local: 1 };
         const raw = await window.__gem(prompt, { modelTier: 'quick' }, true);
         const mm = String(raw).match(/\{[\s\S]*\}/); try { d = JSON.parse(mm ? mm[0] : raw); } catch (e) { d = null; }
-        if (!d || !Array.isArray(d.nodes) || !d.nodes.length) throw new Error('관계도를 못 만들었어요. 다시 길게 눌러 주세요');
+        if (!d || !Array.isArray(d.nodes) || !d.nodes.length) throw new Error('관계도를 못 만들었어요');
         try { localStorage.setItem(key, JSON.stringify(d)); } catch (e) {}
-      } catch (e) { wdone(); window.__toast && __toast(e.message || '관계도를 못 만들었어요'); if (btn) { btn.disabled = false; btn.innerHTML = old; } return; }
+      } catch (e) { d = localDia(q, pre); if (!(e && e.local)) window.__toast && __toast('AI를 못 써서 문제 글과 해설로 간단히 그렸어요'); }   // AI 없이도: 규칙으로
       wdone();
       if (btn) { btn.disabled = false; btn.innerHTML = old; }
       const here = (cur === 'quiz' && typeof S !== 'undefined' && S && S.list && S.list[S.i] && S.list[S.i].id === q.id) || (cur === 'variant' && window.__vqid === q.id);
@@ -1919,7 +1956,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     });
     let sy = stepY;
     const CL = (d.calc || []).filter(Boolean).slice(0, 7);
-    if (CL.length) { T(.05, sy, '🧮 계산식', { al: 'left', f: 14, b: 1, c: '#22c55e' }); sy += 26 / H; CL.forEach(t => { T(.08, sy, String(t), { al: 'left', f: 15, b: 1, c: '#22c55e' }); sy += 27 / H; }); sy += 14 / H; }
+    if (CL.length) { T(.05, sy, d.calcTitle || '🧮 계산식', { al: 'left', f: 14, b: 1, c: '#22c55e' }); sy += 26 / H; CL.forEach(t => { T(.08, sy, String(t), { al: 'left', f: 15, b: 1, c: '#22c55e' }); sy += 27 / H; }); sy += 14 / H; }
     (d.steps || []).slice(0, 7).forEach((t, i) => T(.05, sy + i * 24 / H, String(t), { al: 'left', f: 13 }));
     PAD.hist.push(JSON.stringify(PAD.strokes)); PAD.redo = [];
     PAD.strokes = PAD.strokes.filter(st => st.g !== 'dia').concat(out);
@@ -1998,7 +2035,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     more.style.display = 'none';
     const onAi = tabs.querySelector('.on')?.dataset.x !== 'beg';
     mb.style.display = onAi ? '' : 'none';
-    if (onAi && !mOpen && !more.disabled && more.dataset.auto !== q.id) { more.dataset.auto = q.id; setTimeout(() => { try { more.click(); } catch (e) {} }, 300); }
+    if (onAi && aiOK() && !mOpen && !more.disabled && more.dataset.auto !== q.id) { more.dataset.auto = q.id; setTimeout(() => { try { more.click(); } catch (e) {} }, 300); }
   }
   function xshow(k, load) {
     const card = document.querySelector('#view .card'); if (!card) return;
@@ -2316,7 +2353,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     // ── 더 자세히·기초부터 미리 받아 두기: 오늘 풀 문제를 뒤에서 조용히 ──
     let PF = false;
     async function prefetch(list) {
-      if (PF || !window.__gem || !navigator.onLine) return; PF = true;
+      if (PF || !window.__gem || !navigator.onLine || !aiOK()) return; PF = true;
       const has = k => { try { return !!localStorage.getItem(k); } catch (e) { return true; } };
       const morePrompt = q => `너는 공인중개사 시험 강사야. 아래 기출문제를 수험생이 완전히 이해하도록 더 자세히, 쉬운 말로 설명해 줘. 왜 그 보기가 정답인지, 헷갈리는 보기는 왜 아닌지, 관련 개념과 암기 요령까지. 해요체, 8문장 안팎. 소리 내어 읽기 좋게 괄호·한자·기호는 쓰지 마.\n[정답] ${q.a}번\n[문제]\n${q.x}`;
       try {
@@ -2337,6 +2374,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
       const K = 'reb_key_' + q.id; let d = null; try { d = JSON.parse(localStorage.getItem(K)); } catch (e) {}
       const OPS = () => { const e = [...document.querySelectorAll('#view .qtext .elc')]; return e.length ? e : [...document.querySelectorAll('#view .choices button')].filter(b => b.innerText.trim().length > 3); };
       const bs = OPS(); if (!bs.length) return;
+      if (!d && !aiOK()) d = { k: bs.map(b => { const t = b.innerText; const m = t.match(TRAP) || t.match(/\d[\d,.]*\s*(?:년|개월|일|월|억|만|원|%|퍼센트|분의\s*\d+|이상|이하|초과|미만)/) || t.match(/(?:시[·ㆍ]?도지사|시장[·ㆍ]?군수[·ㆍ]?구청장|국토교통부장관|등록관청|법원|등기관|지적소관청)/); TRAP.lastIndex = 0; return m ? m[0] : ''; }), local: 1 };   // AI 없이: 숫자·기간·주체·함정 표현
       if (!d) {
         if (!window.__gem) return window.__toast && __toast('인터넷 연결이 필요해요');
         window.__toast && __toast('🔎 힌트 찾는 중…');
@@ -2471,7 +2509,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
         const rp = document.getElementById('lwrp'); if (rp) rp.onclick = () => { try { const A = LSJ('reb_lawflag', {}); A[q.id] = { at: d.at, t: (d.t || '').slice(0, 300) }; LSS('reb_lawflag', A); } catch (e) {} document.getElementById('lawp')?.remove(); try { report(q); setTimeout(() => { const m = document.getElementById('rpm'); if (m) m.value = '[법령 개정] ' + (d.t || '').slice(0, 500); }, 60); } catch (e) {} };
       };
       if (d) return show(d);
-      if (!window.__gemSearch) return window.__toast && __toast('앱에서만 쓸 수 있어요');
+      if (!window.__gemSearch || !aiOK()) { show({ v: 'unsure', law: '', t: 'AI 없이 쓰는 중이라 자동 대조는 못 했어요. 아직 밤 자동 확인도 안 된 문제예요. 아래 국가법령정보센터에서 관련 법령 원문을 직접 확인해 주세요.', src: [], at: '' }); return; }
       show(null, true);
       let ex = null; try { ex = window.__mcx && __mcx(q.id); } catch (e) {}
       const today2 = new Date().toISOString().slice(0, 10);
@@ -2525,6 +2563,10 @@ ${base}`, { modelTier: 'default' }, false);
       b.querySelector('.db2').onclick = () => b.remove();
       setTimeout(() => b.remove(), 15000);
     };
+    if (typeof variant === 'function' && !window.__noaiVar) {
+      window.__noaiVar = 1; const _v0 = variant;
+      window.variant = function (arg) { if (!aiOK()) { window.__toast && __toast('숫자 바꾸기는 AI가 있어야 돼요. 대신 같은 주제 계산 문제를 이어 드릴게요'); try { const q0 = (arg && arg.q) || (S && S.list && S.list[S.i]); if (q0 && cur === 'quiz') relAdd(q0); } catch (e) {} return; } return _v0.apply(this, arguments); };
+    }
     if (typeof variant === 'function' && !window.__varWrapped) {
       window.__varWrapped = 1; const _var = variant;
       window.variant = async function (arg) {

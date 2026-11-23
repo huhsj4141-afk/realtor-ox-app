@@ -57,6 +57,7 @@
     const body = { contents: [{ parts: [{ text: String(prompt) }] }], generationConfig: { temperature: 0.4 } };
     if (asJson) body.generationConfig.responseMimeType = 'application/json';
     if (opts && opts.search) body.tools = [{ google_search: {} }];   // 구글 검색으로 최신 정보 확인
+    try { if (localStorage.getItem('reb_noai') === '1') { const e = new Error('AI 기능을 꺼 두었어요 (⚙ 설정에서 켜기)'); e.code = 'ai_off'; throw e; } } catch (e) { if (e.code === 'ai_off') throw e; }
     const tier = (opts && opts.modelTier) === 'quick' ? 'quick' : (opts && opts.modelTier) === 'search' ? 'search' : 'default';
     let last = null, busy = false; const t0 = Date.now();
     for (let pass = 0; pass < 2; pass++) {   // 서버가 잠깐 붐벼서(503 등) 실패하면 2.5초 뒤 한 번 더 자동으로
