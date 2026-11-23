@@ -1643,7 +1643,7 @@
     const HELP = {
       head: ['위쪽 버튼', [['예상 점수', '지금까지 푼 결과로 계산한 1차·2차 예상 점수. 누르면 기록 화면'], ['🌊', '공부할 때 틀어 두는 집중 소리(빗소리 등)'], ['🔊', '지금 화면 글을 소리 내어 읽기'], ['📝', '필기장 (문제마다 따로 저장)'], ['🧮', '시험장 일반 계산기']]],
       home: ['오늘 화면', [['▶ 문제 풀기', '틀린 문제 + 새 기출을 알아서 섞어 줘요. 이것만 누르면 돼요'], ['카드 N', '어제 "다시 볼래요" 한 개념이 문제 전에 먼저 나와요'], ['📆 하루 N문제', '시험일까지 3회독이 되도록 저절로 계산'], ['🎧 암기 듣기', '묻고 3초 쉬고 답. 화면을 꺼도 계속 읽어요'], ['🔥 N일', '연속 공부한 날 (주 1회 빠져도 이어져요)']]],
-      quiz: ['문제 화면', [['문제 글 길게 누르기', '🔗 관계도·🧮 계산식을 필기장에 그려 줘요 (풀기 전엔 정답 없이)'], ['보기 길게 누르기', '참·거짓을 가르는 낱말에 노란 물결 밑줄 (힌트)'], ['보기 옆으로 밀기', '아닌 보기에 줄 긋기 (소거법)'], ['보기 두 번 톡톡', '❓ 헷갈린 보기 표시 → 오답 탭에서 모아 풀기'], ['주황 밑줄', '"할 수 있다·하여야 한다·이상·이하" 같은 함정 표현'], ['점선 밑줄 낱말', '누르면 용어 설명'], ['✍ 지문 위 필기', '문제 위에 바로 밑줄·동그라미'], ['틀리면', '핵심 1줄 카드 + 같은 주제 기출 1문제가 다음에 자동으로'], ['⋯ 더보기', '⚖ 최신 법령 확인 · 🔗 연관 문제 3개 더 · 🔁 숫자 바꾸기 · 원본 · 🚩 신고'], ['⚖ 지금 법에도 맞나요?', '답한 뒤 누르면 구글 검색으로 개정 여부 확인 (결과 저장)'], ['⏱', '문제마다 걸린 시간 자동 기록 (1분 30초 넘으면 따로 모아 줘요)']]],
+      quiz: ['문제 화면', [['문제 글 길게 누르기', '🔗 관계도·🧮 계산식을 필기장에 그려 줘요 (풀기 전엔 정답 없이)'], ['보기 길게 누르기', '참·거짓을 가르는 낱말에 노란 물결 밑줄 (힌트)'], ['보기 옆으로 밀기', '아닌 보기에 줄 긋기 (소거법)'], ['보기 두 번 톡톡', '❓ 헷갈린 보기 표시 → 오답 탭에서 모아 풀기'], ['주황 밑줄', '"할 수 있다·하여야 한다·이상·이하" 같은 함정 표현'], ['점선 밑줄 낱말', '누르면 용어 설명'], ['✍ 지문 위 필기', '문제 위에 바로 밑줄·동그라미'], ['틀리면', '핵심 1줄 카드 + 같은 주제 기출 1문제가 다음에 자동으로'], ['⋯ 더보기', '💬 챗GPT에 풀이 묻기 · 🔎 제미나이에 법령 묻기(내 유료 앱으로) · ⚖ 최신 법령 확인 · 🔗 연관 문제 3개 더 · 🔁 숫자 바꾸기 · 원본 · 🚩 신고'], ['⚖ 지금 법에도 맞나요?', '답한 뒤 누르면 구글 검색으로 개정 여부 확인 (결과 저장)'], ['⏱', '문제마다 걸린 시간 자동 기록 (1분 30초 넘으면 따로 모아 줘요)']]],
       wrong: ['오답 화면', [['🔁 복습', '틀린 문제만 다시'], ['❓ 헷갈린 보기', '두 번 톡톡 표시한 문제'], ['⏱ 오래 걸린', '1분 30초 넘게 걸린 문제'], ['★ 북마크', '별표 한 문제']]],
       stats: ['기록 화면', [['점수 / 최근 / 달력', '위쪽에서 바꿔 보기'], ['과목 막대', '빨강=과락(40점 미만) · 노랑=60점 미만 · 오른쪽은 푼 문제 수'], ['🏅 줄 누르기', '배지·레벨 펼치기'], ['📅 이번 주', '이번 주 푼 수·정답률·평균 시간·다음 주 챙길 과목'], ['최근', '방금 푼 문제 다시 찾기']]],
       memo: ['암기 듣기', [['순서', '내가 다시 보기로 한 개념 → 틀린 문제 핵심 → 빈출 공식'], ['💡 팁', '외우기 쉬운 말장난·두문자를 같이 읽어요'], ['화면 꺼도', '계속 읽어요 (이어폰 추천)']]],
@@ -2453,6 +2453,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
           // 🔗 연관 문제: 더보기 안 + 답한 뒤 해설 위에
           const relN = relList(q).length, fbx2 = document.querySelector('#view .fb');
           const tb2 = document.querySelector('.qdock .qmore .qtb');
+          if (tb2 && !tb2.querySelector('#qask1')) { tb2.insertAdjacentHTML('beforeend', `<button class="btn" id="qask1"><span class="ic">💬</span>챗GPT에 풀이 묻기</button><button class="btn" id="qask2"><span class="ic">🔎</span>제미나이에 법령 묻기</button>`); tb2.querySelector('#qask1').onclick = () => askApp(S.list[S.i], 'exp'); tb2.querySelector('#qask2').onclick = () => askApp(S.list[S.i], 'law'); }
           if (tb2 && !tb2.querySelector('#qlaw')) { tb2.insertAdjacentHTML('afterbegin', `<button class="btn" id="qlaw"><span class="ic">⚖</span>최신 법령 확인</button>`); tb2.querySelector('#qlaw').onclick = () => { document.querySelector('.qdock')?.classList.remove('open'); lawCheck(S.list[S.i]); }; }
           if (fbx2 && !document.getElementById('qlaw2')) { const lw = lawGet(q.id);
             fbx2.insertAdjacentHTML('afterend', `<button class="btn sm" id="qlaw2" style="margin:6px 0 0">${lw ? (lw.v === 'ok' ? '✅ 최신 법령 확인됨' : lw.v === 'changed' ? '⚠️ 법이 바뀐 문제 — 보기' : '❓ 법령 확인 결과 보기') : '⚖ 지금 법에도 맞나요?'}</button>`); document.getElementById('qlaw2').onclick = () => lawCheck(q); }
@@ -2502,9 +2503,10 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
           ${(d.src || []).length ? `<h4>근거 조문·찾아본 곳</h4>${d.src.slice(0, 5).map(x => `<a class="lws" href="${esc(x.uri)}" target="_blank" rel="noopener">🔗 ${esc(x.title || x.uri)}</a>`).join('')}` : ''}
           <a class="lws" href="https://www.law.go.kr/LSW/lsSc.do?query=${encodeURIComponent((d.law || SUBS[q.s] || '').split(/[,·]/)[0])}" target="_blank" rel="noopener">📜 국가법령정보센터에서 직접 보기</a>
           <div class="muted" style="font-size:12px;margin-top:10px">${esc(d.at || '')} 확인 · AI가 정리한 결과라 중요한 건 아래 원문 링크로 한 번 더 확인하세요</div>
-          <div class="arow" style="margin-top:10px"><button class="btn" id="lwre">🔄 다시 확인</button>${v === 'changed' ? '<button class="btn" id="lwrp">🚩 신고에 남기기</button>' : ''}</div>`}</div></div>`);
+          <div class="arow" style="margin-top:10px"><button class="btn" id="lwre">🔄 다시 확인</button><button class="btn" id="lwgm">🔎 제미나이로 더 알아보기</button>${v === 'changed' ? '<button class="btn" id="lwrp">🚩 신고에 남기기</button>' : ''}</div>`}</div></div>`);
         if (d && !loading) { const b2 = document.getElementById('qlaw2'); if (b2) b2.textContent = v === 'ok' ? '✅ 최신 법령 확인됨' : v === 'changed' ? '⚠️ 법이 바뀐 문제 — 보기' : '❓ 법령 확인 결과 보기'; }
         const p2 = document.getElementById('lawp'); p2.onclick = e => { if (e.target === p2 || e.target.id === 'lwx') p2.remove(); };
+        const gm = document.getElementById('lwgm'); if (gm) gm.onclick = () => askApp(q, 'law');
         const re = document.getElementById('lwre'); if (re) re.onclick = () => { localStorage.removeItem(K); lawCheck(q); };
         const rp = document.getElementById('lwrp'); if (rp) rp.onclick = () => { try { const A = LSJ('reb_lawflag', {}); A[q.id] = { at: d.at, t: (d.t || '').slice(0, 300) }; LSS('reb_lawflag', A); } catch (e) {} document.getElementById('lawp')?.remove(); try { report(q); setTimeout(() => { const m = document.getElementById('rpm'); if (m) m.value = '[법령 개정] ' + (d.t || '').slice(0, 500); }, 60); } catch (e) {} };
       };
@@ -2554,6 +2556,19 @@ ${base}`, { modelTier: 'default' }, false);
       } catch (e) { document.getElementById('lawp')?.remove(); window.__toast && __toast(e.message || '확인하지 못했어요'); }
     }
     window.lawCheck = lawCheck;
+    // 🤖 내 유료 제미나이·챗GPT 앱에 바로 물어보기 (질문을 만들어 넘김, 추가 비용 없음)
+    function askPrompt(q, kind) {
+      const ex = expOf(q) || {}, today3 = new Date().toISOString().slice(0, 10);
+      const head = `[공인중개사 기출] 제${q.n}회 ${SUBS[q.s]} ${q.no}번 · 공식 정답 ${q.a}번\n${q.x}\n` + (ex.summary ? `\n(앱 해설 요약) ${ex.summary}` : '');
+      if (kind === 'law') return `${head}\n\n오늘(${today3}) 기준으로 이 문제와 정답·해설이 현행 법령과 맞는지 실시간 검색으로 확인해 줘.\n1) 관련 법령·조문(시행령·시행규칙 포함)과 최근 개정 여부·시행일\n2) 지금 법 기준으로 정답이 달라지는지\n3) 근거 링크(국가법령정보센터 law.go.kr 우선)\n쉬운 말로 정리해 줘.`;
+      return `${head}\n\n공인중개사 수험생에게 설명하듯이:\n1) 등장하는 사람(甲·乙 등)·권리·돈의 관계를 화살표 관계도로 그려 줘(텍스트로)\n2) 계산 문제면 공식→숫자 대입→결과를 단계별로\n3) 보기마다 맞고 틀린 이유를 한 줄씩\n4) 꼭 외울 것과 함정 2~3개\n쉬운 말로, 표나 목록으로 정리해 줘.`;
+    }
+    function askApp(q, kind) {
+      const t = askPrompt(q, kind), pkg = kind === 'law' ? 'com.google.android.apps.bard' : 'com.openai.chatgpt';
+      if (window.NativeBridge && NativeBridge.askApp) { NativeBridge.askApp(pkg, t); window.__toast && __toast(`${kind === 'law' ? '제미나이' : '챗GPT'}를 열어요 · 질문은 복사돼 있어서 안 들어가 있으면 붙여넣기만 하세요`); }
+      else { try { navigator.clipboard.writeText(t); } catch (e) {} window.__toast && __toast('질문을 복사했어요'); }
+    }
+    window.askApp = askApp;
     // ✅ 오래 걸리는 AI 작업이 끝나면 어느 화면에 있든 위쪽에 알림 (누르면 바로 보기)
     window.__done = (msg, go2) => {
       document.querySelectorAll('.donebar').forEach(e => e.remove());

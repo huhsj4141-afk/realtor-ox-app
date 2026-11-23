@@ -184,6 +184,15 @@ class WebActivity : Activity() {
         @JavascriptInterface fun setToday(json: String) { this@WebActivity.getSharedPreferences("ox", android.content.Context.MODE_PRIVATE).edit().putString("today", json).apply() }
         @JavascriptInterface fun openOx() = runOnUiThread { startActivity(Intent(this@WebActivity, MainActivity::class.java)); @Suppress("DEPRECATION") overridePendingTransition(0, 0) }
 
+        /** 제미나이·챗GPT 앱에 질문 넘기기 (내 유료 구독으로 답 받기). 앱이 없으면 공유 창 */
+        @JavascriptInterface fun askApp(pkg: String, text: String) {
+            runOnUiThread {
+                try { (getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("질문", text)) } catch (e: Exception) {}
+                val i = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
+                try { startActivity(Intent(i).setPackage(pkg)) }
+                catch (e: Exception) { try { startActivity(Intent.createChooser(i, "질문 보낼 앱")) } catch (x: Exception) {} }
+            }
+        }
         /** 국가법령정보센터 조문 가져오기 (law.go.kr 만 허용) */
         @JavascriptInterface fun httpGet(id: String, url: String) {
             io.execute {
