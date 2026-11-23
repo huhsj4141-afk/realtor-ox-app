@@ -625,5 +625,13 @@
 "31-11-46":{"ok":false,"sev":"high","issues":["보기 해설 1번: ㄴ은 최고에 대해 기간 내 확답이 없으면 추인 거절로 보므로 옳다고 하였으나, 민법 제131조에 따라 추인을 거절한 것으로 보는 것이 아니라 '추인을 거절한 것으로 본다'가 아니라 '추인을 거절한 것으로 본다'는 규정은 존재하지 않으며, 정확히는 '추인을 거절한 것으로 본다'가 아니라 '추인을 거절한 것으로 본다'는 법 조문은 없으며, 민법 제131조는 '추인을 거절한 것으로 본다'가 아니라 '추인을 거절한 것으로 본다'는 표현은 틀림. 정확히는 '추인을 거절한 것으로 본다'가 아니라 '추인을 거절한 것으로 본다'는 표현은 민법 제131조에 의해 '추인을 거절한 것으로 본다'가 맞음. (해설의 문구는 맞으나, 법령 해석상 '추인을 거절한 것으로 본다'는 표현이 맞음.)"],"m":"gemini-3.1-flash-lite","d":"2026-11-23","h":"537a3eb7ab","hits":1},
 "31-11-5":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.1-flash-lite","d":"2026-11-23","h":"a032e1a934","hits":0},
 "31-11-6":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.1-flash-lite","d":"2026-11-23","h":"bd1831818b","hits":0},
-"31-11-7":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.1-flash-lite","d":"2026-11-23","h":"98a91d3e7a","hits":0}
+"31-11-7":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.1-flash-lite","d":"2026-11-23","h":"98a91d3e7a","hits":0},
+"31-21-11":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash-lite","d":"2026-11-23","h":"f43b147f6b","hits":0},
+"31-21-12":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash-lite","d":"2026-11-23","h":"bf59834efa","hits":0},
+"31-21-13":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash-lite","d":"2026-11-23","h":"6dd62667a6","hits":0},
+"31-21-14":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash-lite","d":"2026-11-23","h":"30ece76d71","hits":0},
+"31-21-3":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash-lite","d":"2026-11-23","h":"78bb9bd54e","hits":0},
+"31-21-4":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash-lite","d":"2026-11-23","h":"1b4e39aa91","hits":0},
+"31-21-5":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash-lite","d":"2026-11-23","h":"9656f09976","hits":0},
+"31-21-6":{"ok":true,"sev":"low","issues":[],"m":"gemini-3.5-flash-lite","d":"2026-11-23","h":"44d42a1ae3","hits":0}
 }
