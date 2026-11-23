@@ -557,7 +557,7 @@
   let LATEST = 0;
   try { const lv = NB && NB.latestVersion ? +NB.latestVersion() : 0; if (lv > appVer()) LATEST = lv; } catch (e) {}
   function showVer() {
-    const v = appVer(); if (!v) return;
+    const v = appVer();
     const top = document.querySelector('header.top'); if (!top) return;
     let el = document.getElementById('ver');
     if (!el) { el = document.createElement('button'); el.id = 'ver'; (document.getElementById('hdrb') || top).appendChild(el); const sy = document.getElementById('sync'); if (sy) sy.style.display = 'none'; }
@@ -1093,6 +1093,7 @@
     let g = document.getElementById('hdrb'); if (!g) { g = document.createElement('div'); g.id = 'hdrb'; top.appendChild(g); }
     const v = document.getElementById('ver'); g.appendChild(b); if (v) g.appendChild(v);
   }
+  setInterval(() => { try { if (!document.getElementById('ver') || document.getElementById('ver').parentNode.id !== 'hdrb') showVer(); } catch (e) {} }, 1500);   // ⚙ 설정은 어느 화면에서나 아이콘 줄 끝에
   /* ---------- 해설 군더더기 숨기기: 계산 문제가 아니면 '풀이 순서·공식'(보기마다 같은 말 반복)과 '보기 정리'(이미 보기 밑에 나옴), 맨 아래 안내문 ---------- */
   function trimEx() {
     const q = (typeof S !== 'undefined' && S && S.list) ? S.list[S.i] : null; if (cur !== 'quiz' || !q) return;
