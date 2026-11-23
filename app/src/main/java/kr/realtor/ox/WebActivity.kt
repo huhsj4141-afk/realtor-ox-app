@@ -23,6 +23,8 @@ class WebActivity : Activity() {
     private lateinit var web: WebView
     private lateinit var voice: ExoPlayer
     private val io = Executors.newFixedThreadPool(2)
+    private val drv = Executors.newSingleThreadExecutor()   // 드라이브 질문함/답함: 순서대로 읽고 쓰기
+    private fun dp() = getSharedPreferences("ox", android.content.Context.MODE_PRIVATE)
     private var speakId: String? = null
     @Volatile private var allQueued = true
     private val ttsGen = java.util.concurrent.atomic.AtomicInteger(0)
@@ -100,7 +102,7 @@ class WebActivity : Activity() {
         if (loaded) js("window.__fixTab&&__fixTab()")
     }
 
-    override fun onDestroy() { try { stt?.destroy() } catch (e: Exception) {}; voice.release(); io.shutdown(); web.destroy(); super.onDestroy() }
+    override fun onDestroy() { try { stt?.destroy() } catch (e: Exception) {}; voice.release(); io.shutdown(); drv.shutdown(); web.destroy(); super.onDestroy() }
 
     @Deprecated("back")
     override fun onBackPressed() {
@@ -116,6 +118,12 @@ class WebActivity : Activity() {
         super.onActivityResult(rc, res, data)
         if (rc == 91 && res == RESULT_OK) data?.data?.let { u ->
             io.execute { try { val t = contentResolver.openInputStream(u)!!.bufferedReader().readText(); js("window.__restore&&__restore(${q(t)})") } catch (e: Exception) { js("window.__toast&&__toast('파일을 읽지 못했어요')") } }
+        }
+        if ((rc == 92 || rc == 93) && res == RESULT_OK) data?.data?.let { u ->
+            val w = if (rc == 92) "q" else "a"
+            try { contentResolver.takePersistableUriPermission(u, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION) } catch (e: Exception) {}
+            dp().edit().putString("drv_$w", u.toString()).apply()
+            js("window.__drvLinked&&__drvLinked('$w')")
         }
     }
     /* 누르고 있는 동안 음성 인식 → 떼면 글자로 */
@@ -162,6 +170,25 @@ class WebActivity : Activity() {
         }
         @JavascriptInterface fun backupPick() {
             runOnUiThread { try { startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*"), 91) } catch (e: Exception) {} }
+        }
+        /* 🖥 PC 일꾼: 구글 드라이브의 질문함.json(앱이 씀) · 답함.json(PC가 씀) */
+        @JavascriptInterface fun driveOk(): Boolean = dp().getString("drv_q", null) != null && dp().getString("drv_a", null) != null
+        @JavascriptInterface fun driveLink(w: String) {
+            runOnUiThread { try { startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION), if (w == "q") 92 else 93) } catch (e: Exception) {} }
+        }
+        @JavascriptInterface fun driveUnlink() { dp().edit().remove("drv_q").remove("drv_a").apply() }
+        @JavascriptInterface fun driveRead(id: String, w: String) {
+            drv.execute {
+                val t = try { contentResolver.openInputStream(Uri.parse(dp().getString("drv_$w", null)!!))!!.use { it.bufferedReader().readText() } } catch (e: Exception) { null }
+                js("window.__drv&&__drv(${q(id)},${if (t == null) "null" else q(t)})")
+            }
+        }
+        @JavascriptInterface fun driveWrite(w: String, text: String) {
+            drv.execute {
+                try { contentResolver.openOutputStream(Uri.parse(dp().getString("drv_$w", null)!!), "wt")!!.use { it.write(text.toByteArray()) } }
+                catch (e: Exception) { js("window.__toast&&__toast('드라이브 질문함에 쓰지 못했어요 · ⚙ 설정에서 다시 연결해 주세요')") }
+            }
         }
         @JavascriptInterface fun sttStart() { runOnUiThread { sttBegin() } }
         @JavascriptInterface fun sttStop() { runOnUiThread { stt?.stopListening() } }

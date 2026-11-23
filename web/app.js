@@ -1060,6 +1060,7 @@
       <div class="thg">${sw}</div>
       <button id="sph" class="nzoff">📳 터치 진동 ${(() => { try { return !window.NativeBridge || !NativeBridge.hapticOn || NativeBridge.hapticOn(); } catch (e) { return true; } })() ? '켬' : '끔'}</button>
       <button class="nzoff" id="spai">${localStorage.getItem('reb_noai') === '1' ? '🤖 AI 기능: 꺼짐 (누르면 켜기)' : '🤖 AI 기능: 켜짐 (누르면 끄기)'}</button>
+      <button class="nzoff" id="sppc">${window.pcLabel ? pcLabel() : '🖥 PC 일꾼'}</button>
       <button class="nzoff" onclick="backupNow()">💾 기록 백업 (구글 드라이브에 저장)</button><button class="nzoff" onclick="backupRestore()">📂 백업에서 되돌리기</button>
       <button id="spu" class="nzoff">${nv ? '⬇ 새 버전 v' + LATEST + ' 받기' : '지금 v' + v + ' · 업데이트 확인'}</button></div>`);
     p = document.getElementById('setp');
@@ -1067,6 +1068,7 @@
     p.querySelectorAll('.thm').forEach(b => b.onclick = () => { applyTheme(b.dataset.t); p.querySelectorAll('.thm').forEach(x => x.classList.toggle('on', x === b)); });
     p.querySelector('#sph').onclick = e => { try { const nb = NativeBridge, v = !nb.hapticOn(); nb.setHaptic(v); e.target.textContent = '📳 터치 진동 ' + (v ? '켬' : '끔'); if (v) nb.tap(false); } catch (x) {} };
     const sai = p.querySelector('#spai'); if (sai) sai.onclick = () => { const off = localStorage.getItem('reb_noai') === '1'; localStorage.setItem('reb_noai', off ? '0' : '1'); sai.textContent = off ? '🤖 AI 기능: 켜짐 (누르면 끄기)' : '🤖 AI 기능: 꺼짐 (누르면 켜기)'; window.__toast && __toast(off ? 'AI 기능을 켰어요' : 'AI 없이 쓰기: 관계도·기초부터·힌트는 해설과 용어 사전으로 만들어요'); };
+    const spc = p.querySelector('#sppc'); if (spc) spc.onclick = () => window.pcSetup && pcSetup(spc);
     p.querySelector('#spu').onclick = () => { try { if (nv) NB.update(); else { if (window.__toast) window.__toast('새 버전 확인 중…'); NB.checkUpdate(); } } catch (e) {} p.remove(); };
   }
   function updBanner() {
@@ -1819,6 +1821,7 @@ ${q.x}
         if (document.getElementById('begBox') === box) { show(t); btn.innerHTML = '🐣 처음부터 알려줘 <span class="svd">✓ 저장됨</span>'; }
         else window.__done && __done(`🐣 ${q.n}회 ${q.no}번 '기초부터' 설명이 완성됐어요 · 다시 풀면 바로 보여요`, () => startQuiz([q], { from: 'home', title: '기초부터 완성된 문제' }));
       } catch (e) {
+        if (window.pcAsk && pcAsk({ id: 'beg_' + q.id, kind: 'ask', prompt: begPrompt(q), key: K, qid: q.id, label: '기초부터 설명' })) window.__toast && __toast('🖥 AI 한도가 막혀서 PC에 맡겼어요 · 다 되면 알려 드려요');
         if (document.getElementById('begBox') === box) show(localBeg(q));   // AI 없이도: 용어 사전 + 해설로 만든 기초 설명
       } finally { clearInterval(tick); btn.disabled = false; }
     };
@@ -2491,6 +2494,19 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     let LAWDB = null; const lawDB = () => { if (LAWDB === null) { LAWDB = asset('law_audit.json') || {}; if (!Object.keys(LAWDB).length) try { fetch('law_audit.json').then(r => r.json()).then(j => { LAWDB = j || {}; }).catch(() => {}); } catch (e) {} } return LAWDB; };
     const lawGet = id => { let d = null; try { d = JSON.parse(localStorage.getItem('reb_law_' + id)); } catch (e) {} if (!d) { const a = lawDB()[id]; if (a) d = { v: a.v, law: a.law, t: a.t, src: a.src || [], at: (a.d || '') + ' 자동' + (a.basis === 'law' ? ' · 현행 원문과 대조' : a.web === false ? ' (검색 없이 AI 지식으로 — 국가법령정보센터로 꼭 확인)' : '') }; } return d; };
     window.lawGet = lawGet;
+    function pcLaw(q) {   // 🖥 AI 한도가 막히면 PC 일꾼에게: 조문 고르기 → 국가법령정보센터 원문 → 대조
+      if (!window.pcAsk) return false;
+      let ex = null; try { ex = window.__mcx && __mcx(q.id); } catch (e) {}
+      const base = `[출제] 제${q.n}회 ${SUBS[q.s]}\n[정답] ${q.a}번\n[문제]\n${q.x}\n${ex ? '[해설]\n' + JSON.stringify(ex).slice(0, 2500) : ''}`;
+      return pcAsk({ id: 'law_' + q.id, kind: 'law', key: 'reb_law_' + q.id, qid: q.id, label: '법령 확인',
+        pick: '아래 공인중개사 기출문제를 판단하는 데 필요한 한국 법령 조문을 최대 4개 골라. 시행령·시행규칙 조문이 핵심이면 그것도. JSON만: {"refs":[{"law":"공인중개사법 시행령","jo":"제24조"}]}\n' + base,
+        prompt: `오늘은 ${new Date().toISOString().slice(0, 10)}이야. 맨 아래 [현행 조문 원문](국가법령정보센터에서 방금 가져온 오늘 시행 중인 법)과 기출문제·해설을 대조해 줘.
+- 주의: 기출의 '틀린 보기'는 원래 법과 다르게 만든 것이라, 그 보기가 원문과 다른 건 당연해요. 그것만으로 [바뀜]이 아니에요.
+- 판정 기준: 공식 정답과 해설의 결론·숫자·요건이 현행 원문 기준으로도 그대로 맞으면 [같음]. 현행 원문 기준으로 정답이 달라지거나, 해설·정답 보기의 숫자·기간·금액·요건이 현행 원문과 다르면 [바뀜]. 필요한 조문이 원문에 없어 판단할 수 없으면 [불확실].
+- 첫 줄에 판정 하나만, 둘째 줄: 법령: ○○법
+- 그 아래 쉬운 말로 3~6문장: 원문 어느 조문 기준으로 무엇이 같은지/다른지, 지금 법 기준으로 정답이 달라지는지. 해요체.
+${base}` });
+    }
     async function lawCheck(q) {
       const K = 'reb_law_' + q.id; let d = lawGet(q.id);
       const show = (d, loading) => {
@@ -2511,6 +2527,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
         const rp = document.getElementById('lwrp'); if (rp) rp.onclick = () => { try { const A = LSJ('reb_lawflag', {}); A[q.id] = { at: d.at, t: (d.t || '').slice(0, 300) }; LSS('reb_lawflag', A); } catch (e) {} document.getElementById('lawp')?.remove(); try { report(q); setTimeout(() => { const m = document.getElementById('rpm'); if (m) m.value = '[법령 개정] ' + (d.t || '').slice(0, 500); }, 60); } catch (e) {} };
       };
       if (d) return show(d);
+      if ((!window.__gemSearch || !aiOK()) && pcLaw(q)) { show({ v: 'unsure', law: '', t: '🖥 지금은 AI를 바로 쓸 수 없어서 PC 일꾼에게 맡겼어요. PC가 국가법령정보센터 원문과 대조해서 끝나면 위쪽에 알려 드려요. 그동안 아래 링크로 직접 볼 수도 있어요.', src: [], at: '' }); return; }
       if (!window.__gemSearch || !aiOK()) { show({ v: 'unsure', law: '', t: 'AI 없이 쓰는 중이라 자동 대조는 못 했어요. 아직 밤 자동 확인도 안 된 문제예요. 아래 국가법령정보센터에서 관련 법령 원문을 직접 확인해 주세요.', src: [], at: '' }); return; }
       show(null, true);
       let ex = null; try { ex = window.__mcx && __mcx(q.id); } catch (e) {}
@@ -2553,7 +2570,7 @@ ${base}`, { modelTier: 'default' }, false);
         d = { v, law: lm ? lm[1].trim() : '', t: t.split('\n').slice(1).filter(l => !/^법령\s*[:：]/.test(l)).join('\n').trim(), src: (r.sources || []).map(x => ({ uri: x.uri, title: x.title })), at: new Date().toLocaleDateString('ko-KR') + (r.law ? ' · 국가법령정보센터 현행 원문과 대조' : r.offline ? ' (검색 없이 AI 지식으로 — 국가법령정보센터로 꼭 확인)' : '') };
         try { localStorage.setItem(K, JSON.stringify(d)); } catch (e) {}
         if (document.getElementById('lawp')) show(d); else window.__done && __done(`⚖ ${q.n}회 ${q.no}번 법령 확인 끝 · ${d.v === 'ok' ? '✅ 지금 법과 같아요' : d.v === 'changed' ? '⚠️ 법이 바뀌었어요' : '❓ 확인 필요'}`, () => lawCheck(q));
-      } catch (e) { document.getElementById('lawp')?.remove(); window.__toast && __toast(e.message || '확인하지 못했어요'); }
+      } catch (e) { document.getElementById('lawp')?.remove(); window.__toast && __toast(pcLaw(q) ? '🖥 AI 한도가 막혀서 PC에 맡겼어요 · 다 되면 알려 드려요' : (e.message || '확인하지 못했어요')); }
     }
     window.lawCheck = lawCheck;
     // 🤖 내 유료 제미나이·챗GPT 앱에 바로 물어보기 (질문을 만들어 넘김, 추가 비용 없음)
@@ -2597,6 +2614,59 @@ ${base}`, { modelTier: 'default' }, false);
       } catch (e) {}
     }, 500);
     // ✅ 오래 걸리는 AI 작업이 끝나면 어느 화면에 있든 위쪽에 알림 (누르면 바로 보기)
+    // 🖥 PC 일꾼: AI 한도가 막히면 구글 드라이브 질문함에 맡기고, PC가 답함에 쓴 답을 받아 저장
+    (() => {
+      const NB2 = window.NativeBridge;
+      const J = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
+      const on = () => { try { return !!(NB2 && NB2.driveOk && NB2.driveOk()); } catch (e) { return false; } };
+      const list = () => J('reb_pcq', []);
+      const flush = L => { try { localStorage.setItem('reb_pcq', JSON.stringify(L)); } catch (e) {} if (on()) try { NB2.driveWrite('q', JSON.stringify({ jobs: L.map(j => ({ id: j.id, kind: j.kind, prompt: j.prompt, pick: j.pick, quick: j.quick, at: j.at })) })); } catch (e) {} };
+      window.pcOn = () => on() && localStorage.getItem('reb_noai') !== '1';
+      window.pcAsk = job => { if (!pcOn()) return false; if (list().some(j => j.key === job.key)) return true; const L = list(); L.push(Object.assign({}, job, { id: job.id + '_' + Date.now().toString(36), at: Date.now() })); flush(L.slice(-60)); return true; };
+      const cb = {}; let n = 0;
+      window.__drv = (id, t) => { const f = cb[id]; delete cb[id]; if (f) f(t); };
+      const read = () => new Promise(res => { const id = 'r' + (++n); cb[id] = res; try { NB2.driveRead(id, 'a'); } catch (e) { delete cb[id]; res(null); } setTimeout(() => { if (cb[id]) { delete cb[id]; res(null); } }, 30000); });
+      const ago = ms => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? '방금' : m < 60 ? m + '분 전' : m < 1440 ? Math.round(m / 60) + '시간 전' : Math.round(m / 1440) + '일 전'; };
+      window.pcLabel = () => { if (!on()) return '🖥 PC 일꾼: 연결 안 됨 (누르면 연결)'; const st = window.__pcState, w = list().length; return '🖥 PC 일꾼: 연결됨' + (st && st.seen ? ' · PC 확인 ' + ago(st.seen) : ' · PC 소식 아직 없음') + (w ? ' · 맡긴 일 ' + w + '개' : ''); };
+      window.pcSetup = btn => {
+        if (!NB2 || !NB2.driveLink) { window.__toast && __toast('앱을 새 버전으로 업데이트해 주세요'); return; }
+        if (on()) { poll().then(() => { if (btn) btn.textContent = pcLabel(); }); const st = window.__pcState; window.__toast && __toast(st && st.seen && Date.now() - st.seen > 30 * 60000 ? 'PC가 30분 넘게 소식이 없어요 · PC가 켜져 있는지 봐 주세요' : '다시 연결하려면 길게 누르세요'); if (btn && !btn.dataset.lp) { btn.dataset.lp = 1; let t; btn.addEventListener('pointerdown', () => { t = setTimeout(() => { NB2.driveUnlink(); pcSetup(btn); }, 700); }); ['pointerup', 'pointerleave'].forEach(ev => btn.addEventListener(ev, () => clearTimeout(t))); } return; }
+        window.__toast && __toast('구글 드라이브 › 공인중개사 › 앱 폴더의 질문함.json 을 골라 주세요');
+        setTimeout(() => NB2.driveLink('q'), 900);
+      };
+      window.__drvLinked = w => {
+        if (w === 'q') { window.__toast && __toast('질문함 연결됨 · 이어서 같은 폴더의 답함.json 을 골라 주세요'); setTimeout(() => NB2.driveLink('a'), 1200); }
+        else { window.__toast && __toast('🖥 PC 일꾼 연결 끝! AI 한도가 막히면 PC에 맡겨요'); flush(list()); poll(); const b = document.getElementById('sppc'); if (b) b.textContent = pcLabel(); }
+      };
+      async function poll() {
+        if (!on()) return;
+        const t = await read(); if (t == null) return;
+        let A; try { A = JSON.parse(t || '{}'); } catch (e) { return; }
+        window.__pcState = A._pc || null;
+        const L = list(); if (!L.length) return;
+        const left = [];
+        for (const j of L) {
+          const r = A[j.id]; if (!r) { left.push(j); continue; }
+          if (!r.text) continue;
+          const q = (typeof BYID !== 'undefined' && BYID[j.qid]) || null, nm = q ? `${q.n}회 ${q.no}번 ` : '';
+          try {
+            if (j.kind === 'law') {
+              const tx = String(r.text).trim(), first = tx.split('\n')[0], lm = tx.match(/법령\s*[:：]\s*([^\n]+)/);
+              const d = { v: /바뀜/.test(first) ? 'changed' : /같음/.test(first) ? 'ok' : 'unsure', law: lm ? lm[1].trim() : '', t: tx.split('\n').slice(1).filter(l => !/^법령\s*[:：]/.test(l)).join('\n').trim(), src: (r.src || []).map(x => ({ uri: x.uri, title: x.law + ' ' + x.jo + ' (현행 원문)' })), at: new Date().toLocaleDateString('ko-KR') + ' · PC가 국가법령정보센터 현행 원문과 대조' };
+              localStorage.setItem(j.key, JSON.stringify(d));
+              window.__done && __done(`🖥 ${nm}법령 확인을 PC가 끝냈어요 · ${d.v === 'ok' ? '✅ 지금 법과 같아요' : d.v === 'changed' ? '⚠️ 법이 바뀌었어요' : '❓ 확인 필요'}`, q ? () => lawCheck(q) : null);
+            } else {
+              localStorage.setItem(j.key, r.text);
+              window.__done && __done(`🖥 ${nm}${j.label || '설명'}을 PC가 만들었어요 · 다시 풀면 바로 보여요`, q ? () => startQuiz([q], { from: 'home', title: 'PC가 만든 설명' }) : null);
+            }
+          } catch (e) {}
+        }
+        if (left.length !== L.length) flush(left);
+      }
+      window.pcPoll = poll;
+      setInterval(() => { if (!document.hidden) poll(); }, 60000); setTimeout(poll, 4000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+    })();
     window.__done = (msg, go2) => {
       document.querySelectorAll('.donebar').forEach(e => e.remove());
       document.body.insertAdjacentHTML('beforeend', `<div class="donebar"><span>${esc(msg)}</span>${go2 ? '<button class="db1">보기</button>' : ''}<button class="db2" aria-label="닫기">✕</button></div>`);

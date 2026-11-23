@@ -39,6 +39,10 @@ def find_folder():
     cands += glob.glob(os.path.join(home, 'Google Drive*', '*', '공인중개사', '앱')) + glob.glob(os.path.join(home, 'Google Drive*', '공인중개사', '앱'))
     for c in cands:
         if os.path.isdir(c): return c
+    for c in cands:   # 드라이브는 있는데 폴더가 없으면 만들어요
+        base = os.path.dirname(os.path.dirname(c))
+        if os.path.isdir(base) and base.rstrip('\\/')[-2:] != ':':
+            os.makedirs(c, exist_ok=True); return c
     return None
 
 
@@ -139,7 +143,13 @@ def do_job(job):
     kind = job.get('kind', 'ask'); prompt = job.get('prompt', '')
     if kind == 'law':
         src = []
-        for r in job.get('refs', [])[:4]:
+        refs = job.get('refs') or []
+        if not refs and job.get('pick'):
+            t, _ = gemini(job['pick'], QUICK)
+            m = re.search(r'\{.*\}', t, re.S)
+            try: refs = json.loads(m.group(0)).get('refs', []) if m else []
+            except Exception: refs = []
+        for r in refs[:4]:
             try:
                 a = article(r.get('law', ''), r.get('jo', ''))
                 if a: src.append(a)
@@ -158,6 +168,8 @@ def main():
         log('드라이브의 공인중개사\\앱 폴더를 못 찾았어요. folder.txt에 경로를 적어 주세요. 1분 뒤 다시 찾아요.')
         time.sleep(POLL); folder = find_folder()
     qp, ap = os.path.join(folder, '질문함.json'), os.path.join(folder, '답함.json')
+    if not os.path.exists(qp): save(qp, {'jobs': []})
+    if not os.path.exists(ap): save(ap, {})
     log('시작:', folder)
     wait_until = 0; fails = {}
     while True:
