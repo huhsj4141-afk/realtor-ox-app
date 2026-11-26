@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: { ref: main }
+        with: { ref: main, fetch-depth: 300 }
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '17' }
       - uses: gradle/actions/setup-gradle@v4
@@ -88,6 +88,16 @@ jobs:
           [ -f gen/mc_exp.json ] && cp gen/mc_exp.json app/src/main/assets/web/ || true
           [ -f gen/law_audit.json ] && cp gen/law_audit.json app/src/main/assets/web/ || true
           [ -f gen/ox_var.json ] && cp gen/ox_var.json app/src/main/assets/web/ || true
+          python3 - <<'PY'   # 📜 업데이트 내역: 사람이 고친 커밋만, 첫 줄을 쉬운 말로
+          import json, subprocess, re
+          out = []
+          for l in subprocess.run(['git', 'log', '-300', '--no-merges', '--date=format:%Y-%m-%d', '--pretty=%ad\t%an\t%s', '--', 'web', 'app'], capture_output=True, text=True).stdout.splitlines():
+              d, a, msg = (l.split('\t', 2) + ['', ''])[:3]
+              if 'bot' in a.lower() or 'skip ci' in msg or re.match(r'^(test|wip|merge)', msg, re.I): continue
+              out.append([d, re.sub(r'\s*\(#\d+\)$', '', msg)[:160]])
+              if len(out) >= 80: break
+          json.dump(out, open('app/src/main/assets/web/changes.json', 'w', encoding='utf8'), ensure_ascii=False)
+          PY
           python3 - <<'PY'
           p='app/src/main/assets/web/index.html'; s=open(p,encoding='utf8').read()
           i=s.find('<script'); s=s[:i]+'<script src="shim.js"></script>\n'+s[i:]
