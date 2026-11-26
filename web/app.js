@@ -2656,7 +2656,14 @@ ${base}`, { modelTier: 'default' }, false);
       const J = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
       const on = () => { try { return !!(NB2 && NB2.driveOk && NB2.driveOk()); } catch (e) { return false; } };
       const list = () => J('reb_pcq', []);
-      const flush = L => { try { localStorage.setItem('reb_pcq', JSON.stringify(L)); } catch (e) {} if (on()) try { NB2.driveWrite('q', JSON.stringify({ jobs: L.map(j => ({ id: j.id, kind: j.kind, prompt: j.prompt, pick: j.pick, quick: j.quick, at: j.at })) })); } catch (e) {} };
+      // 💾 진도 자동 백업: 질문함.json 에 같이 실어 보내요(30분에 한 번까지). PC가 날짜별로 드라이브 '백업' 폴더에 남겨요
+      const BKX = /^(reb_more_|reb_beg_|reb_dia2_|reb_key_|reb_law_|reb_lawpc|reb_pcq|gem_|reb_ex_)|key|token|secret/i;
+      let bk = null, bkAt = 0;
+      const progN = () => { try { return Object.keys(P || {}).length; } catch (e) { return 0; } };
+      const mkBk = () => { if (progN() < 1) return window.__qbk || null; if (bk && Date.now() - bkAt < 30 * 60e3) return bk; const o = {}; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (BKX.test(k)) continue; const v = localStorage.getItem(k); if (v && v.length < 8e5) o[k] = v; } bk = { app: 'realtor-ox', at: new Date().toISOString(), n: progN(), data: o }; bkAt = Date.now(); return bk; };
+      const flush = L => { try { localStorage.setItem('reb_pcq', JSON.stringify(L)); } catch (e) {} if (on()) try { NB2.driveWrite('q', JSON.stringify({ jobs: L.map(j => ({ id: j.id, kind: j.kind, prompt: j.prompt, pick: j.pick, quick: j.quick, at: j.at })), bk: mkBk() })); } catch (e) {} };
+      let lastBkFlush = 0;
+      setInterval(() => { if (on() && Date.now() - lastBkFlush > 30 * 60e3 && progN()) { lastBkFlush = Date.now(); bk = null; flush(list()); } }, 60e3);
       window.pcOn = () => on() && localStorage.getItem('reb_noai') !== '1';
       window.pcAsk = job => { if (!pcOn()) return false; if (list().some(j => j.key === job.key)) return true; const L = list(); L.push(Object.assign({}, job, { id: job.id + '_' + Date.now().toString(36), at: Date.now() })); flush(L.slice(-60)); return true; };
       const cb = {}; let n = 0;
@@ -2672,7 +2679,15 @@ ${base}`, { modelTier: 'default' }, false);
       };
       window.__drvLinked = w => {
         if (w === 'q') { window.__toast && __toast('질문함 연결됨 · 이어서 같은 폴더의 답함.json 을 골라 주세요'); setTimeout(() => NB2.driveLink('a'), 1200); }
-        else { window.__toast && __toast('🖥 PC 일꾼 연결 끝! AI 한도가 막히면 PC에 맡겨요'); flush(list()); poll(); const b = document.getElementById('sppc'); if (b) b.textContent = pcLabel(); }
+        else {   // 연결하자마자 덮어쓰기 전에: 질문함에 예전 진도 백업이 있고 지금 앱이 비어 있으면 되돌리기
+          const id = 'q' + Date.now(); cb[id] = t => {
+            let Q2 = null; try { Q2 = JSON.parse(t || '{}'); } catch (e) {}
+            window.__qbk = Q2 && Q2.bk || null;
+            if (window.__qbk && progN() < 5 && (window.__qbk.n || 0) > progN()) { window.__restore(JSON.stringify(window.__qbk)); return; }
+            window.__toast && __toast('🖥 PC 일꾼 연결 끝! AI 한도가 막히면 PC에 맡기고, 진도도 자동 백업해요'); flush(list()); poll(); const b = document.getElementById('sppc'); if (b) b.textContent = pcLabel();
+          };
+          try { NB2.driveRead(id, 'q'); } catch (e) { delete cb[id]; }
+        }
       };
       async function poll() {
         if (!on()) return;

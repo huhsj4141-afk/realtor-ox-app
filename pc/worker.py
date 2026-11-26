@@ -202,7 +202,13 @@ def main():
     wait_until = 0; fails = {}
     while True:
         try:
-            jobs = load(qp, {}).get('jobs', [])
+            qd = load(qp, {}); jobs = qd.get('jobs', [])
+            if qd.get('bk') and qd['bk'].get('n'):   # 💾 앱 진도 백업을 날짜별로 남기기(최근 14개)
+                bdir = os.path.join(folder, '백업'); os.makedirs(bdir, exist_ok=True)
+                bp = os.path.join(bdir, '진도_' + time.strftime('%Y-%m-%d') + '.json')
+                if not os.path.exists(bp) or os.path.getsize(bp) != len(json.dumps(qd['bk'], ensure_ascii=False).encode()):
+                    with open(bp, 'w', encoding='utf-8') as f: f.write(json.dumps(qd['bk'], ensure_ascii=False))
+                    for old in sorted(glob.glob(os.path.join(bdir, '진도_*.json')))[:-14]: os.remove(old)
             ans = load(ap, {})
             todo = [j for j in jobs if j.get('id') and j['id'] not in ans]
             ans['_pc'] = {'seen': int(time.time() * 1000), 'queue': len(todo), 'used': state['used'], 'skip': state['skip']}
