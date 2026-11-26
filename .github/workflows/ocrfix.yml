@@ -33,7 +33,7 @@ jobs:
           openssl enc -d -aes-256-cbc -pbkdf2 -pass file:/tmp/aes.key -in private/pages.enc | tar xf - -C /tmp
           MINUTES=12 python3 tools/glossgen.py || true   # 용어 풍선말 늘리기 (새 후보가 있을 때만)
           MINUTES=20 python3 tools/exp_audit.py || true  # 해설 검수 (결과는 앱에 바로 안 보임, 두 번 지적되면 다시 만들기)
-          MINUTES=10 python3 tools/law_audit.py || true  # 법 개정 확인 (하루 40문제씩, 구글 검색)
+          # 법 개정 확인은 사용자 PC(pc/law_night.py)로 옮김 — 같은 무료 한도를 나눠 쓰지 않게
           python3 tools/oxmark.py || true          # OX 틀린 지문의 틀린 부분 표시 (먼저, 금방 끝남)
           python3 tools/ocrfix.py /tmp/pg2 || true
           MINUTES=15 python3 tools/oxvar.py || true   # 남은 무료 한도로 OX 변형(기출 보기 뒤집기) 만들기

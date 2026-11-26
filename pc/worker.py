@@ -6,7 +6,7 @@
 - 답함.json   : PC가 씀  {"<id>":{"text","model","at","src"}, "_pc":{상태}}
 AI 키는 이 폴더의 key.txt 에 직접 넣어 주세요(채팅으로 보내지 마세요).
 """
-import json, os, re, sys, time, glob, urllib.request, urllib.parse, urllib.error, datetime
+import json, os, re, sys, time, glob, subprocess, urllib.request, urllib.parse, urllib.error, datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OC = 'huhsj4141'                       # 국가법령정보센터 아이디(비밀 아님)
@@ -162,6 +162,30 @@ def do_job(job):
     return {'text': text, 'model': m}
 
 
+# ---------- 밤 작업(법 개정 확인)을 하루 한 번 따로 돌리기 ----------
+night = {'p': None}
+def night_tick():
+    st = os.path.join(HERE, 'night_day.txt')
+    if night['p'] and night['p'].poll() is None: return          # 아직 도는 중
+    if read_txt('night_day.txt') == day_key(): return            # 오늘 몫은 했음
+    if datetime.datetime.now().hour < 17 or datetime.datetime.now().minute < 10 and datetime.datetime.now().hour == 17: return
+    open(st, 'w').write(day_key())
+    exe = sys.executable.replace('python.exe', 'pythonw.exe') if os.name == 'nt' else sys.executable
+    night['p'] = subprocess.Popen([exe, os.path.join(HERE, 'law_night.py')], cwd=HERE)
+    log('밤 작업 시작(법 개정 확인)')
+
+
+def law_delta():   # 최근 7일 결과만 앱에 보내기(파일을 가볍게)
+    p = os.path.join(HERE, 'night', 'gen', 'law_audit.json')
+    try: d = json.load(open(p, encoding='utf8'))
+    except Exception: return None, None
+    cut = time.strftime('%Y-%m-%d', time.localtime(time.time() - 7 * 86400))
+    rec = sorted(((k, v) for k, v in d.items() if v.get('d', '') >= cut and v.get('m')), key=lambda kv: kv[1].get('d', ''), reverse=True)[:250]
+    out = {k: {'v': v['v'], 'law': v.get('law', ''), 't': v.get('t', '')[:600], 'src': v.get('src', [])[:4], 'd': v.get('d', ''), 'basis': v.get('basis', '')} for k, v in rec}
+    stat = {'all': len(d), 'changed': sum(1 for v in d.values() if v.get('v') == 'changed')}
+    return out, stat
+
+
 def main():
     folder = find_folder()
     while not folder:
@@ -171,6 +195,7 @@ def main():
     if not os.path.exists(qp): save(qp, {'jobs': []})
     if not os.path.exists(ap): save(ap, {})
     log('시작:', folder)
+    me = os.path.getmtime(os.path.abspath(__file__))
     wait_until = 0; fails = {}
     while True:
         try:
@@ -178,6 +203,11 @@ def main():
             ans = load(ap, {})
             todo = [j for j in jobs if j.get('id') and j['id'] not in ans]
             ans['_pc'] = {'seen': int(time.time() * 1000), 'queue': len(todo), 'used': state['used'], 'skip': state['skip']}
+            try: night_tick()
+            except Exception as e: log('밤 작업 실행 실패', e)
+            ld, ls = law_delta()
+            if ld is not None: ans['_law'] = ld; ans['_pc']['law'] = ls
+            ans['_pc']['night'] = bool(night['p'] and night['p'].poll() is None)
             if todo and time.time() >= wait_until:
                 job = todo[0]
                 try:
@@ -198,6 +228,8 @@ def main():
             if todo and time.time() >= wait_until: time.sleep(5); continue   # 밀린 일 있으면 바로 다음
         except Exception as e:
             log('오류', e)
+        if os.path.getmtime(os.path.abspath(__file__)) != me:   # 새 버전으로 바뀌면 스스로 다시 시작
+            log('새 버전으로 다시 시작'); os.execv(sys.executable, [sys.executable, os.path.abspath(__file__)])
         time.sleep(POLL)
 
 

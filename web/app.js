@@ -2495,7 +2495,8 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     }, 400);
     // ⚖ 최신 법령 확인: 구글 검색으로 지금 법과 맞는지 (문제마다 결과 저장)
     let LAWDB = null; const lawDB = () => { if (LAWDB === null) { LAWDB = asset('law_audit.json') || {}; if (!Object.keys(LAWDB).length) try { fetch('law_audit.json').then(r => r.json()).then(j => { LAWDB = j || {}; }).catch(() => {}); } catch (e) {} } return LAWDB; };
-    const lawGet = id => { let d = null; try { d = JSON.parse(localStorage.getItem('reb_law_' + id)); } catch (e) {} if (!d) { const a = lawDB()[id]; if (a) d = { v: a.v, law: a.law, t: a.t, src: a.src || [], at: (a.d || '') + ' 자동' + (a.basis === 'law' ? ' · 현행 원문과 대조' : a.web === false ? ' (검색 없이 AI 지식으로 — 국가법령정보센터로 꼭 확인)' : '') }; } return d; };
+    const lawPC = () => window.__lawpc || (window.__lawpc = (() => { try { return JSON.parse(localStorage.getItem('reb_lawpc')) || {}; } catch (e) { return {}; } })());
+    const lawGet = id => { let d = null; try { d = JSON.parse(localStorage.getItem('reb_law_' + id)); } catch (e) {} if (!d) { const p2 = lawPC()[id], b2 = lawDB()[id], a = p2 && (!b2 || (p2.d || '') >= (b2.d || '')) ? p2 : b2; if (a) d = { v: a.v, law: a.law, t: a.t, src: a.src || [], at: (a.d || '') + ' 자동' + (a.basis === 'law' ? ' · 현행 원문과 대조' : a.web === false ? ' (검색 없이 AI 지식으로 — 국가법령정보센터로 꼭 확인)' : '') }; } return d; };
     window.lawGet = lawGet;
     function pcLaw(q) {   // 🖥 AI 한도가 막히면 PC 일꾼에게: 조문 고르기 → 국가법령정보센터 원문 → 대조
       if (!window.pcAsk) return false;
@@ -2630,7 +2631,7 @@ ${base}`, { modelTier: 'default' }, false);
       window.__drv = (id, t) => { const f = cb[id]; delete cb[id]; if (f) f(t); };
       const read = () => new Promise(res => { const id = 'r' + (++n); cb[id] = res; try { NB2.driveRead(id, 'a'); } catch (e) { delete cb[id]; res(null); } setTimeout(() => { if (cb[id]) { delete cb[id]; res(null); } }, 30000); });
       const ago = ms => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? '방금' : m < 60 ? m + '분 전' : m < 1440 ? Math.round(m / 60) + '시간 전' : Math.round(m / 1440) + '일 전'; };
-      window.pcLabel = () => { if (!on()) return '🖥 PC 일꾼: 연결 안 됨 (누르면 연결)'; const st = window.__pcState, w = list().length; return '🖥 PC 일꾼: 연결됨' + (st && st.seen ? ' · PC 확인 ' + ago(st.seen) : ' · PC 소식 아직 없음') + (w ? ' · 맡긴 일 ' + w + '개' : ''); };
+      window.pcLabel = () => { if (!on()) return '🖥 PC 일꾼: 연결 안 됨 (누르면 연결)'; const st = window.__pcState, w = list().length; return '🖥 PC 일꾼: 연결됨' + (st && st.seen ? ' · PC 확인 ' + ago(st.seen) : ' · PC 소식 아직 없음') + (w ? ' · 맡긴 일 ' + w + '개' : '') + (st && st.law ? ` · 🌙 법령 확인 ${st.law.all}문제${st.night ? '(확인 중)' : ''}` : ''); };
       window.pcSetup = btn => {
         if (!NB2 || !NB2.driveLink) { window.__toast && __toast('앱을 새 버전으로 업데이트해 주세요'); return; }
         if (on()) { poll().then(() => { if (btn) btn.textContent = pcLabel(); }); const st = window.__pcState; window.__toast && __toast(st && st.seen && Date.now() - st.seen > 30 * 60000 ? 'PC가 30분 넘게 소식이 없어요 · PC가 켜져 있는지 봐 주세요' : '다시 연결하려면 길게 누르세요'); if (btn && !btn.dataset.lp) { btn.dataset.lp = 1; let t; btn.addEventListener('pointerdown', () => { t = setTimeout(() => { NB2.driveUnlink(); pcSetup(btn); }, 700); }); ['pointerup', 'pointerleave'].forEach(ev => btn.addEventListener(ev, () => clearTimeout(t))); } return; }
@@ -2646,6 +2647,11 @@ ${base}`, { modelTier: 'default' }, false);
         const t = await read(); if (t == null) return;
         let A; try { A = JSON.parse(t || '{}'); } catch (e) { return; }
         window.__pcState = A._pc || null;
+        if (A._law && typeof A._law === 'object') {   // 🌙 PC 밤 작업: 법 개정 확인 결과를 앱에 쌓기
+          const db = J('reb_lawpc', {}); let ch = 0, nch = 0;
+          for (const [id, v] of Object.entries(A._law)) if (!db[id] || (v.d || '') > (db[id].d || '')) { db[id] = v; ch++; if (v.v === 'changed') nch++; }
+          if (ch) { try { localStorage.setItem('reb_lawpc', JSON.stringify(db)); } catch (e) {} window.__lawpc = null; if (nch && window.__done) __done(`🌙 PC가 밤새 법 개정 확인 ${ch}문제 · ⚠️ 바뀐 법 ${nch}개`); }
+        }
         const L = list(); if (!L.length) return;
         const left = [];
         for (const j of L) {
