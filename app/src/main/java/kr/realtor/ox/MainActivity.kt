@@ -72,8 +72,11 @@ class MainActivity : Activity() {
             return
         }
         Store.load(this)
-        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
-            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+        // 알림 권한은 처음 한 번만 물어요(물어보는 창이 떠 있는 채로 다른 앱으로 가면 최근 앱 카드에 그 창만 남아 다시 안 열릴 수 있어요)
+        val sp0 = getSharedPreferences("ox", MODE_PRIVATE)
+        if (Build.VERSION.SDK_INT >= 33 && !sp0.getBoolean("asked_noti", false) && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            sp0.edit().putBoolean("asked_noti", true).apply(); requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+        }
         val i = Intent(this, PlayerService::class.java)
         intent?.getStringExtra("mode")?.let { m ->    // 상황별 학습에서 열었을 때
             i.action = "PRESET"; i.putExtra("mode", m).putExtra("sleep", intent.getIntExtra("sleep", 0)).putExtra("bus", intent.getIntExtra("bus", 0))
