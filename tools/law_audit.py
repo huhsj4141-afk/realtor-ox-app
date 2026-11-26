@@ -58,6 +58,15 @@ def _ask(model, text, search):
     return ''.join(p.get('text', '') for p in c['content']['parts']), [{'uri': s.get('uri'), 'title': s.get('title')} for s in src][:4]
 
 
+def verdict(first, body):
+    """첫 줄 판정 + 본문이 스스로 모순되면(\"결론은 같아요\", \"확인할 수 없어요\") 바뀜으로 치지 않기"""
+    if '바뀜' in first and not ('같음' in first and first.index('같음') < first.index('바뀜')):
+        if re.search(r'(결론|정답)[^.\n]{0,25}(같|동일|유지|그대로|맞습니다|맞아요)', body) or re.search(r'불확실|확인할 수 없|확인이 (추가로 )?필요|포함되어 있지 않', body):
+            return 'unsure'
+        return 'changed'
+    return 'ok' if '같음' in first else 'unsure'
+
+
 def main():
     mc = json.load(open(os.path.join(ROOT, 'data', 'mc.json'), encoding='utf8'))
     ex = json.load(open(os.path.join(ROOT, 'gen', 'mc_exp.json'), encoding='utf8')) if os.path.exists(os.path.join(ROOT, 'gen', 'mc_exp.json')) else {}
@@ -65,7 +74,8 @@ def main():
     today = time.strftime('%Y-%m-%d'); old = time.strftime('%Y-%m-%d', time.localtime(time.time() - 180 * 86400))
     pool = [q for q in mc if not q.get('ocr') and q.get('s') in ORDER and re.fullmatch(r'[1-5](,[1-5])*', str(q.get('a')))]
     pool.sort(key=lambda q: (q['id'] in out and out[q['id']].get('d', '') >= old, ORDER.index(q['s']), q.get('n', 0), q.get('no', 0)))
-    todo = [q for q in pool if not (q['id'] in out and out[q['id']].get('d', '') >= old)][:MAX]
+    re2 = [q for q in pool if q['id'] in out and out[q['id']].get('v') == 'changed' and not out[q['id']].get('r2')]   # 바뀜은 한 번 더 확인
+    todo = (re2 + [q for q in pool if not (q['id'] in out and out[q['id']].get('d', '') >= old)])[:MAX]
     print('법 개정 확인할 것', len(todo), '/ 남은 전체', sum(1 for q in pool if q['id'] not in out))
     ms, mi, n = models(), 0, 0
     busy = [0]
@@ -109,10 +119,11 @@ def main():
             print('  조문 대조 실패', err)
         if not t or not src: continue   # 원문 대조를 못 했으면 저장하지 않고 다음에 다시
         t = t.strip(); first = t.split('\n')[0]
-        v = 'changed' if '바뀜' in first else 'ok' if '같음' in first else 'unsure'
+        v = verdict(first, '\n'.join(t.split('\n')[1:]))
         lm = re.search(r'법령\s*[:：]\s*([^\n]+)', t)
         body = '\n'.join(l for l in t.split('\n')[1:] if not re.match(r'^\s*법령\s*[:：]', l)).strip()
-        out[q['id']] = {'v': v, 'law': lm.group(1).strip()[:40] if lm else '', 't': body[:900], 'src': src, 'd': today, 'm': ms[mi], 'web': bool(src), 'basis': 'law' if src else 'ai'}
+        was = out.get(q['id'], {}).get('v')
+        out[q['id']] = {'r2': was == 'changed', 'v': v, 'law': lm.group(1).strip()[:40] if lm else '', 't': body[:900], 'src': src, 'd': today, 'm': ms[mi], 'web': bool(src), 'basis': 'law' if src else 'ai'}
         n += 1
         print(q['id'], v)
         json.dump(out, open(OUT, 'w', encoding='utf8'), ensure_ascii=False, separators=(',', ':'))
