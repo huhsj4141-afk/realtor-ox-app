@@ -2582,9 +2582,9 @@ ${base}`, { modelTier: 'default' }, false);
       out.push(!lw ? row('⚖️', 'na', '현행 법령 · 확인 전 (눌러서 지금 확인)', 'law') : lw.v === 'ok' ? row('⚖️', 'ok', '현행 법령 · 지금 법과 같아요', 'law', (lw.d || '').slice(5).replace('-', '/')) : lw.v === 'changed' ? row('⚖️', 'bad', '현행 법령 · 법이 바뀌었어요 (눌러서 보기)', 'law') : row('⚖️', 'mid', '현행 법령 · 확인이 더 필요해요 (눌러서 보기)', 'law'));
       let mt = ''; try { mt = localStorage.getItem('reb_more_' + q.id) || ''; } catch (x) {}
       if (mt) {
-        const ans = String(q.a).split(',').map(Number), m = mt.match(/정답[은는이:\s]*(?:은|는)?\s*([①-⑤]|[1-5]\s*번)/);
-        const said = m ? (CIRC.indexOf(m[1]) + 1 || parseInt(m[1])) : 0;
-        out.push(!said ? row('🔍', 'na', '더 자세히 · 정답 번호 언급 없음', 'x') : ans.includes(said) ? row('🔍', 'ok', '더 자세히 · 공식 정답과 일치', 'x') : row('🔍', 'bad', `더 자세히 · 정답을 ${CIRC[said - 1]}로 잘못 적음 (눌러서 지우기)`, 'more'));
+        const ans = String(q.a).split(',').map(Number), saids = [...mt.matchAll(/정답[^\n.]{0,8}?([①-⑤]|[1-5]\s*번)/g)].map(m => CIRC.indexOf(m[1]) + 1 || parseInt(m[1])).filter(Boolean);
+        const said = saids.find(x => ans.includes(x)) || saids[0] || 0;
+        out.push(!said ? row('🔍', 'na', '더 자세히 · 정답 번호 언급 없음', 'x') : ans.includes(said) ? row('🔍', 'ok', '더 자세히 · 공식 정답과 일치', 'x') : row('🔍', 'bad', `더 자세히 · 정답을 ${CIRC[said - 1]}로 적음 (공식 ${ans.map(a => CIRC[a - 1]).join('')}) · 눌러서 지우기`, 'more'));
       }
       const worst = out.join('').includes(' bad"') ? 'bad' : out.join('').includes(' mid"') ? 'mid' : 'ok';
       return `<div class="vh ${worst}">🛡 검증</div>` + out.join('');
@@ -2625,13 +2625,23 @@ ${base}`, { modelTier: 'default' }, false);
       let bk = null, bkAt = 0;
       const progN = () => { try { return Object.keys(P || {}).length; } catch (e) { return 0; } };
       const mkBk = () => { if (progN() < 1) return window.__qbk || null; if (bk && Date.now() - bkAt < 30 * 60e3) return bk; const o = {}; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (BKX.test(k)) continue; const v = localStorage.getItem(k); if (v && v.length < 8e5) o[k] = v; } bk = { app: 'realtor-ox', at: new Date().toISOString(), n: progN(), data: o }; bkAt = Date.now(); return bk; };
-      const flush = L => { try { localStorage.setItem('reb_pcq', JSON.stringify(L)); } catch (e) {} if (on()) try { NB2.driveWrite('q', JSON.stringify({ jobs: L.map(j => ({ id: j.id, kind: j.kind, prompt: j.prompt, pick: j.pick, quick: j.quick, at: j.at })), bk: mkBk() })); } catch (e) {} };
+      let qReady = false, qPending = false;
+      const lawLa = () => { let m = ''; try { for (const v of Object.values(JSON.parse(localStorage.getItem('reb_lawpc') || '{}'))) if ((v.d || '') > m) m = v.d; } catch (e) {} return m; };
+      const flush = L => {
+        try { localStorage.setItem('reb_pcq', JSON.stringify(L)); } catch (e) {}
+        if (!on()) return;
+        if (!qReady) { qPending = true; return; }   // 질문함의 예전 백업을 읽기 전엔 덮어쓰지 않기
+        const b = mkBk();
+        try { NB2.driveWrite('q', JSON.stringify(Object.assign({ jobs: L.map(j => ({ id: j.id, kind: j.kind, prompt: j.prompt, pick: j.pick, quick: j.quick, at: j.at })), la: lawLa() }, b ? { bk: b } : {}))); } catch (e) {}
+      };
       let lastBkFlush = 0;
       setInterval(() => { if (on() && Date.now() - lastBkFlush > 30 * 60e3 && progN()) { lastBkFlush = Date.now(); bk = null; flush(list()); } }, 60e3);
       window.pcOn = () => on() && localStorage.getItem('reb_noai') !== '1';
       window.pcAsk = job => { if (!pcOn()) return false; if (list().some(j => j.key === job.key)) return true; const L = list(); L.push(Object.assign({}, job, { id: job.id + '_' + Date.now().toString(36), at: Date.now() })); flush(L.slice(-60)); return true; };
       const cb = {}; let n = 0;
       window.__drv = (id, t) => { const f = cb[id]; delete cb[id]; if (f) f(t); };
+      const readQ = () => new Promise(res => { const id = 'q' + (++n); cb[id] = res; try { NB2.driveRead(id, 'q'); } catch (e) { delete cb[id]; res(null); } setTimeout(() => { if (cb[id]) { delete cb[id]; res(null); } }, 30000); });
+      setTimeout(async () => { if (!on()) { qReady = true; return; } const t = await readQ(); if (t != null) { try { const Q2 = JSON.parse(t || '{}'); window.__qbk = Q2.bk || window.__qbk || null; } catch (e) {} qReady = true; if (qPending) { qPending = false; flush(list()); } } else setTimeout(() => { qReady = true; }, 60000); }, 2500);
       const read = () => new Promise(res => { const id = 'r' + (++n); cb[id] = res; try { NB2.driveRead(id, 'a'); } catch (e) { delete cb[id]; res(null); } setTimeout(() => { if (cb[id]) { delete cb[id]; res(null); } }, 30000); });
       const ago = ms => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? '방금' : m < 60 ? m + '분 전' : m < 1440 ? Math.round(m / 60) + '시간 전' : Math.round(m / 1440) + '일 전'; };
       window.pcLabel = () => { if (!on()) return '🖥 PC 일꾼: 연결 안 됨 (누르면 연결)'; const st = window.__pcState, w = list().length; return '🖥 PC 일꾼: 연결됨' + (st && st.seen ? ' · PC 확인 ' + ago(st.seen) : ' · PC 소식 아직 없음') + (w ? ' · 맡긴 일 ' + w + '개' : '') + (st && st.law ? ` · 🌙 법령 확인 ${st.law.all}문제${st.night ? '(확인 중)' : ''}` : ''); };
@@ -2646,7 +2656,7 @@ ${base}`, { modelTier: 'default' }, false);
         else {   // 연결하자마자 덮어쓰기 전에: 질문함에 예전 진도 백업이 있고 지금 앱이 비어 있으면 되돌리기
           const id = 'q' + Date.now(); cb[id] = t => {
             let Q2 = null; try { Q2 = JSON.parse(t || '{}'); } catch (e) {}
-            window.__qbk = Q2 && Q2.bk || null;
+            window.__qbk = Q2 && Q2.bk || null; qReady = true;
             if (window.__qbk && progN() < 5 && (window.__qbk.n || 0) > progN()) { window.__restore(JSON.stringify(window.__qbk)); return; }
             window.__toast && __toast('🖥 PC 일꾼 연결 끝! AI 한도가 막히면 PC에 맡기고, 진도도 자동 백업해요'); flush(list()); poll(); const b = document.getElementById('sppc'); if (b) b.textContent = pcLabel();
           };

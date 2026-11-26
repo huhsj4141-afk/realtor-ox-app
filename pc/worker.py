@@ -178,11 +178,11 @@ def night_tick():
     log('밤 작업 시작(법 개정 확인)')
 
 
-def law_delta():   # 최근 7일 결과만 앱에 보내기(파일을 가볍게)
+def law_delta(la=''):   # 앱이 아직 못 받은 결과만(앱이 알려 준 날짜 이후, 없으면 최근 7일) — 파일을 가볍게
     p = os.path.join(HERE, 'night', 'gen', 'law_audit.json')
     try: d = json.load(open(p, encoding='utf8'))
     except Exception: return None, None
-    cut = time.strftime('%Y-%m-%d', time.localtime(time.time() - 7 * 86400))
+    cut = max(la or '', time.strftime('%Y-%m-%d', time.localtime(time.time() - 7 * 86400)))
     rec = sorted(((k, v) for k, v in d.items() if v.get('d', '') >= cut and v.get('m')), key=lambda kv: kv[1].get('d', ''), reverse=True)[:250]
     out = {k: {'v': v['v'], 'law': v.get('law', ''), 't': v.get('t', '')[:600], 'src': v.get('src', [])[:4], 'd': v.get('d', ''), 'basis': v.get('basis', '')} for k, v in rec}
     stat = {'all': len(d), 'changed': sum(1 for v in d.values() if v.get('v') == 'changed')}
@@ -199,7 +199,7 @@ def main():
     if not os.path.exists(ap): save(ap, {})
     log('시작:', folder)
     me = os.path.getmtime(os.path.abspath(__file__))
-    wait_until = 0; fails = {}
+    wait_until = 0; fails = {}; last = {'body': '', 't': 0}
     while True:
         try:
             qd = load(qp, {}); jobs = qd.get('jobs', [])
@@ -214,7 +214,7 @@ def main():
             ans['_pc'] = {'seen': int(time.time() * 1000), 'queue': len(todo), 'used': state['used'], 'skip': state['skip']}
             try: night_tick()
             except Exception as e: log('밤 작업 실행 실패', e)
-            ld, ls = law_delta()
+            ld, ls = law_delta(qd.get('la', ''))
             if ld is not None: ans['_law'] = ld; ans['_pc']['law'] = ls
             ans['_pc']['night'] = bool(night['p'] and night['p'].poll() is None)
             if todo and time.time() >= wait_until:
@@ -233,7 +233,10 @@ def main():
             # 오래된 답 정리(30일)
             cut = (time.time() - 30 * 86400) * 1000
             for k in [k for k, v in ans.items() if k != '_pc' and isinstance(v, dict) and v.get('at', cut) < cut]: ans.pop(k)
-            save(ap, ans)
+            # 바뀐 게 있을 때만 저장(아니면 10분에 한 번 '살아 있음'만) → 드라이브 업로드·폰 데이터 절약
+            body = json.dumps({k: v for k, v in ans.items() if k != '_pc'}, ensure_ascii=False, sort_keys=True) + json.dumps({k: v for k, v in ans['_pc'].items() if k != 'seen'}, sort_keys=True)
+            if body != last['body'] or time.time() - last['t'] > 600:
+                save(ap, ans); last['body'] = body; last['t'] = time.time()
             if todo and time.time() >= wait_until: time.sleep(5); continue   # 밀린 일 있으면 바로 다음
         except Exception as e:
             log('오류', e)
