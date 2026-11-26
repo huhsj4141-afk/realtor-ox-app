@@ -224,8 +224,10 @@ class WebActivity : Activity() {
             runOnUiThread {
                 try { (getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("질문", text)) } catch (e: Exception) {}
                 val i = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
-                try { startActivity(Intent(i).setPackage(pkg)) }
-                catch (e: Exception) { try { startActivity(Intent.createChooser(i, "질문 보낼 앱")) } catch (x: Exception) {} }
+                // 새 작업으로 열어야 챗GPT·제미나이가 우리 앱 안에 끼어들지 않아요(최근 앱에서 앱 전환이 정상)
+                val nt = Intent.FLAG_ACTIVITY_NEW_TASK
+                try { startActivity(Intent(i).setPackage(pkg).addFlags(nt)) }
+                catch (e: Exception) { try { startActivity(Intent.createChooser(i, "질문 보낼 앱").addFlags(nt)) } catch (x: Exception) {} }
             }
         }
         /** 국가법령정보센터 조문 가져오기 (law.go.kr 만 허용) */
