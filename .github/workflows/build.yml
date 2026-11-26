@@ -106,8 +106,10 @@ jobs:
           open(p,'w',encoding='utf8').write(s)
           PY
       - name: 빌드
-        env: { VCODE: '${{ github.run_number }}' }
-        run: gradle assembleRelease --no-daemon --stacktrace
+        env: { VCODE: '${{ github.run_number }}', OX_KS_B64: '${{ secrets.OX_KS }}', OX_KS_PW: '${{ secrets.OX_KS_PW }}' }
+        run: |
+          if [ -n "$OX_KS_B64" ]; then echo "$OX_KS_B64" | base64 -d > /tmp/ox.jks && export OX_KS_PATH=/tmp/ox.jks && echo "새 서명 열쇠 사용"; fi
+          gradle assembleRelease --no-daemon --stacktrace
       - name: 올리기
         env: { GH_TOKEN: '${{ github.token }}' }
         run: |

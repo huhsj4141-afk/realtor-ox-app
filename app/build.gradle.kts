@@ -11,8 +11,10 @@ android {
     }
     signingConfigs {
         create("rel") {
-            storeFile = rootProject.file("keystore/release.jks")
-            storePassword = "realtorox"; keyAlias = "ox"; keyPassword = "realtorox"
+            // 새 서명 열쇠는 GitHub 비밀값(OX_KS, OX_KS_PW)에만 있어요. 없으면 예전 열쇠로.
+            val ks = System.getenv("OX_KS_PATH"); val pw = System.getenv("OX_KS_PW")
+            if (!ks.isNullOrBlank() && !pw.isNullOrBlank() && file(ks).exists()) { storeFile = file(ks); storePassword = pw; keyAlias = "ox"; keyPassword = pw }
+            else { storeFile = rootProject.file("keystore/release.jks"); storePassword = "realtorox"; keyAlias = "ox"; keyPassword = "realtorox" }
         }
     }
     buildTypes {
