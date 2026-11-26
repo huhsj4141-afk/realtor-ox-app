@@ -2618,9 +2618,9 @@ ${base}`, { modelTier: 'default' }, false);
       return `${head}\n\n공인중개사 수험생에게 설명하듯이:\n1) 등장하는 사람(甲·乙 등)·권리·돈의 관계를 화살표 관계도로 그려 줘(텍스트로)\n2) 계산 문제면 공식→숫자 대입→결과를 단계별로\n3) 보기마다 맞고 틀린 이유를 한 줄씩\n4) 꼭 외울 것과 함정 2~3개\n쉬운 말로, 표나 목록으로 정리해 줘.`;
     }
     function askApp(q, kind) {
-      try { localStorage.setItem('reb_lastask', JSON.stringify({ id: q.id, k: kind, at: Date.now() })); } catch (e) {}
       const gem = kind === 'law' || kind === 'both2', t = askPrompt(q, kind), pkg = gem ? 'com.google.android.apps.bard' : 'com.openai.chatgpt';
-      if (window.NativeBridge && NativeBridge.askApp) { NativeBridge.askApp(pkg, t); window.__toast && __toast(`${kind === 'both' ? '1/2 ' : kind === 'both2' ? '2/2 ' : ''}${gem ? '제미나이' : '챗GPT'}를 열어요 · 답이 나오면 [공유 → 중개사 앱] 하거나 답을 복사해 와서 📋 붙여넣기`); }
+      try { localStorage.setItem('reb_lastask', JSON.stringify({ id: q.id, k: kind, at: Date.now(), p: t.slice(0, 200) })); } catch (e) {}
+      if (window.NativeBridge && NativeBridge.askApp) { NativeBridge.askApp(pkg, t); window.__toast && __toast(`${kind === 'both' ? '1/2 ' : kind === 'both2' ? '2/2 ' : ''}${gem ? '제미나이' : '챗GPT'}를 열어요 · 보내기 → 답이 나오면 [복사] 하고 돌아오세요`); }
       else { try { navigator.clipboard.writeText(t); } catch (e) {} window.__toast && __toast('질문을 복사했어요'); }
     }
     window.askApp = askApp;
@@ -2632,13 +2632,13 @@ ${base}`, { modelTier: 'default' }, false);
       t = String(t || '').trim(); if (t.length < 5) return window.__toast && __toast('붙여 넣을 답이 없어요. 앱에서 답을 복사해 주세요');
       const L = LSJ(askKey(q.id), []); if (L.some(x => x.t === t)) return; L.push({ k: la ? la.k : 'exp', t: t.slice(0, 12000), at: new Date().toLocaleString('ko-KR') }); LSS(askKey(q.id), L);
       document.getElementById('askc')?.remove();
-      if (la && la.k === 'both') return window.__done(`💬 챗GPT 답 저장 · 이제 제미나이에게도 물어봐요 (누르기)`, () => askApp(q, 'both2'));
-      if (la && la.k === 'both2') { try { localStorage.removeItem('reb_lastask'); } catch (e) {} return askSum(q); }
+      if (la && la.k === 'both') { window.__toast && __toast('✅ 챗GPT 답 저장 → 이제 제미나이로 넘어가요'); setTimeout(() => askApp(q, 'both2'), 1500); return; }
+      if (la && la.k === 'both2') { try { localStorage.removeItem('reb_lastask'); } catch (e) {} return askSum(q, true); }
       window.__done(`💬 ${q.n}회 ${q.no}번에 ${la && la.k === 'law' ? '제미나이' : '챗GPT'} 답을 저장했어요`, () => { if (!(cur === 'quiz' && S.list[S.i] && S.list[S.i].id === q.id)) startQuiz([q], { from: 'home', title: '받아 온 답' }); });
     }
     window.__shared = saveAnswer;
     const ASKN = { exp: '💬 챗GPT · 풀이', law: '🔎 제미나이 · 법령', both: '💬 챗GPT', both2: '🔎 제미나이', sum: '🤖 두 답 종합 정리' };
-    async function askSum(q) {   // 🤖 챗GPT·제미나이 답을 하나로 (AI가 없으면 두 답을 이어 붙임)
+    async function askSum(q, auto) {   // 🤖 챗GPT·제미나이 답을 하나로 (AI가 없으면 두 답을 이어 붙임)
       const L = LSJ(askKey(q.id), []), a = [...L].reverse().find(x => x.k === 'both' || x.k === 'exp'), b = [...L].reverse().find(x => x.k === 'both2' || x.k === 'law');
       if (!a || !b) return window.__toast && __toast('챗GPT와 제미나이 답이 둘 다 있어야 종합할 수 있어요');
       let t = '';
@@ -2647,7 +2647,8 @@ ${base}`, { modelTier: 'default' }, false);
       if (!t) t = `(AI 없이 두 답을 이어 붙였어요)\n\n[챗GPT]\n${a.t}\n\n[제미나이]\n${b.t}`;
       const L2 = LSJ(askKey(q.id), []); L2.push({ k: 'sum', t: String(t).trim().slice(0, 12000), at: new Date().toLocaleString('ko-KR') }); LSS(askKey(q.id), L2);
       document.getElementById('askc')?.remove();
-      window.__done(`🤖 ${q.n}회 ${q.no}번 종합 정리 완료 · 📝 필기장에 넣기`, () => padInsert(q, t));
+      if (auto) { padInsert(q, t); window.__done(`🤖 ${q.n}회 ${q.no}번 종합 정리를 📝 필기장에 넣었어요`, () => padInsert(q, t)); }
+      else window.__done(`🤖 ${q.n}회 ${q.no}번 종합 정리 완료 · 📝 필기장에 넣기`, () => padInsert(q, t));
     }
     function padInsert(q, t) {   // 📝 정리된 글을 그 문제의 필기장(⌨️ 글)에 덧붙이기
       const clean = String(t).replace(/\*\*|__|^#+\s*/gm, '').trim(), k = 'reb_padt_' + q.id;
@@ -2659,6 +2660,13 @@ ${base}`, { modelTier: 'default' }, false);
       window.__toast && __toast('📝 필기장(⌨️ 글)에 넣었어요');
     }
     window.askSum = askSum; window.padInsert = padInsert;
+    // 📋 챗GPT·제미나이에서 [복사]하고 돌아오면 붙여넣기 없이 자동 저장 → 다음 단계로
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden || !window.NativeBridge || !NativeBridge.clipText) return;
+      let la = null; try { la = JSON.parse(localStorage.getItem('reb_lastask')); } catch (e) {}
+      if (!la || Date.now() - la.at > 30 * 60000) return;
+      setTimeout(() => { let t = ''; try { t = String(NativeBridge.clipText() || '').trim(); } catch (e) {} if (t.length < 30 || t.slice(0, 200) === la.p) return; saveAnswer(t); }, 800);
+    });
     setInterval(() => {
       try {
         if (cur !== 'quiz' || !S || !S.list) return; const q = S.list[S.i]; if (!q) return;

@@ -78,10 +78,12 @@ class WebActivity : Activity() {
             // 인터넷 주소(원본 PDF·신고 등)는 앱 밖 브라우저로 열기
             webViewClient = object : android.webkit.WebViewClient() {
                 override fun onPageFinished(v: WebView, url: String) { loaded = true; goTab(intent); measureTabs(); takeShared(intent) }
+                // 다른 앱 쓰는 동안 폰이 화면 엔진을 정리해 버리면(메모리 부족) 앱이 멈춘 듯 안 열려요 → 화면을 새로 만들기
+                override fun onRenderProcessGone(v: WebView, d: android.webkit.RenderProcessGoneDetail): Boolean { try { recreate() } catch (e: Exception) { finish() }; return true }
                 override fun shouldOverrideUrlLoading(v: WebView, r: android.webkit.WebResourceRequest): Boolean {
                     val u = r.url
                     if (u.scheme == "http" || u.scheme == "https") {
-                        try { startActivity(Intent(Intent.ACTION_VIEW, u)) } catch (e: Exception) { }
+                        try { startActivity(Intent(Intent.ACTION_VIEW, u).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (e: Exception) { }
                         return true
                     }
                     return false
@@ -165,7 +167,7 @@ class WebActivity : Activity() {
                 f.writeText(json)
                 val uri = androidx.core.content.FileProvider.getUriForFile(this@WebActivity, packageName + ".files", f)
                 val i = Intent(Intent.ACTION_SEND).setType("application/json").putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                runOnUiThread { startActivity(Intent.createChooser(i, "백업 저장할 곳 (구글 드라이브 추천)")) }
+                runOnUiThread { startActivity(Intent.createChooser(i, "백업 저장할 곳 (구글 드라이브 추천)").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             } catch (e: Exception) { js("window.__toast&&__toast('백업을 만들지 못했어요')") }
         }
         @JavascriptInterface fun backupPick() {
