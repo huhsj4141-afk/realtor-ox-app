@@ -45,14 +45,7 @@ class WebActivity : Activity() {
             }
         }, 1500)
     }
-    override fun onNewIntent(i: Intent) { super.onNewIntent(i); setIntent(i); goTab(i); takeShared(i) }
-    /** 제미나이·챗GPT에서 '공유 → 중개사 앱' 한 답을 받아 지금 문제에 붙임 */
-    private fun takeShared(i: Intent?) {
-        if (i?.action != Intent.ACTION_SEND) return
-        val t = i.getStringExtra(Intent.EXTRA_TEXT) ?: return
-        i.action = null
-        web.postDelayed({ js("window.__shared&&__shared(${JSONObject.quote(t)})") }, if (loaded) 300 else 2500)
-    }
+    override fun onNewIntent(i: Intent) { super.onNewIntent(i); setIntent(i); goTab(i) }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(b: Bundle?) {
@@ -77,7 +70,7 @@ class WebActivity : Activity() {
             webChromeClient = WebChromeClient()
             // 인터넷 주소(원본 PDF·신고 등)는 앱 밖 브라우저로 열기
             webViewClient = object : android.webkit.WebViewClient() {
-                override fun onPageFinished(v: WebView, url: String) { loaded = true; goTab(intent); measureTabs(); takeShared(intent) }
+                override fun onPageFinished(v: WebView, url: String) { loaded = true; goTab(intent); measureTabs() }
                 // 다른 앱 쓰는 동안 폰이 화면 엔진을 정리해 버리면(메모리 부족) 앱이 멈춘 듯 안 열려요 → 화면을 새로 만들기
                 override fun onRenderProcessGone(v: WebView, d: android.webkit.RenderProcessGoneDetail): Boolean { try { recreate() } catch (e: Exception) { finish() }; return true }
                 override fun shouldOverrideUrlLoading(v: WebView, r: android.webkit.WebResourceRequest): Boolean {
@@ -220,18 +213,6 @@ class WebActivity : Activity() {
         @JavascriptInterface fun setToday(json: String) { this@WebActivity.getSharedPreferences("ox", android.content.Context.MODE_PRIVATE).edit().putString("today", json).apply() }
         @JavascriptInterface fun openOx() = runOnUiThread { startActivity(Intent(this@WebActivity, MainActivity::class.java)); @Suppress("DEPRECATION") overridePendingTransition(0, 0) }
 
-        @JavascriptInterface fun clipText(): String = try { (getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).primaryClip?.getItemAt(0)?.coerceToText(this@WebActivity)?.toString() ?: "" } catch (e: Exception) { "" }
-        /** 제미나이·챗GPT 앱에 질문 넘기기 (내 유료 구독으로 답 받기). 앱이 없으면 공유 창 */
-        @JavascriptInterface fun askApp(pkg: String, text: String) {
-            runOnUiThread {
-                try { (getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("질문", text)) } catch (e: Exception) {}
-                val i = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
-                // 새 작업으로 열어야 챗GPT·제미나이가 우리 앱 안에 끼어들지 않아요(최근 앱에서 앱 전환이 정상)
-                val nt = Intent.FLAG_ACTIVITY_NEW_TASK
-                try { startActivity(Intent(i).setPackage(pkg).addFlags(nt)) }
-                catch (e: Exception) { try { startActivity(Intent.createChooser(i, "질문 보낼 앱").addFlags(nt)) } catch (x: Exception) {} }
-            }
-        }
         /** 국가법령정보센터 조문 가져오기 (law.go.kr 만 허용) */
         @JavascriptInterface fun httpGet(id: String, url: String) {
             io.execute {

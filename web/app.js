@@ -280,20 +280,6 @@
     }).join('');
     return `<div style="margin-top:14px;font-size:13px;opacity:.95">이번 주 <b>${days}일</b> 공부 · <b>${sum}</b>문제 <span style="opacity:.8">(목표 주 6일)</span></div><div class="wk">${cells}</div>`;
   }
-  function roundCard() {
-    const sub = typeof SUBS !== 'undefined' ? SUBS : ['학개론', '민법', '중개사법', '공법', '공시법', '세법'];
-    const rows = sub.map((n, s) => {
-      const qs = Q.filter(q => q.s === s), T = qs.length || 1;
-      const k = m => qs.filter(q => P[q.id] && P[q.id][2] >= m).length;
-      const r1 = k(1), r2 = k(2), r3 = k(3);
-      return `<b>${n}</b><div class="b"><i style="width:${r3 / T * 100}%;background:#16a34a"></i><i style="width:${(r2 - r3) / T * 100}%;background:#60a5fa"></i><i style="width:${(r1 - r2) / T * 100}%;background:#cbd5e1"></i></div><span class="muted">${Math.round(r1 / T * 100)}%</span>`;
-    }).join('');
-    const un = unsureIds().length;
-    return `<div class="card" id="rdcard"><h2>📚 회독 진도</h2>
-      <div class="muted" style="font-size:12px;margin-bottom:8px">막대: <span style="color:#16a34a">■</span>3회독 <span style="color:#60a5fa">■</span>2회독 <span style="color:#94a3b8">■</span>1회독 · 숫자는 1회독 비율</div>
-      <div class="rd">${rows}</div>
-</div>`;
-  }
   function cleanCards(texts) {
     document.querySelectorAll('#view .card, #view details').forEach(c => {
       const t = (c.querySelector('h2,summary,b')?.textContent || '') + ' ' + c.textContent.slice(0, 60);
@@ -1157,17 +1143,6 @@
     try { const t = THEMES[k], nb = window.NativeBridge; if (nb && nb.setTheme) nb.setTheme(t && t.bg ? JSON.stringify(t) : ''); } catch (e) {}   // 듣기 화면도 같은 색
   }
   try { applyTheme(localStorage.getItem('reb_theme') || 'auto'); } catch (e) {}
-  function themeCard() {
-    if (document.getElementById('themec')) return;
-    const view = document.getElementById('view'); if (!view) return;
-    let curT = 'auto'; try { curT = localStorage.getItem('reb_theme') || 'auto'; } catch (e) {}
-    const sw = Object.entries(THEMES).map(([k, t]) => {
-      const bg = t.bg || 'linear-gradient(135deg,#f6f7f9 50%,#12151b 50%)', pri = t.pri || '#6f9bff', card = t.card || 'transparent';
-      return `<button class="thm ${k === curT ? 'on' : ''}" data-t="${k}"><span class="sw" style="background:${bg}"><i style="background:${card}"></i><b style="background:${pri}"></b></span><span class="nm">${t.name}</span><small>${t.sub}</small></button>`;
-    }).join('');
-    view.insertAdjacentHTML('beforeend', `<div class="card" id="themec"><h3 style="margin:0 0 10px">🎨 화면 색</h3><div class="thg">${sw}</div></div>`);
-    view.querySelectorAll('#themec .thm').forEach(b => b.onclick = () => { applyTheme(b.dataset.t); view.querySelectorAll('#themec .thm').forEach(x => x.classList.toggle('on', x === b)); });
-  }
   /* ---------- 🔊 말해주기: 모든 화면 오른쪽 아래, 눈 감고 듣기 ---------- */
   function sayClean(t) {
     return String(t || '')
@@ -1321,14 +1296,6 @@
     let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
     PAD.strokes.forEach(st => st.p.forEach(q => { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); }));
     return x0 > x1 ? null : [x0, y0, x1, y1];
-  }
-  function padFit(onlyOut) {   // 그린 것이 다 보이게
-    const b = padBox(), v = PAD.v;
-    if (!b) { PAD.v = { s: 1, ox: 0, oy: 0 }; return; }
-    if (b[0] >= 0 && b[1] >= 0 && b[2] <= 1 && b[3] <= 1 && !onlyOut) { PAD.v = { s: 1, ox: 0, oy: 0 }; return; }
-    const m = .06, need = Math.min(1 / ((b[2] - b[0]) + m * 2), 1 / ((b[3] - b[1]) + m * 2));
-    const s = Math.max(.2, Math.min(onlyOut ? v.s : 1, need));
-    PAD.v = { s, ox: (b[0] + b[2]) / 2 - .5 / s, oy: (b[1] + b[3]) / 2 - .5 / s };
   }
   function padZoom(f, cx = .5, cy = .5) {   // cx,cy: 화면 비율 위치를 중심으로
     const v = PAD.v, ns = Math.max(.2, Math.min(5, v.s * f));
@@ -1670,7 +1637,7 @@
     const HELP = {
       head: ['위쪽 버튼', [['예상 점수', '지금까지 푼 결과로 계산한 1차·2차 예상 점수. 누르면 기록 화면'], ['🌊', '공부할 때 틀어 두는 집중 소리(빗소리 등)'], ['🔊', '지금 화면 글을 소리 내어 읽기'], ['📝', '필기장 (문제마다 따로 저장)'], ['🧮', '시험장 일반 계산기']]],
       home: ['오늘 화면', [['▶ 문제 풀기', '틀린 문제 + 새 기출을 알아서 섞어 줘요. 이것만 누르면 돼요'], ['카드 N', '어제 "다시 볼래요" 한 개념이 문제 전에 먼저 나와요'], ['📆 하루 N문제', '시험일까지 3회독이 되도록 저절로 계산'], ['🎧 암기 듣기', '묻고 3초 쉬고 답. 화면을 꺼도 계속 읽어요'], ['🔥 N일', '연속 공부한 날 (주 1회 빠져도 이어져요)']]],
-      quiz: ['문제 화면', [['문제 글 길게 누르기', '🔗 관계도·🧮 계산식을 필기장에 그려 줘요 (풀기 전엔 정답 없이)'], ['보기 길게 누르기', '참·거짓을 가르는 낱말에 노란 물결 밑줄 (힌트)'], ['보기 옆으로 밀기', '아닌 보기에 줄 긋기 (소거법)'], ['보기 두 번 톡톡', '❓ 헷갈린 보기 표시 → 오답 탭에서 모아 풀기'], ['주황 밑줄', '"할 수 있다·하여야 한다·이상·이하" 같은 함정 표현'], ['점선 밑줄 낱말', '누르면 용어 설명'], ['✍ 지문 위 필기', '문제 위에 바로 밑줄·동그라미'], ['틀리면', '핵심 1줄 카드 + 같은 주제 기출 1문제가 다음에 자동으로'], ['⋯ 더보기', '💬 챗GPT에 풀이 묻기 · 🔎 제미나이에 법령 묻기(내 유료 앱으로) · ⚖ 최신 법령 확인 · 🔗 연관 문제 3개 더 · 🔁 숫자 바꾸기 · 원본 · 🚩 신고'], ['⚖ 지금 법에도 맞나요?', '답한 뒤 누르면 구글 검색으로 개정 여부 확인 (결과 저장)'], ['⏱', '문제마다 걸린 시간 자동 기록 (1분 30초 넘으면 따로 모아 줘요)']]],
+      quiz: ['문제 화면', [['문제 글 길게 누르기', '🔗 관계도·🧮 계산식을 필기장에 그려 줘요 (풀기 전엔 정답 없이)'], ['보기 길게 누르기', '참·거짓을 가르는 낱말에 노란 물결 밑줄 (힌트)'], ['보기 옆으로 밀기', '아닌 보기에 줄 긋기 (소거법)'], ['보기 두 번 톡톡', '❓ 헷갈린 보기 표시 → 오답 탭에서 모아 풀기'], ['주황 밑줄', '"할 수 있다·하여야 한다·이상·이하" 같은 함정 표현'], ['점선 밑줄 낱말', '누르면 용어 설명'], ['✍ 지문 위 필기', '문제 위에 바로 밑줄·동그라미'], ['틀리면', '핵심 1줄 카드 + 같은 주제 기출 1문제가 다음에 자동으로'], ['🛡 검증(답한 뒤)', '해설 AI 검수 · 현행 법령 · 더 자세히 정답 일치를 3줄로. 줄을 누르면 자세히'], ['⋯ 더보기', '⚖ 최신 법령 확인 · 🔗 연관 문제 3개 더 · 🔁 숫자 바꾸기 · 원본 · 🚩 신고'], ['⚖ 지금 법에도 맞나요?', '답한 뒤 누르면 구글 검색으로 개정 여부 확인 (결과 저장)'], ['⏱', '문제마다 걸린 시간 자동 기록 (1분 30초 넘으면 따로 모아 줘요)']]],
       wrong: ['오답 화면', [['🔁 복습', '틀린 문제만 다시'], ['❓ 헷갈린 보기', '두 번 톡톡 표시한 문제'], ['⏱ 오래 걸린', '1분 30초 넘게 걸린 문제'], ['★ 북마크', '별표 한 문제']]],
       stats: ['기록 화면', [['점수 / 최근 / 달력', '위쪽에서 바꿔 보기'], ['과목 막대', '빨강=과락(40점 미만) · 노랑=60점 미만 · 오른쪽은 푼 문제 수'], ['🏅 줄 누르기', '배지·레벨 펼치기'], ['📅 이번 주', '이번 주 푼 수·정답률·평균 시간·다음 주 챙길 과목'], ['최근', '방금 푼 문제 다시 찾기']]],
       memo: ['암기 듣기', [['순서', '내가 다시 보기로 한 개념 → 틀린 문제 핵심 → 빈출 공식'], ['💡 팁', '외우기 쉬운 말장난·두문자를 같이 읽어요'], ['화면 꺼도', '계속 읽어요 (이어폰 추천)']]],
@@ -2062,10 +2029,6 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     // 틀렸거나 헷갈렸으면: 그 테마 핵심 카드로 바로 (개념을 다시 잡을 때)
     const okA = String(q.a).split(',').map(Number).includes(+S.ans[q.id]);
     const fbx = card.querySelector('.fb'), uns = (() => { try { const v = conf()[q.id]; return !!v && v !== 'sure'; } catch (e) { return false; } })();
-    if (false && fbx && (!okA || uns) && !document.getElementById('fbk')) {
-      fbx.insertAdjacentHTML('beforeend', '<button class="btn fbk" id="fbk">🌳 이 테마 개념 노트로 다시 잡기</button>');
-      document.getElementById('fbk').onclick = () => themeView(tkey(q));
-    }
     // 더 자세히: 내용이 펼쳐지면 버튼은 숨김
     const mOpen = mb.textContent.trim().length > 20;
     if (!more.dataset.lbl) { more.dataset.lbl = 1; }
@@ -2491,7 +2454,6 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
           // 🔗 연관 문제: 더보기 안 + 답한 뒤 해설 위에
           const relN = relList(q).length, fbx2 = document.querySelector('#view .fb');
           const tb2 = document.querySelector('.qdock .qmore .qtb');
-          if (false && tb2 && !tb2.querySelector('#qask')) { tb2.insertAdjacentHTML('beforeend', `<button class="btn" id="qask"><span class="ic">🤖</span>챗GPT+제미나이 종합</button>`); tb2.querySelector('#qask').onclick = () => { document.querySelector('.qdock')?.classList.remove('open'); askApp(S.list[S.i], 'both'); }; }
           if (tb2 && !tb2.querySelector('#qlaw')) { tb2.insertAdjacentHTML('afterbegin', `<button class="btn" id="qlaw"><span class="ic">⚖</span>최신 법령 확인</button>`); tb2.querySelector('#qlaw').onclick = () => { document.querySelector('.qdock')?.classList.remove('open'); lawCheck(S.list[S.i]); }; }
           if (fbx2 && !document.getElementById('qlaw2')) { fbx2.insertAdjacentHTML('afterend', `<div id="qlaw2" class="vchk">${verifyHTML(q)}</div>`); const vb = document.getElementById('qlaw2'); vb.onclick = e => { const r = e.target.closest('[data-v]'); if (!r) return; if (r.dataset.v === 'law') lawCheck(q); else if (r.dataset.v === 'more') { try { localStorage.removeItem('reb_more_' + q.id); } catch (x) {} vb.remove(); window.__toast && __toast('더 자세히를 지웠어요 · 더보기에서 다시 만들어 주세요'); } else r.classList.toggle('open'); }; }
           else if (document.getElementById('qlaw2') && fbx2) { const vb = document.getElementById('qlaw2'), h = verifyHTML(q); if (vb.dataset.h !== h.length + '') { vb.dataset.h = h.length; vb.innerHTML = h; } }
@@ -2555,10 +2517,9 @@ ${base}` });
           ${(d.src || []).length ? `<h4>근거 조문·찾아본 곳</h4>${d.src.slice(0, 5).map(x => `<a class="lws" href="${esc(x.uri)}" target="_blank" rel="noopener">🔗 ${esc(x.title || x.uri)}</a>`).join('')}` : ''}
           <a class="lws" href="https://www.law.go.kr/LSW/lsSc.do?query=${encodeURIComponent((d.law || SUBS[q.s] || '').split(/[,·]/)[0])}" target="_blank" rel="noopener">📜 국가법령정보센터에서 직접 보기</a>
           <div class="muted" style="font-size:12px;margin-top:10px">${esc(d.at || '')} 확인 · AI가 정리한 결과라 중요한 건 아래 원문 링크로 한 번 더 확인하세요</div>
-          <div class="arow" style="margin-top:10px"><button class="btn" id="lwre">🔄 다시 확인</button><button class="btn" id="lwgm">🔎 제미나이로 더 알아보기</button>${v === 'changed' ? '<button class="btn" id="lwrp">🚩 신고에 남기기</button>' : ''}</div>`}</div></div>`);
+          <div class="arow" style="margin-top:10px"><button class="btn" id="lwre">🔄 다시 확인</button>${v === 'changed' ? '<button class="btn" id="lwrp">🚩 신고에 남기기</button>' : ''}</div>`}</div></div>`);
         if (d && !loading) { const b2 = document.getElementById('qlaw2'); if (b2) b2.textContent = v === 'ok' ? '✅ 최신 법령 확인됨' : v === 'changed' ? '⚠️ 법이 바뀐 문제 — 보기' : '❓ 법령 확인 결과 보기'; }
         const p2 = document.getElementById('lawp'); p2.onclick = e => { if (e.target === p2 || e.target.id === 'lwx') p2.remove(); };
-        const gm = document.getElementById('lwgm'); if (gm) gm.onclick = () => askApp(q, 'law');
         const re = document.getElementById('lwre'); if (re) re.onclick = () => { localStorage.removeItem(K); lawCheck(q); };
         const rp = document.getElementById('lwrp'); if (rp) rp.onclick = () => { try { const A = LSJ('reb_lawflag', {}); A[q.id] = { at: d.at, t: (d.t || '').slice(0, 300) }; LSS('reb_lawflag', A); } catch (e) {} document.getElementById('lawp')?.remove(); try { report(q); setTimeout(() => { const m = document.getElementById('rpm'); if (m) m.value = '[법령 개정] ' + (d.t || '').slice(0, 500); }, 60); } catch (e) {} };
       };
@@ -2628,47 +2589,9 @@ ${base}`, { modelTier: 'default' }, false);
       const worst = out.join('').includes(' bad"') ? 'bad' : out.join('').includes(' mid"') ? 'mid' : 'ok';
       return `<div class="vh ${worst}">🛡 검증</div>` + out.join('');
     }
-    // 🤖 내 유료 제미나이·챗GPT 앱에 바로 물어보기 (질문을 만들어 넘김, 추가 비용 없음)
-    function askPrompt(q, kind) {
-      const ex = expOf(q) || {}, today3 = new Date().toISOString().slice(0, 10);
-      const head = `[공인중개사 기출] 제${q.n}회 ${SUBS[q.s]} ${q.no}번 · 공식 정답 ${q.a}번\n${q.x}\n` + (ex.summary ? `\n(앱 해설 요약) ${ex.summary}` : '');
-      if (kind === 'both' || kind === 'both2') return `${head}\n\n공인중개사 수험생에게 설명하듯이 쉬운 말로:\n1) 등장하는 사람(甲·乙 등)·권리·돈의 관계를 화살표 관계도로(텍스트로)\n2) 계산 문제면 공식→숫자 대입→결과를 단계별로\n3) 보기마다 맞고 틀린 이유를 한 줄씩\n4) 꼭 외울 것과 함정 2~3개\n5) 오늘(${today3}) 기준 현행 법령과 맞는지(실시간 검색, 개정됐으면 조문·시행일·근거 링크 law.go.kr)`;
-      if (kind === 'law') return `${head}\n\n오늘(${today3}) 기준으로 이 문제와 정답·해설이 현행 법령과 맞는지 실시간 검색으로 확인해 줘.\n1) 관련 법령·조문(시행령·시행규칙 포함)과 최근 개정 여부·시행일\n2) 지금 법 기준으로 정답이 달라지는지\n3) 근거 링크(국가법령정보센터 law.go.kr 우선)\n쉬운 말로 정리해 줘.`;
-      return `${head}\n\n공인중개사 수험생에게 설명하듯이:\n1) 등장하는 사람(甲·乙 등)·권리·돈의 관계를 화살표 관계도로 그려 줘(텍스트로)\n2) 계산 문제면 공식→숫자 대입→결과를 단계별로\n3) 보기마다 맞고 틀린 이유를 한 줄씩\n4) 꼭 외울 것과 함정 2~3개\n쉬운 말로, 표나 목록으로 정리해 줘.`;
-    }
-    function askApp(q, kind) {
-      const gem = kind === 'law' || kind === 'both2', t = askPrompt(q, kind), pkg = gem ? 'com.google.android.apps.bard' : 'com.openai.chatgpt';
-      try { localStorage.setItem('reb_lastask', JSON.stringify({ id: q.id, k: kind, at: Date.now(), p: t.slice(0, 200) })); } catch (e) {}
-      if (window.NativeBridge && NativeBridge.askApp) { NativeBridge.askApp(pkg, t); window.__toast && __toast(`${kind === 'both' ? '1/2 ' : kind === 'both2' ? '2/2 ' : ''}${gem ? '제미나이' : '챗GPT'}를 열어요 · 보내기 → 답이 나오면 [복사] 하고 돌아오세요`); }
-      else { try { navigator.clipboard.writeText(t); } catch (e) {} window.__toast && __toast('질문을 복사했어요'); }
-    }
-    window.askApp = askApp;
-    // 받아 온 답: 앱에서 '공유 → 중개사 앱' 또는 📋 붙여넣기 → 그 문제에 저장해 해설 아래 보여 줌
+    // 💬 예전에 챗GPT·제미나이에서 받아 온 답(버튼은 뺐고, 남아 있는 답만 보여 주기)
     const askKey = id => 'reb_ask_' + id;
-    function saveAnswer(t) {
-      let la = null; try { la = JSON.parse(localStorage.getItem('reb_lastask')); } catch (e) {}
-      const q = (la && BYID[la.id]) || (cur === 'quiz' && S && S.list && S.list[S.i]); if (!q) return window.__toast && __toast('어느 문제의 답인지 몰라서 저장하지 못했어요');
-      t = String(t || '').trim(); if (t.length < 5) return window.__toast && __toast('붙여 넣을 답이 없어요. 앱에서 답을 복사해 주세요');
-      const L = LSJ(askKey(q.id), []); if (L.some(x => x.t === t)) return; L.push({ k: la ? la.k : 'exp', t: t.slice(0, 12000), at: new Date().toLocaleString('ko-KR') }); LSS(askKey(q.id), L);
-      document.getElementById('askc')?.remove();
-      if (la && la.k === 'both') { window.__toast && __toast('✅ 챗GPT 답 저장 → 이제 제미나이로 넘어가요'); setTimeout(() => askApp(q, 'both2'), 1500); return; }
-      if (la && la.k === 'both2') { try { localStorage.removeItem('reb_lastask'); } catch (e) {} return askSum(q, true); }
-      window.__done(`💬 ${q.n}회 ${q.no}번에 ${la && la.k === 'law' ? '제미나이' : '챗GPT'} 답을 저장했어요`, () => { if (!(cur === 'quiz' && S.list[S.i] && S.list[S.i].id === q.id)) startQuiz([q], { from: 'home', title: '받아 온 답' }); });
-    }
-    window.__shared = saveAnswer;
     const ASKN = { exp: '💬 챗GPT · 풀이', law: '🔎 제미나이 · 법령', both: '💬 챗GPT', both2: '🔎 제미나이', sum: '🤖 두 답 종합 정리' };
-    async function askSum(q, auto) {   // 🤖 챗GPT·제미나이 답을 하나로 (AI가 없으면 두 답을 이어 붙임)
-      const L = LSJ(askKey(q.id), []), a = [...L].reverse().find(x => x.k === 'both' || x.k === 'exp'), b = [...L].reverse().find(x => x.k === 'both2' || x.k === 'law');
-      if (!a || !b) return window.__toast && __toast('챗GPT와 제미나이 답이 둘 다 있어야 종합할 수 있어요');
-      let t = '';
-      if (aiOK()) { window.__toast && __toast('🤖 두 답을 하나로 정리하는 중…');
-        try { t = await window.gemini(`공인중개사 수험생 노트용으로 아래 두 AI의 답을 하나로 합쳐 줘. 겹치는 건 한 번만, 서로 다른 내용은 "⚠ 두 AI가 다르게 말함:"으로 표시. 순서: ①관계도(텍스트) ②계산(있으면) ③보기별 O/X 이유 ④꼭 외울 것·함정 ⑤현행 법령 확인(개정·근거). 마크다운 기호(#,*) 없이 줄글·번호로, 900자 이내.\n\n[챗GPT]\n${a.t.slice(0, 5000)}\n\n[제미나이]\n${b.t.slice(0, 5000)}`, { modelTier: 'default', timeout: 60000 }, false); } catch (e) { t = ''; } }
-      if (!t) t = `(AI 없이 두 답을 이어 붙였어요)\n\n[챗GPT]\n${a.t}\n\n[제미나이]\n${b.t}`;
-      const L2 = LSJ(askKey(q.id), []); L2.push({ k: 'sum', t: String(t).trim().slice(0, 12000), at: new Date().toLocaleString('ko-KR') }); LSS(askKey(q.id), L2);
-      document.getElementById('askc')?.remove();
-      if (auto) { padInsert(q, t); window.__done(`🤖 ${q.n}회 ${q.no}번 종합 정리를 📝 필기장에 넣었어요`, () => padInsert(q, t)); }
-      else window.__done(`🤖 ${q.n}회 ${q.no}번 종합 정리 완료 · 📝 필기장에 넣기`, () => padInsert(q, t));
-    }
     function padInsert(q, t) {   // 📝 정리된 글을 그 문제의 필기장(⌨️ 글)에 덧붙이기
       const clean = String(t).replace(/\*\*|__|^#+\s*/gm, '').trim(), k = 'reb_padt_' + q.id;
       const old = localStorage.getItem(k) || '', add = `── 🤖 AI 종합 (${new Date().toLocaleDateString('ko-KR')}) ──\n${clean}`;
@@ -2678,27 +2601,14 @@ ${base}`, { modelTier: 'default' }, false);
       if (here) { const ta = document.getElementById('padt'); if (ta && PAD.key === q.id) ta.value = localStorage.getItem(k); padOpen(true); padTab('memo'); const ta2 = document.getElementById('padt'); if (ta2) { ta2.value = localStorage.getItem(k); ta2.scrollTop = ta2.scrollHeight; } }
       window.__toast && __toast('📝 필기장(⌨️ 글)에 넣었어요');
     }
-    window.askSum = askSum; window.padInsert = padInsert;
-    // 📋 챗GPT·제미나이에서 [복사]하고 돌아오면 붙여넣기 없이 자동 저장 → 다음 단계로
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden || !window.NativeBridge || !NativeBridge.clipText) return;
-      let la = null; try { la = JSON.parse(localStorage.getItem('reb_lastask')); } catch (e) {}
-      if (!la || Date.now() - la.at > 30 * 60000) return;
-      setTimeout(() => { let t = ''; try { t = String(NativeBridge.clipText() || '').trim(); } catch (e) {} if (t.length < 30 || t.slice(0, 200) === la.p) return; saveAnswer(t); }, 800);
-    });
     setInterval(() => {
       try {
         if (cur !== 'quiz' || !S || !S.list) return; const q = S.list[S.i]; if (!q) return;
-        let la = null; try { la = JSON.parse(localStorage.getItem('reb_lastask')); } catch (e) {}
-        const fresh = la && la.id === q.id && Date.now() - la.at < 30 * 60000;
-        const qt3 = document.querySelector('#view .qtext');
-        if (fresh && qt3 && !document.getElementById('askpaste')) { qt3.insertAdjacentHTML('beforebegin', `<button class="btn" id="askpaste" style="width:100%;margin-bottom:8px">📋 ${la.k === 'law' || la.k === 'both2' ? '제미나이' : '챗GPT'} 답 붙여넣어 저장</button>`); document.getElementById('askpaste').onclick = () => { const t = window.NativeBridge && NativeBridge.clipText ? NativeBridge.clipText() : ''; if (t) saveAnswer(t); else (navigator.clipboard && navigator.clipboard.readText ? navigator.clipboard.readText().then(saveAnswer).catch(() => __toast('복사한 답을 못 읽었어요')) : null); }; }
         const L = LSJ(askKey(q.id), []), fb = document.querySelector('#view .fb');
         if (L.length && fb && !document.getElementById('askc')) {
           const tb = document.querySelector('#view .xtabs') || fb;
-          tb.insertAdjacentHTML('beforebegin', `<details class="card askc" id="askc"><summary>💬 내가 받아 온 AI 답 ${L.length}개</summary>${(() => { const hasA = L.some(x => x.k === 'both' || x.k === 'exp'), hasB = L.some(x => x.k === 'both2' || x.k === 'law'), last = L[L.length - 1]; return hasA && hasB && last.k !== 'sum' ? '<button class="btn sm" id="asksum" style="margin:6px 0">🤖 두 답 종합하기</button>' : ''; })()}${L.slice().reverse().map((x, i) => `<div class="aska"><small>${ASKN[x.k] || '💬 AI 답'} · ${esc(x.at)} <button class="btn sm" data-pad="${L.length - 1 - i}">📝 필기장에</button> <button class="btn sm" data-del="${L.length - 1 - i}">지우기</button></small><div>${esc(x.t).replace(/\n/g, '<br>')}</div></div>`).join('')}</details>`);
+          tb.insertAdjacentHTML('beforebegin', `<details class="card askc" id="askc"><summary>💬 내가 받아 온 AI 답 ${L.length}개</summary>${L.slice().reverse().map((x, i) => `<div class="aska"><small>${ASKN[x.k] || '💬 AI 답'} · ${esc(x.at)} <button class="btn sm" data-pad="${L.length - 1 - i}">📝 필기장에</button> <button class="btn sm" data-del="${L.length - 1 - i}">지우기</button></small><div>${esc(x.t).replace(/\n/g, '<br>')}</div></div>`).join('')}</details>`);
           document.querySelectorAll('#askc [data-pad]').forEach(b => b.onclick = e => { e.preventDefault(); const A = LSJ(askKey(q.id), []); const x = A[+b.dataset.pad]; if (x) padInsert(q, x.t); });
-          const sb = document.getElementById('asksum'); if (sb) sb.onclick = e => { e.preventDefault(); askSum(q); };
           document.querySelectorAll('#askc [data-del]').forEach(b => b.onclick = e => { e.preventDefault(); const A = LSJ(askKey(q.id), []); A.splice(+b.dataset.del, 1); LSS(askKey(q.id), A); document.getElementById('askc').remove(); });
         }
       } catch (e) {}

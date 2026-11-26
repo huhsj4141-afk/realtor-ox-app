@@ -206,10 +206,6 @@ function auDark(on){let d=document.getElementById('audark');
   d.oncontextmenu=e=>e.preventDefault();
   (async()=>{try{if(navigator.wakeLock&&!AU.wl)AU.wl=await navigator.wakeLock.request('screen')}catch(e){}})();
   try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen().catch(()=>{})}catch(e){}}
-function auSetVoice(v){if(AU.voice===v)return;const ti=AU.ti,t=AU.el?AU.el.currentTime:0,pl=AU.el&&!AU.el.paused;
-  if(AU.el){AU.el.pause();if(AU.el.keep){AU.el.keep.remove()}else{AU.el.removeAttribute('src');try{AU.el.load()}catch(e){}AU.el.remove&&AU.el.remove()}}
-  AU.el=null;AU.voice=v;try{localStorage.setItem('reb_auvoice',v)}catch(e){}
-  if(ti>=0)auLoad(ti,t,pl);else auRefresh()}
 function auEl(){if(AU.el)return AU.el;let a;if(AU.voice==='phone')a=apMake();else{a=document.createElement('audio');a.preload='metadata';a.setAttribute('playsinline','');document.body.appendChild(a)}AU.el=a;
   a.addEventListener('timeupdate',auTick);a.addEventListener('play',()=>{AU.thinkWait=false;if(typeof oxStopAll==='function'&&OXH)oxStopAll();auMS();auMeta();auBar();auSave()});a.addEventListener('pause',()=>{auBar();auSave()});
   a.addEventListener('ended',()=>{if(AU.opt&&AU.opt.loop&&AU.loopIdx>=0){const it=auTrack().items[AU.loopIdx];if(it){a.currentTime=Math.max(0,it.at-0.2);a.play().catch(()=>{});return}}if(AU.ti<OXA.length-1){auLoad(AU.ti+1,0,true)}else auBar()});
@@ -219,7 +215,6 @@ function auMS(){const a=AU.el;if(!a||!('mediaSession' in navigator))return;{cons
     h('previoustrack',()=>auBtn('pv','previoustrack'));h('nexttrack',()=>auBtn('nx','nexttrack'));
     h('seekbackward',()=>{if(AU.test)return auLog('미디어','⏪ seekbackward (되감기)');auDo('replay')});h('seekforward',()=>{if(AU.test)return auLog('미디어','⏩ seekforward (빨리감기)');auDo('next')});
     h('seekto',d=>{if(d&&d.seekTime!=null)a.currentTime=d.seekTime})}try{navigator.mediaSession.playbackState='playing'}catch(e){}}
-function auBack10(){const a=AU.el;if(a)a.currentTime=Math.max(0,a.currentTime-10)}
 /* ---------- 리모컨 버튼 매핑 (여러 번 누르기 · 공부 모드 · 확인음) ---------- */
 const AUACT={toggle:'⏯ 재생·정지',stepR:'▶▶ 다음 단계 (지문→해설→다음 지문)',stepL:'◀◀ 처음부터 (지문 중→지문 처음·두 번→이전 지문, 해설 중→정답 소리+해설 처음)',replay:'🔁 지문 처음부터 읽기',explain:'💬 해설부터 읽기',next:'⏭ 다음 지문',prev:'⏮ 이전 지문',
   bookmark:'★ 북마크',bmtoggle:'☆ 북마크 넣기/빼기',known:'✅ 알아요 (다음으로)',answer:'🔔 정답 효과음부터',think:'💭 생각할 시간 켜기/끄기',loop:'🔂 이 지문 반복 켜기/끄기',
@@ -530,17 +525,6 @@ function revList(){const seen=new Set(),out=[],add=q=>{if(q&&!q.ocr&&!seen.has(q
   dueList().forEach(add);shuffle(Q.filter(q=>P[q.id]&&P[q.id][1]===0)).forEach(add);
   try{(window.__unsureIds?window.__unsureIds():[]).forEach(k=>add(BYID[k]))}catch(e){}return out}
 window.revList=revList;
-function easyView(){const W=Q.filter(q=>P[q.id]&&P[q.id][1]===0).length,due=dueList().length;
-  V.innerHTML=seg(PSEG,'easy','pseg')+`<div class="bigl">
-  <button data-a="ad"><b>🎯</b><div>맞춤 20문제<span>내 실력에 맞춰 난이도 자동 조절</span></div></button>
-  <button data-a="rev"><b>🔁</b><div>복습하기 ${revList().length}문제<span>오늘 다시 볼 문제 + 틀린 문제 + 헷갈린 문제를 한 번에</span></div></button>
-  <button data-a="calc"><b>🧮</b><div>계산 문제<span>풀이 도식 · 숫자 바꿔 반복</span></div></button>
-  <button data-a="photo"><b>📷</b><div>사진으로 물어보기<span>다른 문제집 문제를 찍으면 풀어줘요</span></div></button></div>`;
-  bindSeg('pseg');V.querySelectorAll('.bigl button').forEach(b=>b.onclick=()=>{const a=b.dataset.a;
-    if(a==='ad')startAdaptive(Q,20,{from:'setup',title:'🎯 맞춤 학습'});
-    else if(a==='rev'){const l=revList();if(l.length)startQuiz(l,{from:'setup',title:'🔁 복습하기'});else if(window.__toast)__toast('복습할 문제가 없어요 👍')}
-    else if(a==='calc')startAdaptive(Q.filter(isCalc),20,{from:'setup',title:'🧮 계산 문제'});
-    else go('photo')})}
 function bindSeg(id){const el=document.getElementById(id);if(!el)return;el.onclick=e=>{const b=e.target.closest('button');if(!b)return;const v=b.dataset.v;
   if(id==='pseg'){PT=v;go(v==='easy'||v==='pick'?'setup':v)}else{RT=v;go(v==='plan'?'plan':v==='stats'?'stats':v==='journal'?'journal':v==='hist'?'hist':'wrong')}}}
 setup=function(a){PT='pick';_setup(a);V.insertAdjacentHTML('afterbegin',seg(PSEG,'pick','pseg'));bindSeg('pseg')};
@@ -767,8 +751,6 @@ function analyze(){const R=range(28),R14=R.slice(-14),A=[];
   const ls=R14.reduce((a,[k,x])=>a+((x&&x.lsec)||0),0)/60;if(mins14>60&&ls/mins14<0.1)A.push({k:'듣기',t:'듣기 공부가 거의 없어요',d:'이동·집안일 시간에 🎧 OX 듣기를 하면 하루 20~30분을 공짜로 더할 수 있어요.',lv:1});
   A.sort((a,b)=>b.lv-a.lv);return {A,pri,B,days14,avg}}
 LJ.analyze=analyze;
-function rxStart(an){const subs=(an.A.find(a=>a.subs)||{}).subs||an.pri.slice(0,2).map(p=>p.s);
-  const pool=Q.filter(q=>subs.includes(q.s)&&graded(q)&&!(P[q.id]&&P[q.id][1]===1));startAdaptive(pool.length?pool:Q.filter(graded),20,{from:'wrong',title:'📈 맞춤 처방 · '+subs.map(s=>SUBS[s]).join('·')})}
 
 /* ---- 달력 화면 ---- */
 LJ.ym=null;LJ.sel=null;
