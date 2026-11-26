@@ -1,0 +1,25 @@
+name: recents-test
+# 최근 앱에서 다시 열기 시험(에뮬레이터): 앱 열기 → 홈 → 다른 앱 → 최근 앱에서 우리 앱 누르기 → 열렸는지 확인
+on: { workflow_dispatch: {} }
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - name: APK 받기
+        run: curl -sL -o app.apk https://github.com/${{ github.repository }}/releases/download/latest/realtor-ox.apk && ls -la app.apk
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: bash tools/recents_test.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: recents, path: /tmp/out }
