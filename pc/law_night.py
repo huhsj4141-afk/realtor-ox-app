@@ -7,7 +7,7 @@ import os, sys, json, time, runpy, urllib.request
 HERE = os.path.dirname(os.path.abspath(__file__))
 N = os.path.join(HERE, 'night')
 RAW = 'https://raw.githubusercontent.com/huhsj4141-afk/realtor-ox-app/main/'
-FILES = ['tools/law_audit.py', 'tools/lawsrc.py', 'data/mc.json', 'gen/mc_exp.json']
+FILES = ['law_oc.txt', 'tools/law_audit.py', 'tools/lawsrc.py', 'data/mc.json', 'gen/mc_exp.json']
 
 
 def log(*a):
