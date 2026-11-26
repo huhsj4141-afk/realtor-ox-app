@@ -87,6 +87,7 @@ jobs:
           mkdir -p app/src/main/assets/web && cp web/* app/src/main/assets/web/
           [ -f gen/mc_exp.json ] && cp gen/mc_exp.json app/src/main/assets/web/ || true
           [ -f gen/law_audit.json ] && cp gen/law_audit.json app/src/main/assets/web/ || true
+          python3 -c "import json;a=json.load(open('gen/exp_audit.json',encoding='utf8'));json.dump({k:[1 if v.get('ok') else 0,v.get('d',''),[str(i)[:140] for i in v.get('issues',[])[:2]]] for k,v in a.items()},open('app/src/main/assets/web/exp_check.json','w',encoding='utf8'),ensure_ascii=False,separators=(',',':'))" || true
           [ -f gen/ox_var.json ] && cp gen/ox_var.json app/src/main/assets/web/ || true
           python3 - <<'PY'   # 📜 업데이트 내역: 사람이 고친 커밋만, 첫 줄을 쉬운 말로
           import json, subprocess, re

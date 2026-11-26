@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <queries><intent><action android:name="android.speech.RecognitionService" /></intent><package android:name="com.google.android.apps.bard" /><package android:name="com.openai.chatgpt" /></queries>
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application android:name=".App" android:label="중개사 공부" android:icon="@drawable/ic_launcher" android:roundIcon="@drawable/ic_launcher"
         android:theme="@android:style/Theme.Material.NoActionBar" android:allowBackup="true">
