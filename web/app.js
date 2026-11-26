@@ -2491,7 +2491,7 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
           // 🔗 연관 문제: 더보기 안 + 답한 뒤 해설 위에
           const relN = relList(q).length, fbx2 = document.querySelector('#view .fb');
           const tb2 = document.querySelector('.qdock .qmore .qtb');
-          if (tb2 && !tb2.querySelector('#qask1')) { tb2.insertAdjacentHTML('beforeend', `<button class="btn" id="qask1"><span class="ic">💬</span>챗GPT에 풀이 묻기</button><button class="btn" id="qask2"><span class="ic">🔎</span>제미나이에 법령 묻기</button>`); tb2.querySelector('#qask1').onclick = () => askApp(S.list[S.i], 'exp'); tb2.querySelector('#qask2').onclick = () => askApp(S.list[S.i], 'law'); }
+          if (tb2 && !tb2.querySelector('#qask')) { tb2.insertAdjacentHTML('beforeend', `<button class="btn" id="qask"><span class="ic">🤖</span>챗GPT+제미나이 종합</button>`); tb2.querySelector('#qask').onclick = () => { document.querySelector('.qdock')?.classList.remove('open'); askApp(S.list[S.i], 'both'); }; }
           if (tb2 && !tb2.querySelector('#qlaw')) { tb2.insertAdjacentHTML('afterbegin', `<button class="btn" id="qlaw"><span class="ic">⚖</span>최신 법령 확인</button>`); tb2.querySelector('#qlaw').onclick = () => { document.querySelector('.qdock')?.classList.remove('open'); lawCheck(S.list[S.i]); }; }
           if (fbx2 && !document.getElementById('qlaw2')) { const lw = lawGet(q.id);
             fbx2.insertAdjacentHTML('afterend', `<button class="btn sm" id="qlaw2" style="margin:6px 0 0">${lw ? (lw.v === 'ok' ? '✅ 최신 법령 확인됨' : lw.v === 'changed' ? '⚠️ 법이 바뀐 문제 — 보기' : '❓ 법령 확인 결과 보기') : '⚖ 지금 법에도 맞나요?'}</button>`); document.getElementById('qlaw2').onclick = () => lawCheck(q); }
@@ -2613,13 +2613,14 @@ ${base}`, { modelTier: 'default' }, false);
     function askPrompt(q, kind) {
       const ex = expOf(q) || {}, today3 = new Date().toISOString().slice(0, 10);
       const head = `[공인중개사 기출] 제${q.n}회 ${SUBS[q.s]} ${q.no}번 · 공식 정답 ${q.a}번\n${q.x}\n` + (ex.summary ? `\n(앱 해설 요약) ${ex.summary}` : '');
+      if (kind === 'both' || kind === 'both2') return `${head}\n\n공인중개사 수험생에게 설명하듯이 쉬운 말로:\n1) 등장하는 사람(甲·乙 등)·권리·돈의 관계를 화살표 관계도로(텍스트로)\n2) 계산 문제면 공식→숫자 대입→결과를 단계별로\n3) 보기마다 맞고 틀린 이유를 한 줄씩\n4) 꼭 외울 것과 함정 2~3개\n5) 오늘(${today3}) 기준 현행 법령과 맞는지(실시간 검색, 개정됐으면 조문·시행일·근거 링크 law.go.kr)`;
       if (kind === 'law') return `${head}\n\n오늘(${today3}) 기준으로 이 문제와 정답·해설이 현행 법령과 맞는지 실시간 검색으로 확인해 줘.\n1) 관련 법령·조문(시행령·시행규칙 포함)과 최근 개정 여부·시행일\n2) 지금 법 기준으로 정답이 달라지는지\n3) 근거 링크(국가법령정보센터 law.go.kr 우선)\n쉬운 말로 정리해 줘.`;
       return `${head}\n\n공인중개사 수험생에게 설명하듯이:\n1) 등장하는 사람(甲·乙 등)·권리·돈의 관계를 화살표 관계도로 그려 줘(텍스트로)\n2) 계산 문제면 공식→숫자 대입→결과를 단계별로\n3) 보기마다 맞고 틀린 이유를 한 줄씩\n4) 꼭 외울 것과 함정 2~3개\n쉬운 말로, 표나 목록으로 정리해 줘.`;
     }
     function askApp(q, kind) {
       try { localStorage.setItem('reb_lastask', JSON.stringify({ id: q.id, k: kind, at: Date.now() })); } catch (e) {}
-      const t = askPrompt(q, kind), pkg = kind === 'law' ? 'com.google.android.apps.bard' : 'com.openai.chatgpt';
-      if (window.NativeBridge && NativeBridge.askApp) { NativeBridge.askApp(pkg, t); window.__toast && __toast(`${kind === 'law' ? '제미나이' : '챗GPT'}를 열어요 · 답이 나오면 [공유 → 중개사 앱] 하거나 답을 복사해 와서 📋 붙여넣기`); }
+      const gem = kind === 'law' || kind === 'both2', t = askPrompt(q, kind), pkg = gem ? 'com.google.android.apps.bard' : 'com.openai.chatgpt';
+      if (window.NativeBridge && NativeBridge.askApp) { NativeBridge.askApp(pkg, t); window.__toast && __toast(`${kind === 'both' ? '1/2 ' : kind === 'both2' ? '2/2 ' : ''}${gem ? '제미나이' : '챗GPT'}를 열어요 · 답이 나오면 [공유 → 중개사 앱] 하거나 답을 복사해 와서 📋 붙여넣기`); }
       else { try { navigator.clipboard.writeText(t); } catch (e) {} window.__toast && __toast('질문을 복사했어요'); }
     }
     window.askApp = askApp;
@@ -2631,20 +2632,46 @@ ${base}`, { modelTier: 'default' }, false);
       t = String(t || '').trim(); if (t.length < 5) return window.__toast && __toast('붙여 넣을 답이 없어요. 앱에서 답을 복사해 주세요');
       const L = LSJ(askKey(q.id), []); if (L.some(x => x.t === t)) return; L.push({ k: la ? la.k : 'exp', t: t.slice(0, 12000), at: new Date().toLocaleString('ko-KR') }); LSS(askKey(q.id), L);
       document.getElementById('askc')?.remove();
+      if (la && la.k === 'both') return window.__done(`💬 챗GPT 답 저장 · 이제 제미나이에게도 물어봐요 (누르기)`, () => askApp(q, 'both2'));
+      if (la && la.k === 'both2') { try { localStorage.removeItem('reb_lastask'); } catch (e) {} return askSum(q); }
       window.__done(`💬 ${q.n}회 ${q.no}번에 ${la && la.k === 'law' ? '제미나이' : '챗GPT'} 답을 저장했어요`, () => { if (!(cur === 'quiz' && S.list[S.i] && S.list[S.i].id === q.id)) startQuiz([q], { from: 'home', title: '받아 온 답' }); });
     }
     window.__shared = saveAnswer;
+    const ASKN = { exp: '💬 챗GPT · 풀이', law: '🔎 제미나이 · 법령', both: '💬 챗GPT', both2: '🔎 제미나이', sum: '🤖 두 답 종합 정리' };
+    async function askSum(q) {   // 🤖 챗GPT·제미나이 답을 하나로 (AI가 없으면 두 답을 이어 붙임)
+      const L = LSJ(askKey(q.id), []), a = [...L].reverse().find(x => x.k === 'both' || x.k === 'exp'), b = [...L].reverse().find(x => x.k === 'both2' || x.k === 'law');
+      if (!a || !b) return window.__toast && __toast('챗GPT와 제미나이 답이 둘 다 있어야 종합할 수 있어요');
+      let t = '';
+      if (aiOK()) { window.__toast && __toast('🤖 두 답을 하나로 정리하는 중…');
+        try { t = await window.gemini(`공인중개사 수험생 노트용으로 아래 두 AI의 답을 하나로 합쳐 줘. 겹치는 건 한 번만, 서로 다른 내용은 "⚠ 두 AI가 다르게 말함:"으로 표시. 순서: ①관계도(텍스트) ②계산(있으면) ③보기별 O/X 이유 ④꼭 외울 것·함정 ⑤현행 법령 확인(개정·근거). 마크다운 기호(#,*) 없이 줄글·번호로, 900자 이내.\n\n[챗GPT]\n${a.t.slice(0, 5000)}\n\n[제미나이]\n${b.t.slice(0, 5000)}`, { modelTier: 'default', timeout: 60000 }, false); } catch (e) { t = ''; } }
+      if (!t) t = `(AI 없이 두 답을 이어 붙였어요)\n\n[챗GPT]\n${a.t}\n\n[제미나이]\n${b.t}`;
+      const L2 = LSJ(askKey(q.id), []); L2.push({ k: 'sum', t: String(t).trim().slice(0, 12000), at: new Date().toLocaleString('ko-KR') }); LSS(askKey(q.id), L2);
+      document.getElementById('askc')?.remove();
+      window.__done(`🤖 ${q.n}회 ${q.no}번 종합 정리 완료 · 📝 필기장에 넣기`, () => padInsert(q, t));
+    }
+    function padInsert(q, t) {   // 📝 정리된 글을 그 문제의 필기장(⌨️ 글)에 덧붙이기
+      const clean = String(t).replace(/\*\*|__|^#+\s*/gm, '').trim(), k = 'reb_padt_' + q.id;
+      const old = localStorage.getItem(k) || '', add = `── 🤖 AI 종합 (${new Date().toLocaleDateString('ko-KR')}) ──\n${clean}`;
+      if (old.includes(clean.slice(0, 80))) return window.__toast && __toast('이미 필기장에 넣었어요');
+      try { localStorage.setItem(k, old ? old + '\n\n' + add : add); const ix = JSON.parse(localStorage.getItem('reb_pad_ix') || '[]').filter(x => x !== q.id); ix.push(q.id); localStorage.setItem('reb_pad_ix', JSON.stringify(ix)); } catch (e) { return window.__toast && __toast('필기장 저장 공간이 부족해요'); }
+      const here = cur === 'quiz' && S && S.list && S.list[S.i] && S.list[S.i].id === q.id;
+      if (here) { const ta = document.getElementById('padt'); if (ta && PAD.key === q.id) ta.value = localStorage.getItem(k); padOpen(true); padTab('memo'); const ta2 = document.getElementById('padt'); if (ta2) { ta2.value = localStorage.getItem(k); ta2.scrollTop = ta2.scrollHeight; } }
+      window.__toast && __toast('📝 필기장(⌨️ 글)에 넣었어요');
+    }
+    window.askSum = askSum; window.padInsert = padInsert;
     setInterval(() => {
       try {
         if (cur !== 'quiz' || !S || !S.list) return; const q = S.list[S.i]; if (!q) return;
         let la = null; try { la = JSON.parse(localStorage.getItem('reb_lastask')); } catch (e) {}
         const fresh = la && la.id === q.id && Date.now() - la.at < 30 * 60000;
         const qt3 = document.querySelector('#view .qtext');
-        if (fresh && qt3 && !document.getElementById('askpaste')) { qt3.insertAdjacentHTML('beforebegin', `<button class="btn" id="askpaste" style="width:100%;margin-bottom:8px">📋 ${la.k === 'law' ? '제미나이' : '챗GPT'} 답 붙여넣어 저장</button>`); document.getElementById('askpaste').onclick = () => { const t = window.NativeBridge && NativeBridge.clipText ? NativeBridge.clipText() : ''; if (t) saveAnswer(t); else (navigator.clipboard && navigator.clipboard.readText ? navigator.clipboard.readText().then(saveAnswer).catch(() => __toast('복사한 답을 못 읽었어요')) : null); }; }
+        if (fresh && qt3 && !document.getElementById('askpaste')) { qt3.insertAdjacentHTML('beforebegin', `<button class="btn" id="askpaste" style="width:100%;margin-bottom:8px">📋 ${la.k === 'law' || la.k === 'both2' ? '제미나이' : '챗GPT'} 답 붙여넣어 저장</button>`); document.getElementById('askpaste').onclick = () => { const t = window.NativeBridge && NativeBridge.clipText ? NativeBridge.clipText() : ''; if (t) saveAnswer(t); else (navigator.clipboard && navigator.clipboard.readText ? navigator.clipboard.readText().then(saveAnswer).catch(() => __toast('복사한 답을 못 읽었어요')) : null); }; }
         const L = LSJ(askKey(q.id), []), fb = document.querySelector('#view .fb');
         if (L.length && fb && !document.getElementById('askc')) {
           const tb = document.querySelector('#view .xtabs') || fb;
-          tb.insertAdjacentHTML('beforebegin', `<details class="card askc" id="askc"><summary>💬 내가 받아 온 AI 답 ${L.length}개</summary>${L.slice().reverse().map((x, i) => `<div class="aska"><small>${x.k === 'law' ? '🔎 제미나이 · 법령' : '💬 챗GPT · 풀이'} · ${esc(x.at)} <button class="btn sm" data-del="${L.length - 1 - i}">지우기</button></small><div>${esc(x.t).replace(/\n/g, '<br>')}</div></div>`).join('')}</details>`);
+          tb.insertAdjacentHTML('beforebegin', `<details class="card askc" id="askc"><summary>💬 내가 받아 온 AI 답 ${L.length}개</summary>${(() => { const hasA = L.some(x => x.k === 'both' || x.k === 'exp'), hasB = L.some(x => x.k === 'both2' || x.k === 'law'), last = L[L.length - 1]; return hasA && hasB && last.k !== 'sum' ? '<button class="btn sm" id="asksum" style="margin:6px 0">🤖 두 답 종합하기</button>' : ''; })()}${L.slice().reverse().map((x, i) => `<div class="aska"><small>${ASKN[x.k] || '💬 AI 답'} · ${esc(x.at)} <button class="btn sm" data-pad="${L.length - 1 - i}">📝 필기장에</button> <button class="btn sm" data-del="${L.length - 1 - i}">지우기</button></small><div>${esc(x.t).replace(/\n/g, '<br>')}</div></div>`).join('')}</details>`);
+          document.querySelectorAll('#askc [data-pad]').forEach(b => b.onclick = e => { e.preventDefault(); const A = LSJ(askKey(q.id), []); const x = A[+b.dataset.pad]; if (x) padInsert(q, x.t); });
+          const sb = document.getElementById('asksum'); if (sb) sb.onclick = e => { e.preventDefault(); askSum(q); };
           document.querySelectorAll('#askc [data-del]').forEach(b => b.onclick = e => { e.preventDefault(); const A = LSJ(askKey(q.id), []); A.splice(+b.dataset.del, 1); LSS(askKey(q.id), A); document.getElementById('askc').remove(); });
         }
       } catch (e) {}
