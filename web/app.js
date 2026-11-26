@@ -6,6 +6,22 @@
    - 앱에서 쓸 수 없는 Claude 전용 메뉴 숨기기
    화면 함수(home·setup·wrong·quiz)를 감싸서 그린 뒤에 덧붙이는 방식 → 원래 화면 코드는 그대로 둠 */
 (() => {
+  // 💾 저장 공간이 꽉 차면 진도 저장이 실패할 수 있어요 → 다시 만들 수 있는 AI 캐시부터 비우고 다시 저장
+  (() => {
+    const CACHE = /^(reb_more_|reb_beg_|reb_dia2_|reb_key_|reb_law_|reb_var|gem_|reb_ex_)/;
+    const prune = need => {
+      const ks = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (CACHE.test(k)) ks.push([k, (localStorage.getItem(k) || '').length]); }
+      ks.sort((a, b) => b[1] - a[1]); let freed = 0;
+      for (const [k, n] of ks) { localStorage.removeItem(k); freed += n; if (freed > need) break; }
+      return freed;
+    };
+    const orig = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (k, v) {
+      try { return orig.call(this, k, v); }
+      catch (e) { if (this !== localStorage || !/quota/i.test(e.name + e.message)) throw e; prune(String(v).length * 2 + 300000); return orig.call(this, k, v); }
+    };
+    setTimeout(() => { try { let n = 0; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); n += k.length + (localStorage.getItem(k) || '').length; } if (n > 4.2e6) prune(n - 3.5e6); } catch (e) {} }, 8000);
+  })();
   const setInterval = (f, ms, ...a) => window.setInterval(() => { if (!document.hidden) f(...a); }, ms);   // 앱이 화면에 없을 땐 반복 점검 쉬기(배터리)
   const N = window.NativeBridge;
   const $ = s => document.querySelector(s);
