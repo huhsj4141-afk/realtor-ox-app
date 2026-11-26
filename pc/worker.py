@@ -167,8 +167,11 @@ night = {'p': None}
 def night_tick():
     st = os.path.join(HERE, 'night_day.txt')
     if night['p'] and night['p'].poll() is None: return          # 아직 도는 중
-    if read_txt('night_day.txt') == day_key(): return            # 오늘 몫은 했음
-    if datetime.datetime.now().hour < 17 or datetime.datetime.now().minute < 10 and datetime.datetime.now().hour == 17: return
+    now_f = os.path.join(HERE, 'night_now.txt')                   # 이 파일이 있으면 바로 한 번 돌리기
+    if os.path.exists(now_f): os.remove(now_f)
+    else:
+        if read_txt('night_day.txt') == day_key(): return        # 오늘 몫은 했음
+        if datetime.datetime.now().hour < 17 or datetime.datetime.now().minute < 10 and datetime.datetime.now().hour == 17: return
     open(st, 'w').write(day_key())
     exe = sys.executable.replace('python.exe', 'pythonw.exe') if os.name == 'nt' else sys.executable
     night['p'] = subprocess.Popen([exe, os.path.join(HERE, 'law_night.py')], cwd=HERE)
