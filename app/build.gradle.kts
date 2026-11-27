@@ -1,7 +1,7 @@
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.android") }
 android {
     namespace = "kr.realtor.ox"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig {
         applicationId = "kr.realtor.ox"
         minSdk = 24
@@ -17,6 +17,13 @@ android {
             else { storeFile = rootProject.file("keystore/release.jks"); storePassword = "realtorox"; keyAlias = "ox"; keyPassword = "realtorox" }
         }
     }
+    // side = 지금처럼 APK로 직접 설치(앱이 스스로 업데이트) · play = 플레이스토어용(업데이트는 플레이스토어가)
+    flavorDimensions += "dist"
+    productFlavors {
+        create("side") { dimension = "dist"; buildConfigField("boolean", "PLAY", "false") }
+        create("play") { dimension = "dist"; targetSdk = 36; buildConfigField("boolean", "PLAY", "true") }
+    }
+    buildFeatures { buildConfig = true }
     buildTypes {
         release { isMinifyEnabled = false; signingConfig = signingConfigs.getByName("rel") }
     }

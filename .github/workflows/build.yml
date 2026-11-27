@@ -109,13 +109,14 @@ jobs:
         env: { VCODE: '${{ github.run_number }}', OX_KS_B64: '${{ secrets.OX_KS }}', OX_KS_PW: '${{ secrets.OX_KS_PW }}' }
         run: |
           if [ -n "$OX_KS_B64" ]; then echo "$OX_KS_B64" | base64 -d > /tmp/ox.jks && export OX_KS_PATH=/tmp/ox.jks && echo "새 서명 열쇠 사용"; fi
-          gradle assembleRelease --no-daemon --stacktrace
+          gradle assembleSideRelease bundlePlayRelease --no-daemon --stacktrace
       - name: 올리기
         env: { GH_TOKEN: '${{ github.token }}' }
         run: |
-          cp app/build/outputs/apk/release/app-release.apk realtor-ox.apk
+          cp app/build/outputs/apk/side/release/app-side-release.apk realtor-ox.apk
+          cp app/build/outputs/bundle/playRelease/app-play-release.aab realtor-ox-play.aab
           echo ${{ github.run_number }} > version.txt
           gh release delete latest -y --cleanup-tag 2>/dev/null || true
           for d in $(gh api repos/${{ github.repository }}/releases -q '.[]|select(.draft)|.id'); do gh api -X DELETE repos/${{ github.repository }}/releases/$d || true; done
           git push origin :refs/tags/latest 2>/dev/null || true
-          gh release create latest realtor-ox.apk version.txt -t "중개사 OX 듣기 v${{ github.run_number }}" -n "폰에서 realtor-ox.apk 를 받아 설치하세요" --latest
+          gh release create latest realtor-ox.apk realtor-ox-play.aab version.txt -t "중개사 OX 듣기 v${{ github.run_number }}" -n "폰에서 realtor-ox.apk 를 받아 설치하세요" --latest

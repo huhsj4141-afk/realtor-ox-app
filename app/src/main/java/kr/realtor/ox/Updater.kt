@@ -30,9 +30,10 @@ object Updater {
     private val busy = java.util.concurrent.atomic.AtomicBoolean(false)
     fun version(a: Activity): Long = current(a)
     fun latestKnown(a: Activity): Long = a.getSharedPreferences("ox", Activity.MODE_PRIVATE).getLong("upd_latest", 0)
-    fun install(a: Activity) = auto(a, latestKnown(a), now = true)
+    fun install(a: Activity) = if (BuildConfig.PLAY) Unit else auto(a, latestKnown(a), now = true)
 
     fun check(a: Activity, force: Boolean = false, quiet: Boolean = false) {
+        if (BuildConfig.PLAY) { if (force) Toast.makeText(a, "업데이트는 플레이스토어가 알아서 해 줘요", Toast.LENGTH_SHORT).show(); return }
         if (!busy.get()) File(a.cacheDir, "update").listFiles()?.forEach { if (!it.name.endsWith("-${latestKnown(a)}.apk") || latestKnown(a) <= current(a)) it.delete() }   // 설치 끝난 업데이트 파일 정리
         val sp = a.getSharedPreferences("ox", Activity.MODE_PRIVATE)
         val now = System.currentTimeMillis()
