@@ -89,7 +89,7 @@
     .aiw::before{content:"";display:block;height:6px;margin:2px 0 8px;border-radius:3px;background:linear-gradient(90deg,var(--pri2) 0%,var(--pri) 40%,var(--pri2) 80%);background-size:250% 100%;animation:aiwbar 1.2s linear infinite} @keyframes aiwbar{from{background-position:100% 0}to{background-position:-150% 0}}
     .xhid{display:none!important} .xtabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin:12px 0 0;padding:4px;border-radius:14px;background:var(--bg);border:1px solid var(--line)}
     .xtabs button{font:inherit;font-size:14px;font-weight:700;padding:11px 2px;border:0;border-radius:10px;background:transparent;color:var(--sub);cursor:pointer;white-space:nowrap}
-    .xtabs button.on{background:var(--pri);color:#fff} .xsay{margin:6px 0 0;width:100%} .note{margin-top:8px;font-size:14.5px;line-height:1.6} .note .nh{font-weight:700;margin:2px 0 6px} .note .nfx{font-family:ui-monospace,monospace;background:var(--bg2,rgba(127,127,127,.12));border-left:3px solid var(--pri);padding:6px 8px;margin:4px 0;border-radius:0 8px 8px 0;white-space:pre-wrap} .note .nw{color:var(--warn,#d29922)} .note .ntb{width:100%;border-collapse:collapse;margin:6px 0;font-size:13.5px} .note .ntb th,.note .ntb td{border:1px solid var(--line);padding:5px 6px;text-align:left;vertical-align:top} .note .ntb th{background:rgba(127,127,127,.12)} .xtabs button.warn:not(.on){color:var(--warn)} .xtabs .xs{font-style:normal;font-size:11px;opacity:.85}
+    .xtabs button.on{background:var(--pri);color:#fff} .xsay{margin:6px 0 0;width:100%} .bsay{float:right;margin:0 0 6px 8px;padding:4px 10px!important;font-size:12.5px!important} .note{margin-top:8px;font-size:14.5px;line-height:1.6} .note .nh{font-weight:700;margin:2px 0 6px} .note .nfx{font-family:ui-monospace,monospace;background:var(--bg2,rgba(127,127,127,.12));border-left:3px solid var(--pri);padding:6px 8px;margin:4px 0;border-radius:0 8px 8px 0;white-space:pre-wrap} .note .nw{color:var(--warn,#d29922)} .note .ntb{width:100%;border-collapse:collapse;margin:6px 0;font-size:13.5px} .note .ntb th,.note .ntb td{border:1px solid var(--line);padding:5px 6px;text-align:left;vertical-align:top} .note .ntb th{background:rgba(127,127,127,.12)} .xtabs button.warn:not(.on){color:var(--warn)} .xtabs .xs{font-style:normal;font-size:11px;opacity:.85}
     .xpanel{margin-top:6px} .xpanel #moreBox:empty,.xpanel #begBox:empty{display:none}
     .qtb.q5{grid-template-columns:repeat(5,1fr)} .qtb{margin-top:14px!important}
     details.fold{padding:0!important;overflow:hidden} details.fold>summary{list-style:none;cursor:pointer;padding:15px 16px;font-weight:800;font-size:16px;display:flex;align-items:center} details.fold>summary::-webkit-details-marker{display:none} details.fold>summary::after{content:'⌄';margin-left:auto;color:var(--sub);transition:transform .2s} details.fold[open]>summary::after{transform:rotate(180deg)} details.fold>.foldin{padding:0 16px 14px}
@@ -2011,11 +2011,10 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     const lbl = (ic, t, ok) => `${ic} ${t}${ok ? ' <i class="xs">✓</i>' : ''}`;
     if (!tabs) {
       const conf = card.querySelector('.conf'), fb = card.querySelector('.fb');
-      (conf || fb || card.querySelector('.choices')).insertAdjacentHTML('afterend', `<div class="xtabs"><button data-x="ai"></button><button data-x="beg"></button><button data-x="note"></button></div><button class="btn sm xsay" id="xsay">🔊 이 탭 읽어 주기</button><div class="xpanel"></div>`);
+      (conf || fb || card.querySelector('.choices')).insertAdjacentHTML('afterend', `<div class="xtabs"><button data-x="ai"></button><button data-x="beg"></button><button data-x="note"></button></div><div class="xpanel"></div>`);
       tabs = card.querySelector('.xtabs'); const pnl = card.querySelector('.xpanel');
       const nb = document.createElement('div'); nb.id = 'noteBox'; nb.style.display = 'none';
       pnl.append(ab, more, mb, bb, nb);
-      document.getElementById('xsay').onclick = e => tabSay(e.currentTarget);                      // 더 자세히는 해설 바로 아래 이어서
       [qa, beg].forEach(b => b.classList.add('xhid')); more.classList.add('full', 'xmore');
       if (qv) { qv.className = 'btn'; qv.innerHTML = '<span class="ic">🔁</span>숫자 바꾸기'; tb.insertBefore(qv, tb.lastElementChild); tb.classList.add('q5'); }
       if (!document.getElementById('qdia')) { tb.insertAdjacentHTML('afterbegin', '<button class="btn" id="qdia"><span class="ic">🕸</span>관계도</button>'); document.getElementById('qdia').onclick = e => makeDiagram(q, e.currentTarget); }
@@ -2024,6 +2023,12 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
       // 저장된 해설이 있으면 바로 펼쳐 보여 주기(인터넷 필요 없음)
       xshow('ai', !!expOf(q) || ab.textContent.trim().length > 20);
     }
+    // 🔊 해설·기초부터·핵심노트 상자마다 맨 위에 읽어 주기
+    [['aibox', ['aibox', 'moreBox']], ['begBox', ['begBox']], ['noteBox', ['noteBox']]].forEach(([id, ids]) => {
+      const box = document.getElementById(id); if (!box || box.querySelector(':scope > .bsay') || box.innerText.trim().length < 20 || /만드는 중|기다려/.test(box.innerText.slice(0, 40))) return;
+      box.insertAdjacentHTML('afterbegin', '<button class="btn sm bsay">🔊 읽어 주기</button>');
+      box.querySelector(':scope > .bsay').onclick = e => boxSay(e.currentTarget, ids);
+    });
     const isCalc = /계산/.test(qa.textContent);
     tabs.children[0].innerHTML = lbl('📖', isCalc ? '계산 풀이' : '해설', !!expOf(q));
     tabs.children[1].innerHTML = lbl('🐣', '기초부터', saved('reb_beg_' + q.id));
@@ -2052,17 +2057,16 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     if (k === 'note') { if (el && (load || !el.dataset.q)) makeNote(S.list[S.i], el); return; }
     if (load && el && el.textContent.trim().length < 20) { const b = document.getElementById(btn); if (b && !b.disabled) b.click(); }
   }
-  // 🔊 지금 보이는 탭(해설+자세히 / 기초부터 / 핵심노트)을 읽어 주기 — 읽는 곳을 표시
-  function tabSay(b) {
+  // 🔊 상자 하나(해설은 더 자세히까지 이어서)를 읽어 주기 — 읽는 곳을 표시
+  function boxSay(b, ids) {
     const T = window.__tts; if (!T) { window.__toast && __toast('읽기를 쓸 수 없어요'); return; }
-    if (SAY.on || T.busy()) { sayStop(); b.textContent = '🔊 이 탭 읽어 주기'; return; }
-    const k = document.querySelector('#view .xtabs .on')?.dataset.x || 'ai';
-    const ids = k === 'ai' ? ['aibox', 'moreBox'] : k === 'beg' ? ['begBox'] : ['noteBox'];
+    if (SAY.on || T.busy()) { sayStop(); document.querySelectorAll('.bsay').forEach(x => x.textContent = '🔊 읽어 주기'); return; }
     const seg = ids.map(id => document.getElementById(id)).filter(el => el && el.style.display !== 'none' && el.innerText.trim().length > 5)
-      .map(el => ({ t: el.innerText.replace(/[|│]/g, ' ').replace(/[=→]/g, m => m === '=' ? ' 는 ' : ' 그래서 ').replace(/[■•⚠🔊📝🐣📖🤖✓]/g, ' ').replace(/\s+/g, ' ').trim(), el }));
+      .map(el => ({ t: el.innerText.replace(/🔊 읽어 주기|■ 그만/g, ' ').replace(/[|│]/g, ' ').replace(/-{3,}/g, ' ').replace(/[=→]/g, m => m === '=' ? ' 는 ' : ' 그래서 ').replace(/×/g, ' 곱하기 ').replace(/÷/g, ' 나누기 ').replace(/[■•⚠🔊📝🐣📖🤖✓🖥]/g, ' ').replace(/\s+/g, ' ').trim(), el }));
     if (!seg.length) { window.__toast && __toast('읽을 내용이 아직 없어요'); return; }
-    sayRun(seg, b, '🔊 이 탭 읽어 주기');
+    sayRun(seg, b, '🔊 읽어 주기');
   }
+  // 🔊 지금 보이는 탭(해설+자세히 / 기초부터 / 핵심노트)을 읽어 주기 — 읽는 곳을 표시
   // 📝 핵심요약노트: 계산은 산식→대입→답, 세율·기간·금액은 표로 (한 번 만들면 저장)
   const notePrompt = q => { let ex = ''; try { ex = JSON.stringify(expOf(q) || '').slice(0, 2500); } catch (e) {} return `공인중개사 기출문제의 '핵심요약노트'를 만들어 줘. 수험생이 시험 직전에 훑어볼 메모처럼 짧게(350자 안팎), 명사형 메모체로.
 형식(꼭 지켜):
@@ -2087,6 +2091,17 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
       else h += `<div class="nl">${esc2(l)}</div>`; }
     flush(); return h;
   }
+  // AI·PC 없이도: 해설 데이터로 간단 노트(주제 · 산식 · 값 표 · 핵심)
+  function localNote(q) {
+    const e = expOf(q) || {}, tex = t => String(t || '').replace(/\\rightarrow|\\to/g, '→').replace(/\\times/g, '×').replace(/\\div/g, '÷').replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, '($1)/($2)').replace(/\\(le|leq)/g, '≤').replace(/\\(ge|geq)/g, '≥').replace(/\\%/g, '%').replace(/\\[a-z]+/g, '').replace(/[{}]/g, '').trim();
+    const L = ['■ 주제: ' + String(e.summary || q.x.split('\n')[0]).replace(/입니다\.?$|합니다\.?$/, '').slice(0, 90)];
+    (e.formulas || []).slice(0, 3).forEach(f => L.push(`산식: ${f.name ? f.name + ' = ' : ''}${tex(f.tex).replace(/^[^=]*=\s*/, f.name ? '' : '$&')}${f.note ? ' (' + f.note + ')' : ''}`));
+    const rows = [...String(q.x).matchAll(/^\s*([ㄱ-ㅎ]|[①-⑤])\s*[.)]?\s*([^:\n]{2,40})\s*[:：]\s*([^\n]{1,40})$/gm)].filter(m => /분의|%|원|년|월|일|배|㎡|명/.test(m[3]));
+    if (rows.length >= 2) { L.push('| 구분 | 값 |', '|---|---|'); rows.forEach(m => L.push(`| ${m[1]} ${m[2].trim()} | ${m[3].trim()} |`)); }
+    L.push(`• 정답: ${String(q.a).split(',').map(a => '①②③④⑤'[a - 1]).join('')}`);
+    String(e.concept || '').split(/(?<=[.다요])\s+/).filter(x => x.length > 12).slice(0, 3).forEach(x => L.push('• ' + x.slice(0, 110)));
+    return L.join('\n');
+  }
   async function makeNote(q, el) {
     if (!q || !el) return; el.dataset.q = q.id; const K = 'reb_note_' + q.id;
     const show = t => { if (el.dataset.q === q.id) el.innerHTML = `<div class="note">${noteHTML(t)}</div>`; };
@@ -2094,12 +2109,12 @@ ${ex ? '해설: ' + JSON.stringify(ex).slice(0, 2500) : ''}`}`;
     if (t) return show(t);
     if (!aiOK()) {
       if (window.pcAsk && pcAsk({ id: 'note_' + q.id, kind: 'ask', prompt: notePrompt(q), key: K, qid: q.id, label: '핵심노트' })) el.innerHTML = '<div class="fb na">🖥 AI를 바로 쓸 수 없어서 PC 일꾼에게 맡겼어요. 다 되면 알려 드려요.</div>';
-      else el.innerHTML = '<div class="fb na">핵심노트는 AI가 만들어요. 인터넷과 AI가 켜져 있을 때 다시 눌러 주세요.</div>';
+      el.innerHTML = `<div class="note">${noteHTML(localNote(q))}</div><div class="fb na" style="font-weight:400">AI 없이 해설로 만든 간단 노트예요${window.pcOn && pcOn() ? ' · PC가 자세한 노트를 만들면 바뀌어요' : ' · AI가 켜지면 다시 눌러 자세히 만들 수 있어요'}</div>`;
       return;
     }
     el.innerHTML = '<div class="fb na" style="font-weight:400"><span class="spin"></span> 핵심노트 만드는 중…</div>';
     try { t = String(await window.gemini(notePrompt(q), { modelTier: 'default', timeout: 60000 }, false) || '').trim(); } catch (e) { t = ''; }
-    if (!t) { if (window.pcAsk && pcAsk({ id: 'note_' + q.id, kind: 'ask', prompt: notePrompt(q), key: K, qid: q.id, label: '핵심노트' })) el.innerHTML = '<div class="fb na">🖥 AI 한도가 막혀서 PC 일꾼에게 맡겼어요. 다 되면 알려 드려요.</div>'; else el.innerHTML = '<div class="fb no">핵심노트를 만들지 못했어요. 잠시 뒤 다시 눌러 주세요.</div>'; return; }
+    if (!t) { const toPC = window.pcAsk && pcAsk({ id: 'note_' + q.id, kind: 'ask', prompt: notePrompt(q), key: K, qid: q.id, label: '핵심노트' }); el.innerHTML = `<div class="note">${noteHTML(localNote(q))}</div><div class="fb na" style="font-weight:400">${toPC ? '🖥 AI 한도가 막혀서 PC가 자세한 노트를 만들고 있어요 · 지금은 해설로 만든 간단 노트' : 'AI가 막혀서 해설로 만든 간단 노트예요 · 잠시 뒤 다시 누르면 자세히'}</div>`; return; }
     try { localStorage.setItem(K, t); } catch (e) {}
     if (el.dataset.q === q.id && document.body.contains(el)) show(t); else window.__done && __done(`📝 ${q.n}회 ${q.no}번 핵심노트 완성 · 다시 풀면 바로 보여요`);
   }
